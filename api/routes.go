@@ -21,7 +21,7 @@ var log = logging.MustGetLogger("api")
 func IPLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		h := c.Request.RemoteAddr
-		if strings.Contains(h, ":") {
+		if ua, ok := c.Request.Header["User-Agent"]; ok && len(ua) > 0 && ua[0] == "plugin.video.elementum" && strings.Contains(h, ":") {
 			h = strings.Split(h, ":")[0]
 		}
 		xbmc.LastCallerIP = h
