@@ -20,11 +20,9 @@ var log = logging.MustGetLogger("api")
 // IPLogger records last caller IP to respond to it later (if needed user interaction)
 func IPLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		h := c.Request.RemoteAddr
-		if ua, ok := c.Request.Header["User-Agent"]; ok && len(ua) > 0 && ua[0] == "plugin.video.elementum" && strings.Contains(h, ":") {
-			h = strings.Split(h, ":")[0]
+		if ua, ok := c.Request.Header["User-Agent"]; ok && len(ua) > 0 && ua[0] == "plugin.video.elementum" && strings.Contains(c.Request.RemoteAddr, ":") {
+			xbmc.LastCallerIP = strings.Split(c.Request.RemoteAddr, ":")[0]
 		}
-		xbmc.LastCallerIP = h
 	}
 }
 
