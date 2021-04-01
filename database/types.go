@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/asdine/storm"
-	"github.com/boltdb/bolt"
 	"github.com/op/go-logging"
+	bolt "go.etcd.io/bbolt"
 )
 
 // StormDatabase ...
@@ -125,6 +125,7 @@ const (
 
 const (
 	historyMaxSize = 50
+	backupPeriod   = 5 * time.Hour
 )
 
 var (

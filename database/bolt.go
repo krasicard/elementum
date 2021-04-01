@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/anacrolix/missinggo/perf"
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/util"
@@ -130,7 +130,7 @@ func (d *BoltDatabase) MaintenanceRefreshHandler() {
 	d.CreateBackup(backupPath)
 	d.CacheCleanup()
 
-	tickerBackup := time.NewTicker(2 * time.Hour)
+	tickerBackup := time.NewTicker(backupPeriod)
 
 	defer tickerBackup.Stop()
 	defer close(d.quit)
@@ -196,6 +196,10 @@ func RestoreBackup(databasePath string, backupPath string) {
 // CreateBackup ...
 func (d *BoltDatabase) CreateBackup(backupPath string) {
 	if config.Args.DisableBackup {
+		return
+	}
+	if stat, err := os.Stat(backupPath); err == nil && time.Now().Sub(stat.ModTime()) < backupPeriod {
+		log.Infof("Skipping backup due to newer modification date of %s", backupPath)
 		return
 	}
 

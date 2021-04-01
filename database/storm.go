@@ -77,7 +77,7 @@ func (d *StormDatabase) MaintenanceRefreshHandler() {
 
 	d.CreateBackup(backupPath)
 
-	tickerBackup := time.NewTicker(2 * time.Hour)
+	tickerBackup := time.NewTicker(backupPeriod)
 
 	defer tickerBackup.Stop()
 	defer close(d.quit)
@@ -99,6 +99,10 @@ func (d *StormDatabase) MaintenanceRefreshHandler() {
 // CreateBackup ...
 func (d *StormDatabase) CreateBackup(backupPath string) {
 	if config.Args.DisableBackup {
+		return
+	}
+	if stat, err := os.Stat(backupPath); err == nil && time.Now().Sub(stat.ModTime()) < backupPeriod {
+		log.Infof("Skipping backup due to newer modification date of %s", backupPath)
 		return
 	}
 
