@@ -68,6 +68,7 @@ func Start() {
 
 		select {
 		case <-closing:
+			log.Info("Closing scraper...")
 			return
 		case <-updateTicker.C:
 			go runUpdater()

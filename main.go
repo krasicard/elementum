@@ -134,6 +134,7 @@ func main() {
 		s.Closer.Set()
 
 		log.Info("Shutting down...")
+		scrape.Stop()
 		library.CloseLibrary()
 		s.Close(true)
 
