@@ -499,8 +499,10 @@ func (s *Service) configure() {
 }
 
 func (s *Service) startServices() {
-	log.Info("Starting LSD...")
-	s.PackSettings.SetBool("enable_lsd", true)
+	if s.config.DisableLSD == false {
+		log.Info("Starting LSD...")
+		s.PackSettings.SetBool("enable_lsd", true)
+	}
 
 	if s.config.DisableDHT == false {
 		log.Info("Starting DHT...")
@@ -551,8 +553,10 @@ func (s *Service) stopServices() {
 		}()
 	}
 
-	log.Info("Stopping LSD...")
-	s.PackSettings.SetBool("enable_lsd", false)
+	if s.config.DisableLSD == false {
+		log.Info("Stopping LSD...")
+		s.PackSettings.SetBool("enable_lsd", false)
+	}
 
 	if s.config.DisableDHT == false {
 		log.Info("Stopping DHT...")
