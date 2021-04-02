@@ -134,6 +134,7 @@ func (s *Service) Close(isShutdown bool) {
 	log.Info("Stopping BT Services...")
 	s.stopServices()
 
+	log.Info("Stopping Libtorrent session...")
 	s.CloseSession()
 }
 

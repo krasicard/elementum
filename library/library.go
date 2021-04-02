@@ -390,6 +390,9 @@ func updateLibraryShows() error {
 	}
 
 	for _, i := range lis {
+		if closer.IsSet() {
+			return nil
+		}
 		if i.ID == 0 || i.ShowID == 0 {
 			continue
 		}
