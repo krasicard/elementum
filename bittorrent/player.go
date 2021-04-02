@@ -1427,15 +1427,15 @@ func getShowSeasonEpisode(showID, seasonNumber, episodeNumber int) (*tmdb.Show, 
 	}
 
 	season := tmdb.GetSeason(showID, seasonNumber, config.Get().Language, len(show.Seasons))
-	if season == nil || len(season.Episodes) < episodeNumber {
+	if season == nil {
 		return nil, nil, nil, errors.New("Unable to find season")
 	}
 
-	if len(season.Episodes) < episodeNumber {
+	if !season.HasEpisode(episodeNumber) {
 		return nil, nil, nil, errors.New("Unable to find episode")
 	}
 
-	return show, season, season.Episodes[episodeNumber-1], nil
+	return show, season, season.GetEpisode(episodeNumber), nil
 }
 
 func getNextShowSeasonEpisode(showID, seasonNumber, episodeNumber int) (*tmdb.Show, *tmdb.Season, *tmdb.Episode, error) {
@@ -1445,16 +1445,16 @@ func getNextShowSeasonEpisode(showID, seasonNumber, episodeNumber int) (*tmdb.Sh
 	}
 
 	season := tmdb.GetSeason(showID, seasonNumber, config.Get().Language, len(show.Seasons))
-	if season == nil || len(season.Episodes) < episodeNumber {
+	if season == nil {
 		return nil, nil, nil, errors.New("Unable to find season")
 	}
 
 	episodeNumber++
-	if len(season.Episodes) < episodeNumber {
+	if !season.HasEpisode(episodeNumber) {
 		return getShowSeasonEpisode(showID, seasonNumber+1, 1)
 	}
 
-	return show, season, season.Episodes[episodeNumber-1], nil
+	return show, season, season.GetEpisode(episodeNumber), nil
 }
 
 // TrimChoices clears redundant folder names from files list and sorts remaining records.

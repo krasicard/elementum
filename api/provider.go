@@ -57,8 +57,12 @@ func ProviderGetEpisode(ctx *gin.Context) {
 	if season == nil {
 		ctx.Error(fmt.Errorf("Unable to get season %d", seasonNumber))
 		return
+	} else if !season.HasEpisode(episodeNumber) {
+		ctx.Error(fmt.Errorf("Unable to get episode %d", episodeNumber))
+		return
 	}
-	episode := season.Episodes[episodeNumber-1]
+
+	episode := season.GetEpisode(episodeNumber)
 
 	log.Infof("Resolved %d to %s", showID, show.Name)
 

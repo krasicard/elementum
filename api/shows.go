@@ -725,12 +725,14 @@ func showEpisodeLinks(showID int, seasonNumber int, episodeNumber int) ([]*bitto
 	}
 
 	season := tmdb.GetSeason(showID, seasonNumber, config.Get().Language, len(show.Seasons))
-	if season == nil || len(season.Episodes) < episodeNumber {
+	if season == nil {
 		return nil, errors.New("Unable to find season")
 	}
 
-	episode := season.Episodes[episodeNumber-1]
-
+	episode := season.GetEpisode(episodeNumber)
+	if episode == nil {
+		return nil, errors.New("Unable to find episode")
+	}
 	log.Infof("Resolved %d to %s", showID, show.Name)
 
 	searchers := providers.GetEpisodeSearchers()

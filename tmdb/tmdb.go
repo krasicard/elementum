@@ -626,3 +626,45 @@ func MakeRequest(r APIRequest) (ret error) {
 
 	return
 }
+
+func (show *Show) EpisodesTillSeason(season int) int {
+	if len(show.Seasons) < season {
+		return 0
+	}
+
+	ret := 0
+	for _, s := range show.Seasons {
+		if s.Season > 0 && s.Season < season {
+			ret += s.EpisodeCount
+		}
+	}
+	return ret
+}
+
+// HasEpisode checks if episode with specific number is available in the episodes list
+func (season *Season) HasEpisode(episode int) bool {
+	if len(season.Episodes) <= 0 {
+		return false
+	}
+
+	for _, e := range season.Episodes {
+		if e.EpisodeNumber == episode {
+			return true
+		}
+	}
+	return false
+}
+
+// GetEpisode gets episode with specific number from Episodes list
+func (season *Season) GetEpisode(episode int) *Episode {
+	if len(season.Episodes) <= 0 {
+		return nil
+	}
+
+	for _, e := range season.Episodes {
+		if e.EpisodeNumber == episode {
+			return e
+		}
+	}
+	return nil
+}

@@ -294,14 +294,21 @@ func (as *AddonSearcher) GetEpisodeSearchObject(show *tmdb.Show, episode *tmdb.E
 
 	// Is this an Anime?
 	absoluteNumber := 0
-	if tvdbID > 0 && show.IsAnime() {
-		an, st := show.AnimeInfo(episode)
+	if show.IsAnime() {
+		// Sometimes TMDB does use EpisodeNumber with Absolute numbering,
+		// 	so we check if current episode is an absolute number
+		episodesTillSeason := show.EpisodesTillSeason(episode.SeasonNumber)
+		if episodesTillSeason > 0 && episodesTillSeason < episode.EpisodeNumber {
+			absoluteNumber = episode.EpisodeNumber
+		} else if tvdbID > 0 {
+			an, st := show.AnimeInfo(episode)
 
-		if an != 0 {
-			absoluteNumber = an
-		}
-		if st != "" {
-			title = st
+			if an != 0 {
+				absoluteNumber = an
+			}
+			if st != "" {
+				title = st
+			}
 		}
 	}
 
