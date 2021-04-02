@@ -716,7 +716,7 @@ func (s *Service) AddTorrent(uri string, paused bool, downloadStorage int) (*Tor
 	torrentParams.SetSavePath(s.config.DownloadPath)
 
 	// Add extra trackers to each added torrent.
-	if len(extraTrackers) > 0 {
+	if len(extraTrackers) > 0 && config.Get().MagnetTrackers == magnetEnricherAdd {
 		trackers := lt.NewStdVectorString()
 		defer lt.DeleteStdVectorString(trackers)
 
