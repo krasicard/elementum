@@ -955,7 +955,7 @@ func (btp *Player) smartMatch(choices []*CandidateFile) {
 				continue
 			}
 
-			index, found := MatchEpisodeFilename(season.Season, episode.EpisodeNumber, len(show.Seasons) == 1, btp.p.Season, show, episode, tvdbShow, choices)
+			index, found := MatchEpisodeFilename(season.Season, episode.EpisodeNumber, show.CountRealSeasons() == 1, btp.p.Season, show, episode, tvdbShow, choices)
 			if index >= 0 && found == 1 {
 				database.GetStorm().AddTorrentLink(strconv.Itoa(episode.ID), hash, b, false)
 			}

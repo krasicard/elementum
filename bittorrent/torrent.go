@@ -1842,7 +1842,7 @@ func (t *Torrent) SelectDownloadFiles(btp *Player) {
 					continue
 				}
 
-				index, found := MatchEpisodeFilename(season.Season, episode.EpisodeNumber, len(show.Seasons) == 1, btp.p.Season, show, episode, tvdbShow, choices)
+				index, found := MatchEpisodeFilename(season.Season, episode.EpisodeNumber, show.CountRealSeasons() == 1, btp.p.Season, show, episode, tvdbShow, choices)
 				if index >= 0 && found == 1 {
 					t.DownloadFile(files[choices[index].Index])
 				}

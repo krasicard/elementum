@@ -369,7 +369,7 @@ func refreshTraktShowsWatched(isRefreshNeeded bool) error {
 		completedSeasons := 0
 		for _, season := range s.Seasons {
 			if tmdbShow != nil {
-				if sc := tmdbShow.GetSeasonEpisodes(season.Number); sc != 0 && sc == len(season.Episodes) {
+				if sc := tmdbShow.GetSeasonEpisodes(season.Number); sc != 0 && sc == len(season.Episodes) && season.Number > 0 {
 					completedSeasons++
 
 					l.WatchedTraktShows = addXXItem(l.WatchedTraktShows, SeasonType, s.Show.IDs, season.Number)
@@ -381,7 +381,7 @@ func refreshTraktShowsWatched(isRefreshNeeded bool) error {
 			}
 		}
 
-		if tmdbShow != nil && (completedSeasons == len(tmdbShow.Seasons) || s.Watched) {
+		if tmdbShow != nil && (completedSeasons == tmdbShow.CountRealSeasons() || s.Watched) {
 			s.Watched = true
 
 			l.WatchedTraktShows = addXXItem(l.WatchedTraktShows, ShowType, s.Show.IDs)

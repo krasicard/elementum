@@ -26,7 +26,7 @@ func GetSeason(showID int, seasonNumber int, language string, seasonsCount int) 
 	} else {
 		updateFrequency = updateFrequency - 1
 	}
-	// Last season should not be savedfor too long
+	// Last season should not be saved for too long
 	if seasonNumber == seasonsCount {
 		updateFrequency = 1440
 	}

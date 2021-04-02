@@ -627,6 +627,7 @@ func MakeRequest(r APIRequest) (ret error) {
 	return
 }
 
+// EpisodesTillSeason counts how many episodes exist before this season.
 func (show *Show) EpisodesTillSeason(season int) int {
 	if len(show.Seasons) < season {
 		return 0
@@ -636,6 +637,21 @@ func (show *Show) EpisodesTillSeason(season int) int {
 	for _, s := range show.Seasons {
 		if s.Season > 0 && s.Season < season {
 			ret += s.EpisodeCount
+		}
+	}
+	return ret
+}
+
+// CountRealSeasons counts real seasons, meaning without specials.
+func (show *Show) CountRealSeasons() int {
+	if len(show.Seasons) <= 0 {
+		return 0
+	}
+
+	ret := 0
+	for _, s := range show.Seasons {
+		if s.Season > 0 {
+			ret++
 		}
 	}
 	return ret
