@@ -40,7 +40,7 @@ func MakeElementumRepositoryAddon() error {
 		Version:      util.GetVersion(),
 		ProviderName: config.Get().Info.Author,
 		Extensions: []*xbmc.AddonExtension{
-			&xbmc.AddonExtension{
+			{
 				Point: "xbmc.addon.repository",
 				Name:  addonName,
 				Info: &xbmc.AddonRepositoryInfo{
@@ -53,10 +53,10 @@ func MakeElementumRepositoryAddon() error {
 					Zip:  true,
 				},
 			},
-			&xbmc.AddonExtension{
+			{
 				Point: "xbmc.addon.metadata",
 				Summaries: []*xbmc.AddonText{
-					&xbmc.AddonText{
+					{
 						Text: "GitHub repository for Elementum updates",
 						Lang: "en",
 					},
