@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -146,11 +145,6 @@ func NewTorrent(service *Service, handle lt.TorrentHandle, info lt.TorrentInfo, 
 		muDemandPieces:   &sync.RWMutex{},
 		muStatus:         &sync.Mutex{},
 	}
-
-	runtime.SetFinalizer(t, func(t *Torrent) {
-		lt.DeleteWrappedTorrentHandle(t.th)
-		lt.DeleteTorrentInfo(t.ti)
-	})
 
 	return t
 }
