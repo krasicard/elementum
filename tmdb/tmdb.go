@@ -46,7 +46,7 @@ type Movie struct {
 	FanArt              *fanart.Movie `json:"fanart"`
 	IMDBId              string        `json:"imdb_id"`
 	Overview            string        `json:"overview"`
-	ProductionCompanies []*IDName     `json:"production_companies"`
+	ProductionCompanies []*IDNameLogo `json:"production_companies"`
 	ProductionCountries []*Country    `json:"production_countries"`
 	Runtime             int           `json:"runtime"`
 	TagLine             string        `json:"tagline"`
@@ -77,21 +77,22 @@ type Movie struct {
 type Show struct {
 	Entity
 
-	FanArt              *fanart.Show `json:"fanart"`
-	EpisodeRunTime      []int        `json:"episode_run_time"`
-	Homepage            string       `json:"homepage"`
-	InProduction        bool         `json:"in_production"`
-	LastAirDate         string       `json:"last_air_date"`
-	Networks            []*IDName    `json:"networks"`
-	NumberOfEpisodes    int          `json:"number_of_episodes"`
-	NumberOfSeasons     int          `json:"number_of_seasons"`
-	OriginCountry       []string     `json:"origin_country"`
-	Overview            string       `json:"overview"`
-	RawPopularity       interface{}  `json:"popularity"`
-	Popularity          float64      `json:"-"`
-	ProductionCompanies []*IDName    `json:"production_companies"`
-	Status              string       `json:"status"`
-	ExternalIDs         *ExternalIDs `json:"external_ids"`
+	FanArt              *fanart.Show  `json:"fanart"`
+	EpisodeRunTime      []int         `json:"episode_run_time"`
+	Homepage            string        `json:"homepage"`
+	InProduction        bool          `json:"in_production"`
+	LastAirDate         string        `json:"last_air_date"`
+	Networks            []*IDNameLogo `json:"networks"`
+	NumberOfEpisodes    int           `json:"number_of_episodes"`
+	NumberOfSeasons     int           `json:"number_of_seasons"`
+	OriginCountry       []string      `json:"origin_country"`
+	Overview            string        `json:"overview"`
+	RawPopularity       interface{}   `json:"popularity"`
+	Popularity          float64       `json:"-"`
+	ProductionCompanies []*IDNameLogo `json:"production_companies"`
+	ProductionCountries []*Country    `json:"production_countries"`
+	Status              string        `json:"status"`
+	ExternalIDs         *ExternalIDs  `json:"external_ids"`
 
 	Translations *struct {
 		Translations []*Translation `json:"translations"`
@@ -148,6 +149,7 @@ type Episode struct {
 	SeasonNumber  int          `json:"season_number"`
 	EpisodeNumber int          `json:"episode_number"`
 	VoteAverage   float32      `json:"vote_average"`
+	VoteCount     int          `json:"vote_count"`
 	StillPath     string       `json:"still_path"`
 	ExternalIDs   *ExternalIDs `json:"external_ids"`
 
@@ -197,6 +199,14 @@ type EntityList struct {
 type IDName struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+}
+
+// IDName ...
+type IDNameLogo struct {
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	Logo          string `json:"logo_path"`
+	OriginCountry string `json:"origin_country"`
 }
 
 // Genre ...
@@ -627,6 +637,36 @@ func MakeRequest(r APIRequest) (ret error) {
 	return
 }
 
+// GetCountries returns list of countries
+func (movie *Movie) GetCountries() []string {
+	countries := make([]string, 0, len(movie.ProductionCountries))
+	for _, country := range movie.ProductionCountries {
+		countries = append(countries, country.Name)
+	}
+
+	return countries
+}
+
+// GetStudios returns list of studios
+func (movie *Movie) GetStudios() []string {
+	studios := make([]string, 0, len(movie.ProductionCompanies))
+	for _, company := range movie.ProductionCompanies {
+		studios = append(studios, company.Name)
+	}
+
+	return studios
+}
+
+// GetGenred returns list of genres
+func (movie *Movie) GetGenres() []string {
+	genres := make([]string, 0, len(movie.Genres))
+	for _, genre := range movie.Genres {
+		genres = append(genres, genre.Name)
+	}
+
+	return genres
+}
+
 // EpisodesTillSeason counts how many episodes exist before this season.
 func (show *Show) EpisodesTillSeason(season int) int {
 	if len(show.Seasons) < season {
@@ -657,6 +697,39 @@ func (show *Show) CountRealSeasons() int {
 	return ret
 }
 
+// GetCountries returns list of countries
+func (show *Show) GetCountries() []string {
+	countries := make([]string, 0, len(show.ProductionCountries))
+	for _, country := range show.ProductionCountries {
+		countries = append(countries, country.Name)
+	}
+
+	return countries
+}
+
+// GetStudios returns list of studios
+func (show *Show) GetStudios() []string {
+	studios := make([]string, 0, len(show.ProductionCompanies)+len(show.Networks))
+	for _, company := range show.ProductionCompanies {
+		studios = append(studios, company.Name)
+	}
+	for _, company := range show.Networks {
+		studios = append(studios, company.Name)
+	}
+
+	return studios
+}
+
+// GetGenred returns list of genres
+func (show *Show) GetGenres() []string {
+	genres := make([]string, 0, len(show.Genres))
+	for _, genre := range show.Genres {
+		genres = append(genres, genre.Name)
+	}
+
+	return genres
+}
+
 // HasEpisode checks if episode with specific number is available in the episodes list
 func (season *Season) HasEpisode(episode int) bool {
 	if len(season.Episodes) <= 0 {
@@ -683,4 +756,40 @@ func (season *Season) GetEpisode(episode int) *Episode {
 		}
 	}
 	return nil
+}
+
+// GetCastMembers returns formatted cast members
+func (credits *Credits) GetCastMembers() []xbmc.ListItemCastMember {
+	res := make([]xbmc.ListItemCastMember, 0)
+	for _, cast := range credits.Cast {
+		res = append(res, xbmc.ListItemCastMember{
+			Name:      cast.Name,
+			Role:      cast.Character,
+			Thumbnail: ImageURL(cast.ProfilePath, "w500"),
+			Order:     cast.Order,
+		})
+	}
+	return res
+}
+
+// GetDirectors returns list of directors
+func (credits *Credits) GetDirectors() []string {
+	directors := make([]string, 0)
+	for _, crew := range credits.Crew {
+		if crew.Job == "Director" {
+			directors = append(directors, crew.Name)
+		}
+	}
+	return directors
+}
+
+// GetDirectors returns list of writers
+func (credits *Credits) GetWriters() []string {
+	writers := make([]string, 0)
+	for _, crew := range credits.Crew {
+		if crew.Department == "Writing" {
+			writers = append(writers, crew.Name)
+		}
+	}
+	return writers
 }

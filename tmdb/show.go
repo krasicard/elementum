@@ -540,7 +540,9 @@ func (show *Show) ToListItem() *xbmc.ListItem {
 			MPAA:          show.mpaa(),
 			DBTYPE:        "tvshow",
 			Mediatype:     "tvshow",
-			Country:       strings.Join(show.OriginCountry, " / "),
+			Genre:         show.GetGenres(),
+			Studio:        show.GetStudios(),
+			Country:       show.GetCountries(),
 		},
 		Art: &xbmc.ListItemArt{
 			FanArt:       ImageURL(show.BackdropPath, "w1280"),
@@ -573,40 +575,12 @@ func (show *Show) ToListItem() *xbmc.ListItem {
 		item.Info.Status = "Discontinued"
 	}
 
-	genres := make([]string, 0, len(show.Genres))
-	for _, genre := range show.Genres {
-		genres = append(genres, genre.Name)
-	}
-	item.Info.Genre = strings.Join(genres, " / ")
-
-	for _, company := range show.ProductionCompanies {
-		item.Info.Studio = company.Name
-		break
-	}
 	if show.Credits != nil {
-		item.CastMembers = make([]xbmc.ListItemCastMember, 0)
-		for _, cast := range show.Credits.Cast {
-			item.CastMembers = append(item.CastMembers, xbmc.ListItemCastMember{
-				Name:      cast.Name,
-				Role:      cast.Character,
-				Thumbnail: ImageURL(cast.ProfilePath, "w500"),
-				Order:     cast.Order,
-			})
-		}
-
-		directors := make([]string, 0)
-		writers := make([]string, 0)
-		for _, crew := range show.Credits.Crew {
-			switch crew.Job {
-			case "Director":
-				directors = append(directors, crew.Name)
-			case "Writer":
-				writers = append(writers, crew.Name)
-			}
-		}
-		item.Info.Director = strings.Join(directors, " / ")
-		item.Info.Writer = strings.Join(writers, " / ")
+		item.CastMembers = show.Credits.GetCastMembers()
+		item.Info.Director = show.Credits.GetDirectors()
+		item.Info.Writer = show.Credits.GetWriters()
 	}
+
 	return item
 }
 

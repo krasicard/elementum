@@ -83,8 +83,8 @@ type ListItemInfo struct {
 	Date  string `json:"date,omitempty"`
 
 	// Video Values
-	Genre         string         `json:"genre,omitempty"`
-	Country       string         `json:"country,omitempty"`
+	Genre         []string       `json:"genre,omitempty"`
+	Country       []string       `json:"country,omitempty"`
 	Year          int            `json:"year,omitempty"`
 	Episode       int            `json:"episode,omitempty"`
 	Season        int            `json:"season,omitempty"`
@@ -93,7 +93,7 @@ type ListItemInfo struct {
 	Rating        float32        `json:"rating,omitempty"`
 	PlayCount     int            `json:"playcount,omitempty"`
 	Overlay       GUIIconOverlay `json:"overlay,omitempty"`
-	Director      string         `json:"director,omitempty"`
+	Director      []string       `json:"director,omitempty"`
 	MPAA          string         `json:"mpaa,omitempty"`
 	Plot          string         `json:"plot,omitempty"`
 	PlotOutline   string         `json:"plotoutline,omitempty"`
@@ -101,15 +101,15 @@ type ListItemInfo struct {
 	OriginalTitle string         `json:"originaltitle,omitempty"`
 	SortTitle     string         `json:"sorttitle,omitempty"`
 	Duration      int            `json:"duration,omitempty"`
-	Studio        string         `json:"studio,omitempty"`
+	Studio        []string       `json:"studio,omitempty"`
 	TagLine       string         `json:"tagline,omitempty"`
-	Writer        string         `json:"writer,omitempty"`
+	Writer        []string       `json:"writer,omitempty"`
 	TVShowTitle   string         `json:"tvshowtitle,omitempty"`
 	Premiered     string         `json:"premiered,omitempty"`
 	Status        string         `json:"status,omitempty"`
 	Code          string         `json:"code,omitempty"`
 	Aired         string         `json:"aired,omitempty"`
-	Credits       string         `json:"credits,omitempty"`
+	Credits       []string       `json:"credits,omitempty"`
 	LastPlayed    string         `json:"lastplayed,omitempty"`
 	Album         string         `json:"album,omitempty"`
 	Artist        []string       `json:"artist,omitempty"`

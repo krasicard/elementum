@@ -170,6 +170,8 @@ func (season *Season) ToListItem(show *Show) *xbmc.ListItem {
 			Code:          show.ExternalIDs.IMDBId,
 			IMDBNumber:    show.ExternalIDs.IMDBId,
 			PlayCount:     playcount.GetWatchedSeasonByTMDB(show.ID, season.Season).Int(),
+			Genre:         show.GetGenres(),
+			Studio:        show.GetStudios(),
 		},
 		Art: &xbmc.ListItemArt{
 			TvShowPoster: ImageURL(show.PosterPath, "w1280"),
@@ -205,10 +207,6 @@ func (season *Season) ToListItem(show *Show) *xbmc.ListItem {
 	}
 
 	item.Thumbnail = item.Art.Thumbnail
-
-	if len(show.Genres) > 0 {
-		item.Info.Genre = show.Genres[0].Name
-	}
 
 	return item
 }

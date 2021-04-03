@@ -3,6 +3,7 @@ package tmdb
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -80,6 +81,8 @@ func (episodes EpisodeList) ToListItems(show *Show, season *Season) []*xbmc.List
 
 // ToListItem ...
 func (episode *Episode) ToListItem(show *Show, season *Season) *xbmc.ListItem {
+	year, _ := strconv.Atoi(strings.Split(episode.AirDate, "-")[0])
+
 	episodeLabel := episode.name(show)
 	if config.Get().AddEpisodeNumbers {
 		episodeLabel = fmt.Sprintf("%dx%02d %s", episode.SeasonNumber, episode.EpisodeNumber, episode.name(show))
@@ -94,6 +97,7 @@ func (episode *Episode) ToListItem(show *Show, season *Season) *xbmc.ListItem {
 		Label:  episodeLabel,
 		Label2: fmt.Sprintf("%f", episode.VoteAverage),
 		Info: &xbmc.ListItemInfo{
+			Year:          year,
 			Count:         rand.Int(),
 			Title:         episodeLabel,
 			OriginalTitle: episode.name(show),
@@ -103,6 +107,7 @@ func (episode *Episode) ToListItem(show *Show, season *Season) *xbmc.ListItem {
 			Plot:          episode.overview(show),
 			PlotOutline:   episode.overview(show),
 			Rating:        episode.VoteAverage,
+			Votes:         strconv.Itoa(episode.VoteCount),
 			Aired:         episode.AirDate,
 			Duration:      runtime,
 			Code:          show.ExternalIDs.IMDBId,
@@ -111,6 +116,9 @@ func (episode *Episode) ToListItem(show *Show, season *Season) *xbmc.ListItem {
 			MPAA:          show.mpaa(),
 			DBTYPE:        "episode",
 			Mediatype:     "episode",
+			Genre:         show.GetGenres(),
+			Studio:        show.GetStudios(),
+			Country:       show.GetCountries(),
 		},
 		Art: &xbmc.ListItemArt{},
 	}
@@ -149,44 +157,17 @@ func (episode *Episode) ToListItem(show *Show, season *Season) *xbmc.ListItem {
 		item.Thumbnail = ImageURL(episode.StillPath, "w1280")
 	}
 
-	genres := make([]string, 0, len(show.Genres))
-	for _, genre := range show.Genres {
-		genres = append(genres, genre.Name)
-	}
-	item.Info.Genre = strings.Join(genres, " / ")
-
-	for _, company := range show.ProductionCompanies {
-		item.Info.Studio = company.Name
-		break
-	}
-
 	if season != nil && episode.Credits == nil && season.Credits != nil {
 		episode.Credits = season.Credits
 	}
+	if episode.Credits == nil && show.Credits != nil {
+		episode.Credits = show.Credits
+	}
 
 	if episode.Credits != nil {
-		item.CastMembers = make([]xbmc.ListItemCastMember, 0)
-		for _, cast := range episode.Credits.Cast {
-			item.CastMembers = append(item.CastMembers, xbmc.ListItemCastMember{
-				Name:      cast.Name,
-				Role:      cast.Character,
-				Thumbnail: ImageURL(cast.ProfilePath, "w500"),
-				Order:     cast.Order,
-			})
-		}
-
-		directors := make([]string, 0)
-		writers := make([]string, 0)
-		for _, crew := range episode.Credits.Crew {
-			switch crew.Job {
-			case "Director":
-				directors = append(directors, crew.Name)
-			case "Writer":
-				writers = append(writers, crew.Name)
-			}
-		}
-		item.Info.Director = strings.Join(directors, " / ")
-		item.Info.Writer = strings.Join(writers, " / ")
+		item.CastMembers = episode.Credits.GetCastMembers()
+		item.Info.Director = episode.Credits.GetDirectors()
+		item.Info.Writer = episode.Credits.GetWriters()
 	}
 
 	return item

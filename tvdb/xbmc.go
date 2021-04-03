@@ -109,7 +109,7 @@ func (season *Season) ToListItem(show *Show) *xbmc.ListItem {
 		}
 	}
 
-	item.Info.Genre = strings.Replace(strings.Trim(show.Genre, "|"), "|", " / ", -1)
+	item.Info.Genre = []string{strings.Replace(strings.Trim(show.Genre, "|"), "|", " / ", -1)}
 
 	return item
 }

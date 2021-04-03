@@ -662,7 +662,7 @@ func (movie *Movie) ToListItem() (item *xbmc.ListItem) {
 				Title:         movie.Title,
 				OriginalTitle: movie.Title,
 				Year:          movie.Year,
-				Genre:         strings.Title(strings.Join(movie.Genres, " / ")),
+				Genre:         movie.Genres,
 				Plot:          movie.Overview,
 				PlotOutline:   movie.Overview,
 				TagLine:       movie.TagLine,

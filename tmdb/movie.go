@@ -448,6 +448,9 @@ func (movie *Movie) ToListItem() *xbmc.ListItem {
 			MPAA:          movie.mpaa(),
 			DBTYPE:        "movie",
 			Mediatype:     "movie",
+			Genre:         movie.GetGenres(),
+			Studio:        movie.GetStudios(),
+			Country:       movie.GetCountries(),
 		},
 		Art: &xbmc.ListItemArt{
 			FanArt:    ImageURL(movie.BackdropPath, "w1280"),
@@ -472,18 +475,6 @@ func (movie *Movie) ToListItem() *xbmc.ListItem {
 	}
 
 	item.Thumbnail = item.Art.Poster
-
-	genres := make([]string, 0, len(movie.Genres))
-	for _, genre := range movie.Genres {
-		genres = append(genres, genre.Name)
-	}
-	item.Info.Genre = strings.Join(genres, " / ")
-
-	countries := make([]string, 0, len(movie.ProductionCountries))
-	for _, country := range movie.ProductionCountries {
-		countries = append(countries, country.Name)
-	}
-	item.Info.Country = strings.Join(countries, " / ")
 
 	if movie.Trailers != nil {
 		for _, trailer := range movie.Trailers.Youtube {
@@ -511,34 +502,12 @@ func (movie *Movie) ToListItem() *xbmc.ListItem {
 		break
 	}
 
-	for _, company := range movie.ProductionCompanies {
-		item.Info.Studio = company.Name
-		break
-	}
 	if movie.Credits != nil {
-		item.CastMembers = make([]xbmc.ListItemCastMember, 0)
-		for _, cast := range movie.Credits.Cast {
-			item.CastMembers = append(item.CastMembers, xbmc.ListItemCastMember{
-				Name:      cast.Name,
-				Role:      cast.Character,
-				Thumbnail: ImageURL(cast.ProfilePath, "w500"),
-				Order:     cast.Order,
-			})
-		}
-
-		directors := make([]string, 0)
-		writers := make([]string, 0)
-		for _, crew := range movie.Credits.Crew {
-			switch crew.Job {
-			case "Director":
-				directors = append(directors, crew.Name)
-			case "Writer":
-				writers = append(writers, crew.Name)
-			}
-		}
-		item.Info.Director = strings.Join(directors, " / ")
-		item.Info.Writer = strings.Join(writers, " / ")
+		item.CastMembers = movie.Credits.GetCastMembers()
+		item.Info.Director = movie.Credits.GetDirectors()
+		item.Info.Writer = movie.Credits.GetWriters()
 	}
+
 	return item
 }
 

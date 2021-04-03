@@ -788,7 +788,7 @@ func (show *Show) ToListItem() (item *xbmc.ListItem) {
 				Title:         show.Title,
 				OriginalTitle: show.Title,
 				Year:          show.Year,
-				Genre:         strings.Title(strings.Join(show.Genres, " / ")),
+				Genre:         show.Genres,
 				Plot:          show.Overview,
 				PlotOutline:   show.Overview,
 				Rating:        show.Rating,
@@ -857,6 +857,7 @@ func (episode *Episode) ToListItem(show *Show) *xbmc.ListItem {
 			Rating:        episode.Rating,
 			Aired:         episode.FirstAired,
 			Duration:      runtime,
+			Genre:         show.Genres,
 			Code:          show.IDs.IMDB,
 			IMDBNumber:    show.IDs.IMDB,
 			PlayCount:     playcount.GetWatchedEpisodeByTMDB(show.IDs.TMDB, episode.Season, episode.Number).Int(),
@@ -873,8 +874,6 @@ func (episode *Episode) ToListItem(show *Show) *xbmc.ListItem {
 		},
 		Thumbnail: show.Images.Poster.Full,
 	}
-
-	item.Info.Genre = strings.Join(show.Genres, " / ")
 
 	if config.Get().UseFanartTv {
 		if fa := fanart.GetShow(util.StrInterfaceToInt(show.IDs.TVDB)); fa != nil {

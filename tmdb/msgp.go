@@ -1233,9 +1233,9 @@ func (z *EntityList) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *Episode) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 14
+	// map header, size 15
 	// string "ID"
-	o = append(o, 0x8e, 0xa2, 0x49, 0x44)
+	o = append(o, 0x8f, 0xa2, 0x49, 0x44)
 	o = msgp.AppendInt(o, z.ID)
 	// string "Name"
 	o = append(o, 0xa4, 0x4e, 0x61, 0x6d, 0x65)
@@ -1255,6 +1255,9 @@ func (z *Episode) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "VoteAverage"
 	o = append(o, 0xab, 0x56, 0x6f, 0x74, 0x65, 0x41, 0x76, 0x65, 0x72, 0x61, 0x67, 0x65)
 	o = msgp.AppendFloat32(o, z.VoteAverage)
+	// string "VoteCount"
+	o = append(o, 0xa9, 0x56, 0x6f, 0x74, 0x65, 0x43, 0x6f, 0x75, 0x6e, 0x74)
+	o = msgp.AppendInt(o, z.VoteCount)
 	// string "StillPath"
 	o = append(o, 0xa9, 0x53, 0x74, 0x69, 0x6c, 0x6c, 0x50, 0x61, 0x74, 0x68)
 	o = msgp.AppendString(o, z.StillPath)
@@ -1417,6 +1420,12 @@ func (z *Episode) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			z.VoteAverage, bts, err = msgp.ReadFloat32Bytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "VoteAverage")
+				return
+			}
+		case "VoteCount":
+			z.VoteCount, bts, err = msgp.ReadIntBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "VoteCount")
 				return
 			}
 		case "StillPath":
@@ -1717,7 +1726,7 @@ func (z *Episode) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *Episode) Msgsize() (s int) {
-	s = 1 + 3 + msgp.IntSize + 5 + msgp.StringPrefixSize + len(z.Name) + 9 + msgp.StringPrefixSize + len(z.Overview) + 8 + msgp.StringPrefixSize + len(z.AirDate) + 13 + msgp.IntSize + 14 + msgp.IntSize + 12 + msgp.Float32Size + 10 + msgp.StringPrefixSize + len(z.StillPath) + 12
+	s = 1 + 3 + msgp.IntSize + 5 + msgp.StringPrefixSize + len(z.Name) + 9 + msgp.StringPrefixSize + len(z.Overview) + 8 + msgp.StringPrefixSize + len(z.AirDate) + 13 + msgp.IntSize + 14 + msgp.IntSize + 12 + msgp.Float32Size + 10 + msgp.IntSize + 10 + msgp.StringPrefixSize + len(z.StillPath) + 12
 	if z.ExternalIDs == nil {
 		s += msgp.NilSize
 	} else {
@@ -2476,6 +2485,85 @@ func (z IDName) Msgsize() (s int) {
 }
 
 // MarshalMsg implements msgp.Marshaler
+func (z *IDNameLogo) MarshalMsg(b []byte) (o []byte, err error) {
+	o = msgp.Require(b, z.Msgsize())
+	// map header, size 4
+	// string "ID"
+	o = append(o, 0x84, 0xa2, 0x49, 0x44)
+	o = msgp.AppendInt(o, z.ID)
+	// string "Name"
+	o = append(o, 0xa4, 0x4e, 0x61, 0x6d, 0x65)
+	o = msgp.AppendString(o, z.Name)
+	// string "Logo"
+	o = append(o, 0xa4, 0x4c, 0x6f, 0x67, 0x6f)
+	o = msgp.AppendString(o, z.Logo)
+	// string "OriginCountry"
+	o = append(o, 0xad, 0x4f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x72, 0x79)
+	o = msgp.AppendString(o, z.OriginCountry)
+	return
+}
+
+// UnmarshalMsg implements msgp.Unmarshaler
+func (z *IDNameLogo) UnmarshalMsg(bts []byte) (o []byte, err error) {
+	var field []byte
+	_ = field
+	var zb0001 uint32
+	zb0001, bts, err = msgp.ReadMapHeaderBytes(bts)
+	if err != nil {
+		err = msgp.WrapError(err)
+		return
+	}
+	for zb0001 > 0 {
+		zb0001--
+		field, bts, err = msgp.ReadMapKeyZC(bts)
+		if err != nil {
+			err = msgp.WrapError(err)
+			return
+		}
+		switch msgp.UnsafeString(field) {
+		case "ID":
+			z.ID, bts, err = msgp.ReadIntBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ID")
+				return
+			}
+		case "Name":
+			z.Name, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Name")
+				return
+			}
+		case "Logo":
+			z.Logo, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Logo")
+				return
+			}
+		case "OriginCountry":
+			z.OriginCountry, bts, err = msgp.ReadStringBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "OriginCountry")
+				return
+			}
+		default:
+			bts, err = msgp.Skip(bts)
+			if err != nil {
+				err = msgp.WrapError(err)
+				return
+			}
+		}
+	}
+	o = bts
+	return
+}
+
+// Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
+func (z *IDNameLogo) Msgsize() (s int) {
+	s = 1 + 3 + msgp.IntSize + 5 + msgp.StringPrefixSize + len(z.Name) + 5 + msgp.StringPrefixSize + len(z.Logo) + 14 + msgp.StringPrefixSize + len(z.OriginCountry)
+	return
+}
+
+// MarshalMsg implements msgp.Marshaler
 func (z *Image) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
 	// map header, size 4
@@ -3157,13 +3245,11 @@ func (z *Movie) MarshalMsg(b []byte) (o []byte, err error) {
 		if z.ProductionCompanies[za0001] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			// map header, size 2
-			// string "ID"
-			o = append(o, 0x82, 0xa2, 0x49, 0x44)
-			o = msgp.AppendInt(o, z.ProductionCompanies[za0001].ID)
-			// string "Name"
-			o = append(o, 0xa4, 0x4e, 0x61, 0x6d, 0x65)
-			o = msgp.AppendString(o, z.ProductionCompanies[za0001].Name)
+			o, err = z.ProductionCompanies[za0001].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "ProductionCompanies", za0001)
+				return
+			}
 		}
 	}
 	// string "ProductionCountries"
@@ -3405,7 +3491,7 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.ProductionCompanies) >= int(zb0002) {
 				z.ProductionCompanies = (z.ProductionCompanies)[:zb0002]
 			} else {
-				z.ProductionCompanies = make([]*IDName, zb0002)
+				z.ProductionCompanies = make([]*IDNameLogo, zb0002)
 			}
 			for za0001 := range z.ProductionCompanies {
 				if msgp.IsNil(bts) {
@@ -3416,55 +3502,26 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					z.ProductionCompanies[za0001] = nil
 				} else {
 					if z.ProductionCompanies[za0001] == nil {
-						z.ProductionCompanies[za0001] = new(IDName)
+						z.ProductionCompanies[za0001] = new(IDNameLogo)
 					}
-					var zb0003 uint32
-					zb0003, bts, err = msgp.ReadMapHeaderBytes(bts)
+					bts, err = z.ProductionCompanies[za0001].UnmarshalMsg(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "ProductionCompanies", za0001)
 						return
 					}
-					for zb0003 > 0 {
-						zb0003--
-						field, bts, err = msgp.ReadMapKeyZC(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "ProductionCompanies", za0001)
-							return
-						}
-						switch msgp.UnsafeString(field) {
-						case "ID":
-							z.ProductionCompanies[za0001].ID, bts, err = msgp.ReadIntBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "ProductionCompanies", za0001, "ID")
-								return
-							}
-						case "Name":
-							z.ProductionCompanies[za0001].Name, bts, err = msgp.ReadStringBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "ProductionCompanies", za0001, "Name")
-								return
-							}
-						default:
-							bts, err = msgp.Skip(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "ProductionCompanies", za0001)
-								return
-							}
-						}
-					}
 				}
 			}
 		case "ProductionCountries":
-			var zb0004 uint32
-			zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0003 uint32
+			zb0003, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "ProductionCountries")
 				return
 			}
-			if cap(z.ProductionCountries) >= int(zb0004) {
-				z.ProductionCountries = (z.ProductionCountries)[:zb0004]
+			if cap(z.ProductionCountries) >= int(zb0003) {
+				z.ProductionCountries = (z.ProductionCountries)[:zb0003]
 			} else {
-				z.ProductionCountries = make([]*Country, zb0004)
+				z.ProductionCountries = make([]*Country, zb0003)
 			}
 			for za0002 := range z.ProductionCountries {
 				if msgp.IsNil(bts) {
@@ -3477,14 +3534,14 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					if z.ProductionCountries[za0002] == nil {
 						z.ProductionCountries[za0002] = new(Country)
 					}
-					var zb0005 uint32
-					zb0005, bts, err = msgp.ReadMapHeaderBytes(bts)
+					var zb0004 uint32
+					zb0004, bts, err = msgp.ReadMapHeaderBytes(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "ProductionCountries", za0002)
 						return
 					}
-					for zb0005 > 0 {
-						zb0005--
+					for zb0004 > 0 {
+						zb0004--
 						field, bts, err = msgp.ReadMapKeyZC(bts)
 						if err != nil {
 							err = msgp.WrapError(err, "ProductionCountries", za0002)
@@ -3544,16 +3601,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "SpokenLanguages":
-			var zb0006 uint32
-			zb0006, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0005 uint32
+			zb0005, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "SpokenLanguages")
 				return
 			}
-			if cap(z.SpokenLanguages) >= int(zb0006) {
-				z.SpokenLanguages = (z.SpokenLanguages)[:zb0006]
+			if cap(z.SpokenLanguages) >= int(zb0005) {
+				z.SpokenLanguages = (z.SpokenLanguages)[:zb0005]
 			} else {
-				z.SpokenLanguages = make([]*Language, zb0006)
+				z.SpokenLanguages = make([]*Language, zb0005)
 			}
 			for za0003 := range z.SpokenLanguages {
 				if msgp.IsNil(bts) {
@@ -3566,14 +3623,14 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					if z.SpokenLanguages[za0003] == nil {
 						z.SpokenLanguages[za0003] = new(Language)
 					}
-					var zb0007 uint32
-					zb0007, bts, err = msgp.ReadMapHeaderBytes(bts)
+					var zb0006 uint32
+					zb0006, bts, err = msgp.ReadMapHeaderBytes(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "SpokenLanguages", za0003)
 						return
 					}
-					for zb0007 > 0 {
-						zb0007--
+					for zb0006 > 0 {
+						zb0006--
 						field, bts, err = msgp.ReadMapKeyZC(bts)
 						if err != nil {
 							err = msgp.WrapError(err, "SpokenLanguages", za0003)
@@ -3638,14 +3695,14 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 						Titles []*AlternativeTitle `json:"titles"`
 					})
 				}
-				var zb0008 uint32
-				zb0008, bts, err = msgp.ReadMapHeaderBytes(bts)
+				var zb0007 uint32
+				zb0007, bts, err = msgp.ReadMapHeaderBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "AlternativeTitles")
 					return
 				}
-				for zb0008 > 0 {
-					zb0008--
+				for zb0007 > 0 {
+					zb0007--
 					field, bts, err = msgp.ReadMapKeyZC(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "AlternativeTitles")
@@ -3653,16 +3710,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					}
 					switch msgp.UnsafeString(field) {
 					case "Titles":
-						var zb0009 uint32
-						zb0009, bts, err = msgp.ReadArrayHeaderBytes(bts)
+						var zb0008 uint32
+						zb0008, bts, err = msgp.ReadArrayHeaderBytes(bts)
 						if err != nil {
 							err = msgp.WrapError(err, "AlternativeTitles", "Titles")
 							return
 						}
-						if cap(z.AlternativeTitles.Titles) >= int(zb0009) {
-							z.AlternativeTitles.Titles = (z.AlternativeTitles.Titles)[:zb0009]
+						if cap(z.AlternativeTitles.Titles) >= int(zb0008) {
+							z.AlternativeTitles.Titles = (z.AlternativeTitles.Titles)[:zb0008]
 						} else {
-							z.AlternativeTitles.Titles = make([]*AlternativeTitle, zb0009)
+							z.AlternativeTitles.Titles = make([]*AlternativeTitle, zb0008)
 						}
 						for za0004 := range z.AlternativeTitles.Titles {
 							if msgp.IsNil(bts) {
@@ -3675,14 +3732,14 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 								if z.AlternativeTitles.Titles[za0004] == nil {
 									z.AlternativeTitles.Titles[za0004] = new(AlternativeTitle)
 								}
-								var zb0010 uint32
-								zb0010, bts, err = msgp.ReadMapHeaderBytes(bts)
+								var zb0009 uint32
+								zb0009, bts, err = msgp.ReadMapHeaderBytes(bts)
 								if err != nil {
 									err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0004)
 									return
 								}
-								for zb0010 > 0 {
-									zb0010--
+								for zb0009 > 0 {
+									zb0009--
 									field, bts, err = msgp.ReadMapKeyZC(bts)
 									if err != nil {
 										err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0004)
@@ -3733,14 +3790,14 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 						Translations []*Translation `json:"translations"`
 					})
 				}
-				var zb0011 uint32
-				zb0011, bts, err = msgp.ReadMapHeaderBytes(bts)
+				var zb0010 uint32
+				zb0010, bts, err = msgp.ReadMapHeaderBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "Translations")
 					return
 				}
-				for zb0011 > 0 {
-					zb0011--
+				for zb0010 > 0 {
+					zb0010--
 					field, bts, err = msgp.ReadMapKeyZC(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "Translations")
@@ -3748,16 +3805,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					}
 					switch msgp.UnsafeString(field) {
 					case "Translations":
-						var zb0012 uint32
-						zb0012, bts, err = msgp.ReadArrayHeaderBytes(bts)
+						var zb0011 uint32
+						zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
 						if err != nil {
 							err = msgp.WrapError(err, "Translations", "Translations")
 							return
 						}
-						if cap(z.Translations.Translations) >= int(zb0012) {
-							z.Translations.Translations = (z.Translations.Translations)[:zb0012]
+						if cap(z.Translations.Translations) >= int(zb0011) {
+							z.Translations.Translations = (z.Translations.Translations)[:zb0011]
 						} else {
-							z.Translations.Translations = make([]*Translation, zb0012)
+							z.Translations.Translations = make([]*Translation, zb0011)
 						}
 						for za0005 := range z.Translations.Translations {
 							if msgp.IsNil(bts) {
@@ -3799,14 +3856,14 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 						Youtube []*Trailer `json:"youtube"`
 					})
 				}
-				var zb0013 uint32
-				zb0013, bts, err = msgp.ReadMapHeaderBytes(bts)
+				var zb0012 uint32
+				zb0012, bts, err = msgp.ReadMapHeaderBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "Trailers")
 					return
 				}
-				for zb0013 > 0 {
-					zb0013--
+				for zb0012 > 0 {
+					zb0012--
 					field, bts, err = msgp.ReadMapKeyZC(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "Trailers")
@@ -3814,16 +3871,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					}
 					switch msgp.UnsafeString(field) {
 					case "Youtube":
-						var zb0014 uint32
-						zb0014, bts, err = msgp.ReadArrayHeaderBytes(bts)
+						var zb0013 uint32
+						zb0013, bts, err = msgp.ReadArrayHeaderBytes(bts)
 						if err != nil {
 							err = msgp.WrapError(err, "Trailers", "Youtube")
 							return
 						}
-						if cap(z.Trailers.Youtube) >= int(zb0014) {
-							z.Trailers.Youtube = (z.Trailers.Youtube)[:zb0014]
+						if cap(z.Trailers.Youtube) >= int(zb0013) {
+							z.Trailers.Youtube = (z.Trailers.Youtube)[:zb0013]
 						} else {
-							z.Trailers.Youtube = make([]*Trailer, zb0014)
+							z.Trailers.Youtube = make([]*Trailer, zb0013)
 						}
 						for za0006 := range z.Trailers.Youtube {
 							if msgp.IsNil(bts) {
@@ -3897,14 +3954,14 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				if z.ReleaseDates == nil {
 					z.ReleaseDates = new(ReleaseDatesResults)
 				}
-				var zb0015 uint32
-				zb0015, bts, err = msgp.ReadMapHeaderBytes(bts)
+				var zb0014 uint32
+				zb0014, bts, err = msgp.ReadMapHeaderBytes(bts)
 				if err != nil {
 					err = msgp.WrapError(err, "ReleaseDates")
 					return
 				}
-				for zb0015 > 0 {
-					zb0015--
+				for zb0014 > 0 {
+					zb0014--
 					field, bts, err = msgp.ReadMapKeyZC(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "ReleaseDates")
@@ -3912,16 +3969,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					}
 					switch msgp.UnsafeString(field) {
 					case "Results":
-						var zb0016 uint32
-						zb0016, bts, err = msgp.ReadArrayHeaderBytes(bts)
+						var zb0015 uint32
+						zb0015, bts, err = msgp.ReadArrayHeaderBytes(bts)
 						if err != nil {
 							err = msgp.WrapError(err, "ReleaseDates", "Results")
 							return
 						}
-						if cap(z.ReleaseDates.Results) >= int(zb0016) {
-							z.ReleaseDates.Results = (z.ReleaseDates.Results)[:zb0016]
+						if cap(z.ReleaseDates.Results) >= int(zb0015) {
+							z.ReleaseDates.Results = (z.ReleaseDates.Results)[:zb0015]
 						} else {
-							z.ReleaseDates.Results = make([]*ReleaseDates, zb0016)
+							z.ReleaseDates.Results = make([]*ReleaseDates, zb0015)
 						}
 						for za0007 := range z.ReleaseDates.Results {
 							if msgp.IsNil(bts) {
@@ -3975,7 +4032,7 @@ func (z *Movie) Msgsize() (s int) {
 		if z.ProductionCompanies[za0001] == nil {
 			s += msgp.NilSize
 		} else {
-			s += 1 + 3 + msgp.IntSize + 5 + msgp.StringPrefixSize + len(z.ProductionCompanies[za0001].Name)
+			s += z.ProductionCompanies[za0001].Msgsize()
 		}
 	}
 	s += 20 + msgp.ArrayHeaderSize
@@ -5086,9 +5143,9 @@ func (z SeasonList) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *Show) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 22
+	// map header, size 23
 	// string "Entity"
-	o = append(o, 0xde, 0x0, 0x16, 0xa6, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79)
+	o = append(o, 0xde, 0x0, 0x17, 0xa6, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79)
 	o, err = z.Entity.MarshalMsg(o)
 	if err != nil {
 		err = msgp.WrapError(err, "Entity")
@@ -5127,13 +5184,11 @@ func (z *Show) MarshalMsg(b []byte) (o []byte, err error) {
 		if z.Networks[za0002] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			// map header, size 2
-			// string "ID"
-			o = append(o, 0x82, 0xa2, 0x49, 0x44)
-			o = msgp.AppendInt(o, z.Networks[za0002].ID)
-			// string "Name"
-			o = append(o, 0xa4, 0x4e, 0x61, 0x6d, 0x65)
-			o = msgp.AppendString(o, z.Networks[za0002].Name)
+			o, err = z.Networks[za0002].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Networks", za0002)
+				return
+			}
 		}
 	}
 	// string "NumberOfEpisodes"
@@ -5168,13 +5223,30 @@ func (z *Show) MarshalMsg(b []byte) (o []byte, err error) {
 		if z.ProductionCompanies[za0004] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			// map header, size 2
-			// string "ID"
-			o = append(o, 0x82, 0xa2, 0x49, 0x44)
-			o = msgp.AppendInt(o, z.ProductionCompanies[za0004].ID)
+			o, err = z.ProductionCompanies[za0004].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "ProductionCompanies", za0004)
+				return
+			}
+		}
+	}
+	// string "ProductionCountries"
+	o = append(o, 0xb3, 0x50, 0x72, 0x6f, 0x64, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x72, 0x69, 0x65, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.ProductionCountries)))
+	for za0005 := range z.ProductionCountries {
+		if z.ProductionCountries[za0005] == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			// map header, size 3
+			// string "Iso31661"
+			o = append(o, 0x83, 0xa8, 0x49, 0x73, 0x6f, 0x33, 0x31, 0x36, 0x36, 0x31)
+			o = msgp.AppendString(o, z.ProductionCountries[za0005].Iso31661)
 			// string "Name"
 			o = append(o, 0xa4, 0x4e, 0x61, 0x6d, 0x65)
-			o = msgp.AppendString(o, z.ProductionCompanies[za0004].Name)
+			o = msgp.AppendString(o, z.ProductionCountries[za0005].Name)
+			// string "EnglishName"
+			o = append(o, 0xab, 0x45, 0x6e, 0x67, 0x6c, 0x69, 0x73, 0x68, 0x4e, 0x61, 0x6d, 0x65)
+			o = msgp.AppendString(o, z.ProductionCountries[za0005].EnglishName)
 		}
 	}
 	// string "Status"
@@ -5200,13 +5272,13 @@ func (z *Show) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "Translations"
 		o = append(o, 0x81, 0xac, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x6c, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x73)
 		o = msgp.AppendArrayHeader(o, uint32(len(z.Translations.Translations)))
-		for za0005 := range z.Translations.Translations {
-			if z.Translations.Translations[za0005] == nil {
+		for za0006 := range z.Translations.Translations {
+			if z.Translations.Translations[za0006] == nil {
 				o = msgp.AppendNil(o)
 			} else {
-				o, err = z.Translations.Translations[za0005].MarshalMsg(o)
+				o, err = z.Translations.Translations[za0006].MarshalMsg(o)
 				if err != nil {
-					err = msgp.WrapError(err, "Translations", "Translations", za0005)
+					err = msgp.WrapError(err, "Translations", "Translations", za0006)
 					return
 				}
 			}
@@ -5221,17 +5293,17 @@ func (z *Show) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "Titles"
 		o = append(o, 0x81, 0xa6, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x73)
 		o = msgp.AppendArrayHeader(o, uint32(len(z.AlternativeTitles.Titles)))
-		for za0006 := range z.AlternativeTitles.Titles {
-			if z.AlternativeTitles.Titles[za0006] == nil {
+		for za0007 := range z.AlternativeTitles.Titles {
+			if z.AlternativeTitles.Titles[za0007] == nil {
 				o = msgp.AppendNil(o)
 			} else {
 				// map header, size 2
 				// string "Iso3166_1"
 				o = append(o, 0x82, 0xa9, 0x49, 0x73, 0x6f, 0x33, 0x31, 0x36, 0x36, 0x5f, 0x31)
-				o = msgp.AppendString(o, z.AlternativeTitles.Titles[za0006].Iso3166_1)
+				o = msgp.AppendString(o, z.AlternativeTitles.Titles[za0007].Iso3166_1)
 				// string "Title"
 				o = append(o, 0xa5, 0x54, 0x69, 0x74, 0x6c, 0x65)
-				o = msgp.AppendString(o, z.AlternativeTitles.Titles[za0006].Title)
+				o = msgp.AppendString(o, z.AlternativeTitles.Titles[za0007].Title)
 			}
 		}
 	}
@@ -5244,17 +5316,17 @@ func (z *Show) MarshalMsg(b []byte) (o []byte, err error) {
 		// string "Ratings"
 		o = append(o, 0x81, 0xa7, 0x52, 0x61, 0x74, 0x69, 0x6e, 0x67, 0x73)
 		o = msgp.AppendArrayHeader(o, uint32(len(z.ContentRatings.Ratings)))
-		for za0007 := range z.ContentRatings.Ratings {
-			if z.ContentRatings.Ratings[za0007] == nil {
+		for za0008 := range z.ContentRatings.Ratings {
+			if z.ContentRatings.Ratings[za0008] == nil {
 				o = msgp.AppendNil(o)
 			} else {
 				// map header, size 2
 				// string "Iso3166_1"
 				o = append(o, 0x82, 0xa9, 0x49, 0x73, 0x6f, 0x33, 0x31, 0x36, 0x36, 0x5f, 0x31)
-				o = msgp.AppendString(o, z.ContentRatings.Ratings[za0007].Iso3166_1)
+				o = msgp.AppendString(o, z.ContentRatings.Ratings[za0008].Iso3166_1)
 				// string "Rating"
 				o = append(o, 0xa6, 0x52, 0x61, 0x74, 0x69, 0x6e, 0x67)
-				o = msgp.AppendString(o, z.ContentRatings.Ratings[za0007].Rating)
+				o = msgp.AppendString(o, z.ContentRatings.Ratings[za0008].Rating)
 			}
 		}
 	}
@@ -5283,13 +5355,13 @@ func (z *Show) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "Seasons"
 	o = append(o, 0xa7, 0x53, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x73)
 	o = msgp.AppendArrayHeader(o, uint32(len(z.Seasons)))
-	for za0008 := range z.Seasons {
-		if z.Seasons[za0008] == nil {
+	for za0009 := range z.Seasons {
+		if z.Seasons[za0009] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.Seasons[za0008].MarshalMsg(o)
+			o, err = z.Seasons[za0009].MarshalMsg(o)
 			if err != nil {
-				err = msgp.WrapError(err, "Seasons", za0008)
+				err = msgp.WrapError(err, "Seasons", za0009)
 				return
 			}
 		}
@@ -5385,7 +5457,7 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			if cap(z.Networks) >= int(zb0003) {
 				z.Networks = (z.Networks)[:zb0003]
 			} else {
-				z.Networks = make([]*IDName, zb0003)
+				z.Networks = make([]*IDNameLogo, zb0003)
 			}
 			for za0002 := range z.Networks {
 				if msgp.IsNil(bts) {
@@ -5396,41 +5468,12 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					z.Networks[za0002] = nil
 				} else {
 					if z.Networks[za0002] == nil {
-						z.Networks[za0002] = new(IDName)
+						z.Networks[za0002] = new(IDNameLogo)
 					}
-					var zb0004 uint32
-					zb0004, bts, err = msgp.ReadMapHeaderBytes(bts)
+					bts, err = z.Networks[za0002].UnmarshalMsg(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "Networks", za0002)
 						return
-					}
-					for zb0004 > 0 {
-						zb0004--
-						field, bts, err = msgp.ReadMapKeyZC(bts)
-						if err != nil {
-							err = msgp.WrapError(err, "Networks", za0002)
-							return
-						}
-						switch msgp.UnsafeString(field) {
-						case "ID":
-							z.Networks[za0002].ID, bts, err = msgp.ReadIntBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "Networks", za0002, "ID")
-								return
-							}
-						case "Name":
-							z.Networks[za0002].Name, bts, err = msgp.ReadStringBytes(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "Networks", za0002, "Name")
-								return
-							}
-						default:
-							bts, err = msgp.Skip(bts)
-							if err != nil {
-								err = msgp.WrapError(err, "Networks", za0002)
-								return
-							}
-						}
 					}
 				}
 			}
@@ -5447,16 +5490,16 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "OriginCountry":
-			var zb0005 uint32
-			zb0005, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0004 uint32
+			zb0004, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "OriginCountry")
 				return
 			}
-			if cap(z.OriginCountry) >= int(zb0005) {
-				z.OriginCountry = (z.OriginCountry)[:zb0005]
+			if cap(z.OriginCountry) >= int(zb0004) {
+				z.OriginCountry = (z.OriginCountry)[:zb0004]
 			} else {
-				z.OriginCountry = make([]string, zb0005)
+				z.OriginCountry = make([]string, zb0004)
 			}
 			for za0003 := range z.OriginCountry {
 				z.OriginCountry[za0003], bts, err = msgp.ReadStringBytes(bts)
@@ -5484,16 +5527,16 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				return
 			}
 		case "ProductionCompanies":
-			var zb0006 uint32
-			zb0006, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0005 uint32
+			zb0005, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "ProductionCompanies")
 				return
 			}
-			if cap(z.ProductionCompanies) >= int(zb0006) {
-				z.ProductionCompanies = (z.ProductionCompanies)[:zb0006]
+			if cap(z.ProductionCompanies) >= int(zb0005) {
+				z.ProductionCompanies = (z.ProductionCompanies)[:zb0005]
 			} else {
-				z.ProductionCompanies = make([]*IDName, zb0006)
+				z.ProductionCompanies = make([]*IDNameLogo, zb0005)
 			}
 			for za0004 := range z.ProductionCompanies {
 				if msgp.IsNil(bts) {
@@ -5504,38 +5547,74 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					z.ProductionCompanies[za0004] = nil
 				} else {
 					if z.ProductionCompanies[za0004] == nil {
-						z.ProductionCompanies[za0004] = new(IDName)
+						z.ProductionCompanies[za0004] = new(IDNameLogo)
+					}
+					bts, err = z.ProductionCompanies[za0004].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "ProductionCompanies", za0004)
+						return
+					}
+				}
+			}
+		case "ProductionCountries":
+			var zb0006 uint32
+			zb0006, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "ProductionCountries")
+				return
+			}
+			if cap(z.ProductionCountries) >= int(zb0006) {
+				z.ProductionCountries = (z.ProductionCountries)[:zb0006]
+			} else {
+				z.ProductionCountries = make([]*Country, zb0006)
+			}
+			for za0005 := range z.ProductionCountries {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.ProductionCountries[za0005] = nil
+				} else {
+					if z.ProductionCountries[za0005] == nil {
+						z.ProductionCountries[za0005] = new(Country)
 					}
 					var zb0007 uint32
 					zb0007, bts, err = msgp.ReadMapHeaderBytes(bts)
 					if err != nil {
-						err = msgp.WrapError(err, "ProductionCompanies", za0004)
+						err = msgp.WrapError(err, "ProductionCountries", za0005)
 						return
 					}
 					for zb0007 > 0 {
 						zb0007--
 						field, bts, err = msgp.ReadMapKeyZC(bts)
 						if err != nil {
-							err = msgp.WrapError(err, "ProductionCompanies", za0004)
+							err = msgp.WrapError(err, "ProductionCountries", za0005)
 							return
 						}
 						switch msgp.UnsafeString(field) {
-						case "ID":
-							z.ProductionCompanies[za0004].ID, bts, err = msgp.ReadIntBytes(bts)
+						case "Iso31661":
+							z.ProductionCountries[za0005].Iso31661, bts, err = msgp.ReadStringBytes(bts)
 							if err != nil {
-								err = msgp.WrapError(err, "ProductionCompanies", za0004, "ID")
+								err = msgp.WrapError(err, "ProductionCountries", za0005, "Iso31661")
 								return
 							}
 						case "Name":
-							z.ProductionCompanies[za0004].Name, bts, err = msgp.ReadStringBytes(bts)
+							z.ProductionCountries[za0005].Name, bts, err = msgp.ReadStringBytes(bts)
 							if err != nil {
-								err = msgp.WrapError(err, "ProductionCompanies", za0004, "Name")
+								err = msgp.WrapError(err, "ProductionCountries", za0005, "Name")
+								return
+							}
+						case "EnglishName":
+							z.ProductionCountries[za0005].EnglishName, bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "ProductionCountries", za0005, "EnglishName")
 								return
 							}
 						default:
 							bts, err = msgp.Skip(bts)
 							if err != nil {
-								err = msgp.WrapError(err, "ProductionCompanies", za0004)
+								err = msgp.WrapError(err, "ProductionCountries", za0005)
 								return
 							}
 						}
@@ -5604,20 +5683,20 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 						} else {
 							z.Translations.Translations = make([]*Translation, zb0009)
 						}
-						for za0005 := range z.Translations.Translations {
+						for za0006 := range z.Translations.Translations {
 							if msgp.IsNil(bts) {
 								bts, err = msgp.ReadNilBytes(bts)
 								if err != nil {
 									return
 								}
-								z.Translations.Translations[za0005] = nil
+								z.Translations.Translations[za0006] = nil
 							} else {
-								if z.Translations.Translations[za0005] == nil {
-									z.Translations.Translations[za0005] = new(Translation)
+								if z.Translations.Translations[za0006] == nil {
+									z.Translations.Translations[za0006] = new(Translation)
 								}
-								bts, err = z.Translations.Translations[za0005].UnmarshalMsg(bts)
+								bts, err = z.Translations.Translations[za0006].UnmarshalMsg(bts)
 								if err != nil {
-									err = msgp.WrapError(err, "Translations", "Translations", za0005)
+									err = msgp.WrapError(err, "Translations", "Translations", za0006)
 									return
 								}
 							}
@@ -5670,47 +5749,47 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 						} else {
 							z.AlternativeTitles.Titles = make([]*AlternativeTitle, zb0011)
 						}
-						for za0006 := range z.AlternativeTitles.Titles {
+						for za0007 := range z.AlternativeTitles.Titles {
 							if msgp.IsNil(bts) {
 								bts, err = msgp.ReadNilBytes(bts)
 								if err != nil {
 									return
 								}
-								z.AlternativeTitles.Titles[za0006] = nil
+								z.AlternativeTitles.Titles[za0007] = nil
 							} else {
-								if z.AlternativeTitles.Titles[za0006] == nil {
-									z.AlternativeTitles.Titles[za0006] = new(AlternativeTitle)
+								if z.AlternativeTitles.Titles[za0007] == nil {
+									z.AlternativeTitles.Titles[za0007] = new(AlternativeTitle)
 								}
 								var zb0012 uint32
 								zb0012, bts, err = msgp.ReadMapHeaderBytes(bts)
 								if err != nil {
-									err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0006)
+									err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0007)
 									return
 								}
 								for zb0012 > 0 {
 									zb0012--
 									field, bts, err = msgp.ReadMapKeyZC(bts)
 									if err != nil {
-										err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0006)
+										err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0007)
 										return
 									}
 									switch msgp.UnsafeString(field) {
 									case "Iso3166_1":
-										z.AlternativeTitles.Titles[za0006].Iso3166_1, bts, err = msgp.ReadStringBytes(bts)
+										z.AlternativeTitles.Titles[za0007].Iso3166_1, bts, err = msgp.ReadStringBytes(bts)
 										if err != nil {
-											err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0006, "Iso3166_1")
+											err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0007, "Iso3166_1")
 											return
 										}
 									case "Title":
-										z.AlternativeTitles.Titles[za0006].Title, bts, err = msgp.ReadStringBytes(bts)
+										z.AlternativeTitles.Titles[za0007].Title, bts, err = msgp.ReadStringBytes(bts)
 										if err != nil {
-											err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0006, "Title")
+											err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0007, "Title")
 											return
 										}
 									default:
 										bts, err = msgp.Skip(bts)
 										if err != nil {
-											err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0006)
+											err = msgp.WrapError(err, "AlternativeTitles", "Titles", za0007)
 											return
 										}
 									}
@@ -5765,47 +5844,47 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 						} else {
 							z.ContentRatings.Ratings = make([]*ContentRating, zb0014)
 						}
-						for za0007 := range z.ContentRatings.Ratings {
+						for za0008 := range z.ContentRatings.Ratings {
 							if msgp.IsNil(bts) {
 								bts, err = msgp.ReadNilBytes(bts)
 								if err != nil {
 									return
 								}
-								z.ContentRatings.Ratings[za0007] = nil
+								z.ContentRatings.Ratings[za0008] = nil
 							} else {
-								if z.ContentRatings.Ratings[za0007] == nil {
-									z.ContentRatings.Ratings[za0007] = new(ContentRating)
+								if z.ContentRatings.Ratings[za0008] == nil {
+									z.ContentRatings.Ratings[za0008] = new(ContentRating)
 								}
 								var zb0015 uint32
 								zb0015, bts, err = msgp.ReadMapHeaderBytes(bts)
 								if err != nil {
-									err = msgp.WrapError(err, "ContentRatings", "Ratings", za0007)
+									err = msgp.WrapError(err, "ContentRatings", "Ratings", za0008)
 									return
 								}
 								for zb0015 > 0 {
 									zb0015--
 									field, bts, err = msgp.ReadMapKeyZC(bts)
 									if err != nil {
-										err = msgp.WrapError(err, "ContentRatings", "Ratings", za0007)
+										err = msgp.WrapError(err, "ContentRatings", "Ratings", za0008)
 										return
 									}
 									switch msgp.UnsafeString(field) {
 									case "Iso3166_1":
-										z.ContentRatings.Ratings[za0007].Iso3166_1, bts, err = msgp.ReadStringBytes(bts)
+										z.ContentRatings.Ratings[za0008].Iso3166_1, bts, err = msgp.ReadStringBytes(bts)
 										if err != nil {
-											err = msgp.WrapError(err, "ContentRatings", "Ratings", za0007, "Iso3166_1")
+											err = msgp.WrapError(err, "ContentRatings", "Ratings", za0008, "Iso3166_1")
 											return
 										}
 									case "Rating":
-										z.ContentRatings.Ratings[za0007].Rating, bts, err = msgp.ReadStringBytes(bts)
+										z.ContentRatings.Ratings[za0008].Rating, bts, err = msgp.ReadStringBytes(bts)
 										if err != nil {
-											err = msgp.WrapError(err, "ContentRatings", "Ratings", za0007, "Rating")
+											err = msgp.WrapError(err, "ContentRatings", "Ratings", za0008, "Rating")
 											return
 										}
 									default:
 										bts, err = msgp.Skip(bts)
 										if err != nil {
-											err = msgp.WrapError(err, "ContentRatings", "Ratings", za0007)
+											err = msgp.WrapError(err, "ContentRatings", "Ratings", za0008)
 											return
 										}
 									}
@@ -5867,20 +5946,20 @@ func (z *Show) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			} else {
 				z.Seasons = make(SeasonList, zb0016)
 			}
-			for za0008 := range z.Seasons {
+			for za0009 := range z.Seasons {
 				if msgp.IsNil(bts) {
 					bts, err = msgp.ReadNilBytes(bts)
 					if err != nil {
 						return
 					}
-					z.Seasons[za0008] = nil
+					z.Seasons[za0009] = nil
 				} else {
-					if z.Seasons[za0008] == nil {
-						z.Seasons[za0008] = new(Season)
+					if z.Seasons[za0009] == nil {
+						z.Seasons[za0009] = new(Season)
 					}
-					bts, err = z.Seasons[za0008].UnmarshalMsg(bts)
+					bts, err = z.Seasons[za0009].UnmarshalMsg(bts)
 					if err != nil {
-						err = msgp.WrapError(err, "Seasons", za0008)
+						err = msgp.WrapError(err, "Seasons", za0009)
 						return
 					}
 				}
@@ -5910,7 +5989,7 @@ func (z *Show) Msgsize() (s int) {
 		if z.Networks[za0002] == nil {
 			s += msgp.NilSize
 		} else {
-			s += 1 + 3 + msgp.IntSize + 5 + msgp.StringPrefixSize + len(z.Networks[za0002].Name)
+			s += z.Networks[za0002].Msgsize()
 		}
 	}
 	s += 17 + msgp.IntSize + 16 + msgp.IntSize + 14 + msgp.ArrayHeaderSize
@@ -5922,7 +6001,15 @@ func (z *Show) Msgsize() (s int) {
 		if z.ProductionCompanies[za0004] == nil {
 			s += msgp.NilSize
 		} else {
-			s += 1 + 3 + msgp.IntSize + 5 + msgp.StringPrefixSize + len(z.ProductionCompanies[za0004].Name)
+			s += z.ProductionCompanies[za0004].Msgsize()
+		}
+	}
+	s += 20 + msgp.ArrayHeaderSize
+	for za0005 := range z.ProductionCountries {
+		if z.ProductionCountries[za0005] == nil {
+			s += msgp.NilSize
+		} else {
+			s += 1 + 9 + msgp.StringPrefixSize + len(z.ProductionCountries[za0005].Iso31661) + 5 + msgp.StringPrefixSize + len(z.ProductionCountries[za0005].Name) + 12 + msgp.StringPrefixSize + len(z.ProductionCountries[za0005].EnglishName)
 		}
 	}
 	s += 7 + msgp.StringPrefixSize + len(z.Status) + 12
@@ -5936,11 +6023,11 @@ func (z *Show) Msgsize() (s int) {
 		s += msgp.NilSize
 	} else {
 		s += 1 + 13 + msgp.ArrayHeaderSize
-		for za0005 := range z.Translations.Translations {
-			if z.Translations.Translations[za0005] == nil {
+		for za0006 := range z.Translations.Translations {
+			if z.Translations.Translations[za0006] == nil {
 				s += msgp.NilSize
 			} else {
-				s += z.Translations.Translations[za0005].Msgsize()
+				s += z.Translations.Translations[za0006].Msgsize()
 			}
 		}
 	}
@@ -5949,11 +6036,11 @@ func (z *Show) Msgsize() (s int) {
 		s += msgp.NilSize
 	} else {
 		s += 1 + 7 + msgp.ArrayHeaderSize
-		for za0006 := range z.AlternativeTitles.Titles {
-			if z.AlternativeTitles.Titles[za0006] == nil {
+		for za0007 := range z.AlternativeTitles.Titles {
+			if z.AlternativeTitles.Titles[za0007] == nil {
 				s += msgp.NilSize
 			} else {
-				s += 1 + 10 + msgp.StringPrefixSize + len(z.AlternativeTitles.Titles[za0006].Iso3166_1) + 6 + msgp.StringPrefixSize + len(z.AlternativeTitles.Titles[za0006].Title)
+				s += 1 + 10 + msgp.StringPrefixSize + len(z.AlternativeTitles.Titles[za0007].Iso3166_1) + 6 + msgp.StringPrefixSize + len(z.AlternativeTitles.Titles[za0007].Title)
 			}
 		}
 	}
@@ -5962,11 +6049,11 @@ func (z *Show) Msgsize() (s int) {
 		s += msgp.NilSize
 	} else {
 		s += 1 + 8 + msgp.ArrayHeaderSize
-		for za0007 := range z.ContentRatings.Ratings {
-			if z.ContentRatings.Ratings[za0007] == nil {
+		for za0008 := range z.ContentRatings.Ratings {
+			if z.ContentRatings.Ratings[za0008] == nil {
 				s += msgp.NilSize
 			} else {
-				s += 1 + 10 + msgp.StringPrefixSize + len(z.ContentRatings.Ratings[za0007].Iso3166_1) + 7 + msgp.StringPrefixSize + len(z.ContentRatings.Ratings[za0007].Rating)
+				s += 1 + 10 + msgp.StringPrefixSize + len(z.ContentRatings.Ratings[za0008].Iso3166_1) + 7 + msgp.StringPrefixSize + len(z.ContentRatings.Ratings[za0008].Rating)
 			}
 		}
 	}
@@ -5983,11 +6070,11 @@ func (z *Show) Msgsize() (s int) {
 		s += z.Images.Msgsize()
 	}
 	s += 8 + msgp.ArrayHeaderSize
-	for za0008 := range z.Seasons {
-		if z.Seasons[za0008] == nil {
+	for za0009 := range z.Seasons {
+		if z.Seasons[za0009] == nil {
 			s += msgp.NilSize
 		} else {
-			s += z.Seasons[za0008].Msgsize()
+			s += z.Seasons[za0009].Msgsize()
 		}
 	}
 	return
