@@ -49,6 +49,7 @@ else ifeq ($(TARGET_OS), linux)
 	EXT =
 	GOOS = linux
 	GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-L $(CROSS_ROOT)/lib/ -lm -lstdc++"
+	# GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-static -L $(CROSS_ROOT)/lib/ -lm -lstdc++"
 else ifeq ($(TARGET_OS), android)
 	EXT =
 	GOOS = android
@@ -70,7 +71,7 @@ GO_PKG = github.com/elgatito/elementum
 GO = go
 GIT = git
 DOCKER = docker
-DOCKER_IMAGE = libtorrent-go
+DOCKER_IMAGE = elementumorg/libtorrent-go
 UPX = upx
 GIT_VERSION = $(shell $(GIT) describe --tags)
 CGO_ENABLED = 1
@@ -215,13 +216,11 @@ binaries:
 
 pull-all:
 	for i in $(PLATFORMS); do \
-		docker pull $(PROJECT)/libtorrent-go:$$i; \
-		docker tag $(PROJECT)/libtorrent-go:$$i libtorrent-go:$$i; \
+		docker pull $(DOCKER_IMAGE):$$i; \
 	done
 
 pull:
-	docker pull $(PROJECT)/libtorrent-go:$(PLATFORM)
-	docker tag $(PROJECT)/libtorrent-go:$(PLATFORM) libtorrent-go:$(PLATFORM)
+	docker pull $(DOCKER_IMAGE):$(PLATFORM)
 
 prepare-all:
 	for i in $(PLATFORMS); do \
