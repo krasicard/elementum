@@ -481,7 +481,7 @@ func PauseTorrent(s *bittorrent.Service) gin.HandlerFunc {
 // RemoveTorrent ...
 func RemoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		deleteFiles := ctx.Query("files")
+		deleteFiles := ctx.DefaultQuery("files", "false")
 
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
@@ -490,7 +490,7 @@ func RemoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 			return
 		}
 
-		s.RemoveTorrent(torrent, true, deleteFiles != "" && deleteFiles != "false", false)
+		s.RemoveTorrent(torrent, true, deleteFiles == "true", false)
 
 		xbmc.Refresh()
 		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
