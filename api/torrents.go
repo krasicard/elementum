@@ -490,7 +490,7 @@ func RemoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 			return
 		}
 
-		s.RemoveTorrent(torrent, true, deleteFiles != "", false)
+		s.RemoveTorrent(torrent, true, deleteFiles != "" && deleteFiles != "false", false)
 
 		xbmc.Refresh()
 		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
