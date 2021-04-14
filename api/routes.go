@@ -46,6 +46,7 @@ func Routes(s *bittorrent.Service) *gin.Engine {
 	history := r.Group("/history")
 	{
 		history.GET("", History)
+		history.GET("/", History)
 		history.GET("/remove", HistoryRemove)
 		history.GET("/clear", HistoryClear)
 	}
