@@ -192,6 +192,13 @@ func Dialog(title string, message string) bool {
 	return retVal != 0
 }
 
+// DialogBrowseSingle ...
+func DialogBrowseSingle(browseType int, title string, shares string, mask string, useThumbs bool, treatAsFolder bool, defaultt string) string {
+	retVal := ""
+	executeJSONRPCEx("Dialog_Browse_Single", &retVal, Args{browseType, title, shares, mask, useThumbs, treatAsFolder, defaultt})
+	return retVal
+}
+
 // DialogConfirm ...
 func DialogConfirm(title string, message string) bool {
 	return dialogConfirmRunner(title, message, false)
