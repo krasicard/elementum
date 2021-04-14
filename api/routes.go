@@ -83,6 +83,7 @@ func Routes(s *bittorrent.Service) *gin.Engine {
 		torrents.GET("/undownloadall/:torrentId", UnDownloadAllTorrent(s))
 		torrents.GET("/selectfile/:torrentId", SelectFileTorrent(s, true))
 		torrents.GET("/downloadfile/:torrentId", SelectFileTorrent(s, false))
+		torrents.GET("/assign/:torrentId/:tmdbId", AssignTorrent(s))
 
 		// Web UI json
 		torrents.GET("/list", ListTorrentsWeb(s))
@@ -270,7 +271,14 @@ func Routes(s *bittorrent.Service) *gin.Engine {
 
 	context := r.Group("/context")
 	{
-		context.GET("/:media/:kodiID/:action", ContextPlaySelector(s))
+		context.GET("/media/:media/:kodiID/:action", ContextPlaySelector(s))
+		torrents := context.Group("/torrents")
+		{
+			torrents.GET("/assign/:torrentId/kodi/:media/:kodiID", ContextAssignKodiSelector(s))
+			torrents.GET("/assign/:torrentId/tmdb/movie/:tmdbId", ContextAssignTMDBMovieSelector(s))
+			torrents.GET("/assign/:torrentId/tmdb/show/:tmdbId/season/:season", ContextAssignTMDBSeasonSelector(s))
+			torrents.GET("/assign/:torrentId/tmdb/show/:tmdbId/season/:season/episode/:episode", ContextAssignTMDBEpisodeSelector(s))
+		}
 	}
 
 	provider := r.Group("/provider")
