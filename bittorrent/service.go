@@ -115,7 +115,10 @@ func NewService() *Service {
 
 	go tmdb.CheckAPIKey()
 
-	go s.loadTorrentFiles()
+	go func() {
+		UpdateDefaultTrackers()
+		s.loadTorrentFiles()
+	}()
 	go s.downloadProgress()
 
 	return s
@@ -161,12 +164,12 @@ func (s *Service) Reconfigure() {
 
 	config.Reload()
 	proxy.Reload()
+	UpdateDefaultTrackers()
 
 	s.config = config.Get()
 	s.configure()
 
 	s.startServices()
-	s.loadTorrentFiles()
 
 	// After re-configure check Trakt authorization
 	if config.Get().TraktToken != "" && !config.Get().TraktAuthorized {
