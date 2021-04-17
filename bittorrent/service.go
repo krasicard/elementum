@@ -177,6 +177,7 @@ func (s *Service) Reconfigure() {
 func (s *Service) configure() {
 	log.Info("Configuring client...")
 
+	proxy.Reload()
 	if s.config.InternalProxyEnabled {
 		log.Infof("Starting internal proxy")
 		s.InternalProxy = proxy.StartProxy()
