@@ -65,8 +65,6 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 		log.Error(err.Error())
 		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
 		ctx.Error(errors.New("Cannot find TMDB for selected Kodi item"))
-		// this will try several times, i guess we don't need this behaviour here
-		//ctx.String(404, "Cannot find TMDB for selected Kodi item")
 		return
 	}
 }

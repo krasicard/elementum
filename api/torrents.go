@@ -89,11 +89,11 @@ func AssignTorrent(s *bittorrent.Service) gin.HandlerFunc {
 
 		log.Infof("AssignTorrent %s to tmdbID %s", torrentID, tmdbID)
 
-		//make old torrent disappear from "found in active torrents" dialog in runtime
+		// make old torrent disappear from "found in active torrents" dialog in runtime
 		tmdbInt, _ := strconv.Atoi(tmdbID)
 		var ti database.TorrentAssignItem
 		if err := database.GetStormDB().One("TmdbID", tmdbInt, &ti); err == nil {
-			//check that old torrent is not equal to chosen torrent
+			// check that old torrent is not equal to chosen torrent
 			oldInfoHash := ti.InfoHash
 			if oldInfoHash != torrent.InfoHash() {
 				oldTorrent := s.GetTorrentByHash(oldInfoHash)
@@ -106,10 +106,10 @@ func AssignTorrent(s *bittorrent.Service) gin.HandlerFunc {
 
 		database.GetStorm().AddTorrentLink(tmdbID, torrent.InfoHash(), torrent.GetMetadata(), false)
 
-		//TODO: if we will pass media type and season/episode number to this func, then we also can
-		//update torrent's DBItem in queue so it will be used in "found in active torrents" dialog in runtime
-		//torrent.DBItem.ID/ShowID/Season/Episode = tmdbInt/...
-		//but this will make things uglier and it does not give much value
+		// TODO: if we will pass media type and season/episode number to this func, then we also can
+		// update torrent's DBItem in queue so it will be used in "found in active torrents" dialog in runtime
+		// torrent.DBItem.ID/ShowID/Season/Episode = tmdbInt/...
+		// but this will make things uglier and it does not give much value
 
 		ctx.JSON(200, nil)
 	}

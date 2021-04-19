@@ -184,7 +184,7 @@ func (d *StormDatabase) CleanupTorrentLink(infoHash string) {
 	defer perf.ScopeTimer()()
 
 	var oldTi TorrentAssignItem
-	//check that there is no TorrentAssignItem left and only then delete TorrentAssignMetadata
+	// check that there is no TorrentAssignItem left and only then delete TorrentAssignMetadata
 	if err := d.db.Select(q.Eq("InfoHash", infoHash)).First(&oldTi); err != nil {
 		if err := d.db.Delete(TorrentAssignMetadataBucket, infoHash); err != nil {
 			log.Errorf("Could not delete old torrent metadata: %s", err)
@@ -209,7 +209,7 @@ func (d *StormDatabase) AddTorrentLink(tmdbID, infoHash string, b []byte, force 
 			InfoHash: infoHash,
 			Metadata: b,
 		}
-		//we could use just Save() since TorrentAssignMetadata does not have unique field, but bettert to be explicit
+		// we could use just Save() since TorrentAssignMetadata does not have unique field, but bettert to be explicit
 		if err == nil {
 			d.db.Update(&tm)
 		} else {
@@ -222,7 +222,7 @@ func (d *StormDatabase) AddTorrentLink(tmdbID, infoHash string, b []byte, force 
 	var ti TorrentAssignItem
 	if err := d.db.One("TmdbID", tmdbInt, &ti); err == nil {
 		oldInfoHash := ti.InfoHash
-		//check that old torrent is not equal to new torrent
+		// check that old torrent is not equal to new torrent
 		if oldInfoHash != infoHash {
 			ti.InfoHash = infoHash
 			log.Infof("Update torrent info, old %s, new %s", oldInfoHash, infoHash)
@@ -232,7 +232,7 @@ func (d *StormDatabase) AddTorrentLink(tmdbID, infoHash string, b []byte, force 
 
 			d.CleanupTorrentLink(oldInfoHash)
 
-			//make old torrent disappear from "found in active torrents" dialog after restart
+			// make old torrent disappear from "found in active torrents" dialog after restart
 			oldBTItem := d.GetBTItem(oldInfoHash)
 			if oldBTItem != nil {
 				if err := d.db.UpdateField(oldBTItem, "ID", 0); err != nil {
