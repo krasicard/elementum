@@ -71,6 +71,50 @@ func AddToTorrentsMap(tmdbID string, torrent *bittorrent.TorrentFile) {
 	database.GetStorm().AddTorrentLink(tmdbID, torrent.InfoHash, b, false)
 }
 
+// AssignTorrent assigns torrent by its id to elementum's item by its TMDB id
+func AssignTorrent(s *bittorrent.Service) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+		torrentID := ctx.Params.ByName("torrentId")
+		torrent, err := GetTorrentFromParam(s, torrentID)
+		if err != nil {
+			log.Error(err.Error())
+			xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+			ctx.Error(err)
+			return
+		}
+
+		tmdbID := ctx.Params.ByName("tmdbId")
+
+		log.Infof("AssignTorrent %s to tmdbID %s", torrentID, tmdbID)
+
+		// make old torrent disappear from "found in active torrents" dialog in runtime
+		tmdbInt, _ := strconv.Atoi(tmdbID)
+		var ti database.TorrentAssignItem
+		if err := database.GetStormDB().One("TmdbID", tmdbInt, &ti); err == nil {
+			// check that old torrent is not equal to chosen torrent
+			oldInfoHash := ti.InfoHash
+			if oldInfoHash != torrent.InfoHash() {
+				oldTorrent := s.GetTorrentByHash(oldInfoHash)
+				if oldTorrent != nil {
+					oldTorrent.DBItem.ID = 0
+					oldTorrent.DBItem.ShowID = 0
+				}
+			}
+		}
+
+		database.GetStorm().AddTorrentLink(tmdbID, torrent.InfoHash(), torrent.GetMetadata(), false)
+
+		// TODO: if we will pass media type and season/episode number to this func, then we also can
+		// update torrent's DBItem in queue so it will be used in "found in active torrents" dialog in runtime
+		// torrent.DBItem.ID/ShowID/Season/Episode = tmdbInt/...
+		// but this will make things uglier and it does not give much value
+
+		ctx.JSON(200, nil)
+	}
+}
+
 // InTorrentsMap ...
 func InTorrentsMap(tmdbID string) *bittorrent.TorrentFile {
 	if !config.Get().UseCacheSelection || tmdbID == "" {

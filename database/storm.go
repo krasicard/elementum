@@ -183,10 +183,11 @@ func (d *StormDatabase) RemoveSearchHistory(historyType, query string) {
 func (d *StormDatabase) CleanupTorrentLink(infoHash string) {
 	defer perf.ScopeTimer()()
 
-	var tiOld TorrentAssignItem
-	if err := d.db.Select(q.Eq("InfoHash", infoHash)).First(&tiOld); err != nil {
+	var oldTi TorrentAssignItem
+	// check that there is no TorrentAssignItem left and only then delete TorrentAssignMetadata
+	if err := d.db.Select(q.Eq("InfoHash", infoHash)).First(&oldTi); err != nil {
 		if err := d.db.Delete(TorrentAssignMetadataBucket, infoHash); err != nil {
-			log.Debugf("Could not delete old torrent metadata: %s", err)
+			log.Errorf("Could not delete old torrent metadata: %s", err)
 		}
 	}
 }
@@ -208,19 +209,40 @@ func (d *StormDatabase) AddTorrentLink(tmdbID, infoHash string, b []byte, force 
 			InfoHash: infoHash,
 			Metadata: b,
 		}
-		d.db.Save(&tm)
+		// we could use just Save() since TorrentAssignMetadata does not have unique field, but bettert to be explicit
+		if err == nil {
+			d.db.Update(&tm)
+		} else {
+			d.db.Save(&tm)
+		}
 	}
 
 	tmdbInt, _ := strconv.Atoi(tmdbID)
+
 	var ti TorrentAssignItem
 	if err := d.db.One("TmdbID", tmdbInt, &ti); err == nil {
 		oldInfoHash := ti.InfoHash
-		ti.InfoHash = infoHash
-		if err := d.db.Update(&ti); err != nil {
-			log.Debugf("Could not update torrent info: %s", err)
-		}
+		// check that old torrent is not equal to new torrent
+		if oldInfoHash != infoHash {
+			ti.InfoHash = infoHash
+			log.Infof("Update torrent info, old %s, new %s", oldInfoHash, infoHash)
+			if err := d.db.Update(&ti); err != nil {
+				log.Errorf("Could not update torrent info: %s", err)
+			}
 
-		d.CleanupTorrentLink(oldInfoHash)
+			d.CleanupTorrentLink(oldInfoHash)
+
+			// make old torrent disappear from "found in active torrents" dialog after restart
+			oldBTItem := d.GetBTItem(oldInfoHash)
+			if oldBTItem != nil {
+				if err := d.db.UpdateField(oldBTItem, "ID", 0); err != nil {
+					log.Errorf("Could not update old BTItem's ID: %s", err)
+				}
+				if err := d.db.UpdateField(oldBTItem, "ShowID", 0); err != nil {
+					log.Errorf("Could not update old BTItem's ShowID: %s", err)
+				}
+			}
+		}
 		return
 	}
 
@@ -229,7 +251,7 @@ func (d *StormDatabase) AddTorrentLink(tmdbID, infoHash string, b []byte, force 
 		TmdbID:   tmdbInt,
 	}
 	if err := d.db.Save(&ti); err != nil {
-		log.Debugf("Could not insert torrent info: %s", err)
+		log.Errorf("Could not insert torrent info: %s", err)
 	}
 }
 
