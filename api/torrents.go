@@ -43,6 +43,8 @@ type TorrentsWeb struct {
 	SeedTimeLimit int     `json:"seed_time_limit"`
 	DownloadRate  float64 `json:"download_rate"`
 	UploadRate    float64 `json:"upload_rate"`
+	TotalDownload float64 `json:"total_download"`
+	TotalUpload   float64 `json:"total_upload"`
 	Seeders       int     `json:"seeders"`
 	SeedersTotal  int     `json:"seeders_total"`
 	Peers         int     `json:"peers"`
@@ -290,8 +292,9 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 
 			ratio := float64(0)
 			allTimeDownload := float64(torrentStatus.GetAllTimeDownload())
+			allTimeUpload := float64(torrentStatus.GetAllTimeUpload())
 			if allTimeDownload > 0 {
-				ratio = float64(torrentStatus.GetAllTimeUpload()) / allTimeDownload
+				ratio = allTimeUpload / allTimeDownload
 			}
 
 			timeRatio := float64(0)
@@ -325,6 +328,8 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 				SeedTimeLimit: seedTimeLimit,
 				DownloadRate:  downloadRate,
 				UploadRate:    uploadRate,
+				TotalDownload: allTimeDownload,
+				TotalUpload:   allTimeUpload,
 				Seeders:       seeders,
 				SeedersTotal:  seedersTotal,
 				Peers:         peers,
