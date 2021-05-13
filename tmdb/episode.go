@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
@@ -52,7 +51,6 @@ func (episodes EpisodeList) ToListItems(show *Show, season *Season) []*xbmc.List
 		fanarts = append(fanarts, ImageURL(backdrop.FilePath, "w1280"))
 	}
 
-	now := util.UTCBod()
 	for _, episode := range episodes {
 		if episode == nil {
 			continue
@@ -62,8 +60,7 @@ func (episodes EpisodeList) ToListItems(show *Show, season *Season) []*xbmc.List
 			if episode.AirDate == "" {
 				continue
 			}
-			firstAired, _ := time.Parse("2006-01-02", episode.AirDate)
-			if firstAired.After(now) || (!config.Get().ShowEpisodesOnReleaseDay && firstAired.Equal(now)) {
+			if _, isExpired := util.AirDateWithExpireCheck(episode.AirDate, config.Get().ShowEpisodesOnReleaseDay); isExpired {
 				continue
 			}
 		}

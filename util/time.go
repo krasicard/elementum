@@ -31,3 +31,13 @@ func UTCBod() time.Time {
 	year, month, day := t.Date()
 	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
 }
+
+func AirDateWithExpireCheck(dt string, allowSameDay bool) (time.Time, bool) {
+	aired, _ := time.Parse("2006-01-02", dt)
+	now := UTCBod()
+	if aired.After(now) || (!allowSameDay && aired.Equal(now)) {
+		return aired, true
+	}
+
+	return aired, false
+}

@@ -567,7 +567,6 @@ func writeShowStrm(showID int, adding, force bool) (*tmdb.Show, error) {
 		writeShowNFO(show, filepath.Join(showPath, "tvshow.nfo"))
 	}
 
-	now := util.UTCBod()
 	addSpecials := config.Get().AddSpecials
 
 	for _, season := range show.Seasons {
@@ -575,8 +574,7 @@ func writeShowStrm(showID int, adding, force bool) (*tmdb.Show, error) {
 			continue
 		}
 		if config.Get().ShowUnairedSeasons == false {
-			firstAired, _ := time.Parse("2006-01-02", show.FirstAirDate)
-			if firstAired.After(now) || (!config.Get().ShowEpisodesOnReleaseDay && firstAired.Equal(now)) {
+			if _, isExpired := util.AirDateWithExpireCheck(show.FirstAirDate, config.Get().ShowEpisodesOnReleaseDay); isExpired {
 				continue
 			}
 		}
@@ -600,8 +598,7 @@ func writeShowStrm(showID int, adding, force bool) (*tmdb.Show, error) {
 				if episode.AirDate == "" {
 					continue
 				}
-				firstAired, _ := time.Parse("2006-01-02", episode.AirDate)
-				if firstAired.After(now) || (!config.Get().ShowEpisodesOnReleaseDay && firstAired.Equal(now)) {
+				if _, isExpired := util.AirDateWithExpireCheck(episode.AirDate, config.Get().ShowEpisodesOnReleaseDay); isExpired {
 					continue
 				}
 			}

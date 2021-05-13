@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
@@ -89,8 +88,6 @@ func (seasons SeasonList) ToListItems(show *Show) []*xbmc.ListItem {
 		fanarts = append(fanarts, ImageURL(backdrop.FilePath, "w1280"))
 	}
 
-	now := util.UTCBod()
-
 	if config.Get().ShowSeasonsOrder == 0 {
 		sort.Slice(seasons, func(i, j int) bool { return seasons[i].Season < seasons[j].Season })
 	} else {
@@ -116,8 +113,7 @@ func (seasons SeasonList) ToListItems(show *Show) []*xbmc.ListItem {
 		}
 
 		if config.Get().ShowUnairedSeasons == false {
-			firstAired, _ := time.Parse("2006-01-02", season.AirDate)
-			if firstAired.After(now) || (!config.Get().ShowEpisodesOnReleaseDay && firstAired.Equal(now)) {
+			if _, isExpired := util.AirDateWithExpireCheck(season.AirDate, config.Get().ShowEpisodesOnReleaseDay); isExpired {
 				continue
 			}
 		}

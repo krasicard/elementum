@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/anacrolix/missinggo/perf"
 	"github.com/gin-gonic/gin"
@@ -450,14 +449,12 @@ func ShowEpisodes(ctx *gin.Context) {
 	seasonsToShow := []int{seasonNumber}
 	if seasonParam == "all" {
 		seasonsToShow = []int{}
-		now := util.UTCBod()
 		for _, s := range show.Seasons {
 			if s.EpisodeCount == 0 {
 				continue
 			}
 			if config.Get().ShowUnairedSeasons == false {
-				firstAired, _ := time.Parse("2006-01-02", s.AirDate)
-				if firstAired.After(now) || (!config.Get().ShowEpisodesOnReleaseDay && firstAired.Equal(now)) {
+				if _, isExpired := util.AirDateWithExpireCheck(s.AirDate, config.Get().ShowEpisodesOnReleaseDay); isExpired {
 					continue
 				}
 			}
