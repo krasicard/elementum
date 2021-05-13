@@ -20,6 +20,7 @@ import (
 	"github.com/op/go-logging"
 	"github.com/pbnjay/memory"
 	"github.com/sanity-io/litter"
+	"github.com/spf13/cast"
 )
 
 var log = logging.MustGetLogger("config")
@@ -266,6 +267,8 @@ type Addon struct {
 	Enabled bool
 }
 
+type XbmcSettings map[string]interface{}
+
 var (
 	config          = &Configuration{}
 	lock            = sync.RWMutex{}
@@ -459,7 +462,7 @@ func Reload() *Configuration {
 	log.Infof("Using torrents path: %s", torrentsPath)
 
 	xbmcSettings := xbmc.GetAllSettings()
-	settings := make(map[string]interface{})
+	settings := XbmcSettings{}
 	for _, setting := range xbmcSettings {
 		switch setting.Type {
 		case "enum":
@@ -504,202 +507,202 @@ func Reload() *Configuration {
 		ProfilePath:                info.Profile,
 		HomePath:                   info.Home,
 		XbmcPath:                   info.Xbmc,
-		DownloadStorage:            settings["download_storage"].(int),
-		SkipBurstSearch:            settings["skip_burst_search"].(bool),
-		AutoMemorySize:             settings["auto_memory_size"].(bool),
-		AutoAdjustMemorySize:       settings["auto_adjust_memory_size"].(bool),
-		AutoMemorySizeStrategy:     settings["auto_memory_size_strategy"].(int),
-		MemorySize:                 settings["memory_size"].(int) * 1024 * 1024,
-		AutoKodiBufferSize:         settings["auto_kodi_buffer_size"].(bool),
-		AutoAdjustBufferSize:       settings["auto_adjust_buffer_size"].(bool),
-		MinCandidateSize:           int64(settings["min_candidate_size"].(int) * 1024 * 1024),
-		MinCandidateShowSize:       int64(settings["min_candidate_show_size"].(int) * 1024 * 1024),
-		BufferTimeout:              settings["buffer_timeout"].(int),
-		BufferSize:                 settings["buffer_size"].(int) * 1024 * 1024,
-		EndBufferSize:              settings["end_buffer_size"].(int) * 1024 * 1024,
-		UploadRateLimit:            settings["max_upload_rate"].(int) * 1024,
-		DownloadRateLimit:          settings["max_download_rate"].(int) * 1024,
-		AutoloadTorrents:           settings["autoload_torrents"].(bool),
-		AutoloadTorrentsPaused:     settings["autoload_torrents_paused"].(bool),
-		SpoofUserAgent:             settings["spoof_user_agent"].(int),
-		LimitAfterBuffering:        settings["limit_after_buffering"].(bool),
-		DownloadFileStrategy:       settings["download_file_strategy"].(int),
-		KeepDownloading:            settings["keep_downloading"].(int),
-		KeepFilesPlaying:           settings["keep_files_playing"].(int),
-		KeepFilesFinished:          settings["keep_files_finished"].(int),
-		UseTorrentHistory:          settings["use_torrent_history"].(bool),
-		TorrentHistorySize:         settings["torrent_history_size"].(int),
-		UseFanartTv:                settings["use_fanart_tv"].(bool),
-		DisableBgProgress:          settings["disable_bg_progress"].(bool),
-		DisableBgProgressPlayback:  settings["disable_bg_progress_playback"].(bool),
-		ForceUseTrakt:              settings["force_use_trakt"].(bool),
-		UseCacheSelection:          settings["use_cache_selection"].(bool),
-		UseCacheSearch:             settings["use_cache_search"].(bool),
-		UseCacheTorrents:           settings["use_cache_torrents"].(bool),
-		CacheSearchDuration:        settings["cache_search_duration"].(int),
-		ResultsPerPage:             settings["results_per_page"].(int),
-		ShowFilesWatched:           settings["show_files_watched"].(bool),
-		GreetingEnabled:            settings["greeting_enabled"].(bool),
-		EnableOverlayStatus:        settings["enable_overlay_status"].(bool),
-		SilentStreamStart:          settings["silent_stream_start"].(bool),
-		AutoYesEnabled:             settings["autoyes_enabled"].(bool),
-		AutoYesTimeout:             settings["autoyes_timeout"].(int),
-		ChooseStreamAutoMovie:      settings["choose_stream_auto_movie"].(bool),
-		ChooseStreamAutoShow:       settings["choose_stream_auto_show"].(bool),
-		ChooseStreamAutoSearch:     settings["choose_stream_auto_search"].(bool),
-		ForceLinkType:              settings["force_link_type"].(bool),
-		UseOriginalTitle:           settings["use_original_title"].(bool),
-		UseAnimeEnTitle:            settings["use_anime_en_title"].(bool),
-		UseLowestReleaseDate:       settings["use_lowest_release_date"].(bool),
-		AddSpecials:                settings["add_specials"].(bool),
-		AddEpisodeNumbers:          settings["add_episode_numbers"].(bool),
-		ShowUnairedSeasons:         settings["unaired_seasons"].(bool),
-		ShowUnairedEpisodes:        settings["unaired_episodes"].(bool),
-		ShowEpisodesOnReleaseDay:   settings["show_episodes_on_release_day"].(bool),
-		ShowSeasonsAll:             settings["seasons_all"].(bool),
-		ShowSeasonsOrder:           settings["seasons_order"].(int),
-		ShowSeasonsSpecials:        settings["seasons_specials"].(bool),
-		PlaybackPercent:            settings["playback_percent"].(int),
-		SmartEpisodeStart:          settings["smart_episode_start"].(bool),
-		SmartEpisodeMatch:          settings["smart_episode_match"].(bool),
-		SmartEpisodeChoose:         settings["smart_episode_choose"].(bool),
-		LibraryEnabled:             settings["library_enabled"].(bool),
-		LibrarySyncEnabled:         settings["library_sync_enabled"].(bool),
-		LibrarySyncPlaybackEnabled: settings["library_sync_playback_enabled"].(bool),
-		LibraryUpdate:              settings["library_update"].(int),
-		StrmLanguage:               settings["strm_language"].(string),
-		LibraryNFOMovies:           settings["library_nfo_movies"].(bool),
-		LibraryNFOShows:            settings["library_nfo_shows"].(bool),
-		SeedForever:                settings["seed_forever"].(bool),
-		ShareRatioLimit:            settings["share_ratio_limit"].(int),
-		SeedTimeRatioLimit:         settings["seed_time_ratio_limit"].(int),
-		SeedTimeLimit:              settings["seed_time_limit"].(int) * 3600,
-		DisableUpload:              settings["disable_upload"].(bool),
-		DisableLSD:                 settings["disable_lsd"].(bool),
-		DisableDHT:                 settings["disable_dht"].(bool),
-		DisableTCP:                 settings["disable_tcp"].(bool),
-		DisableUTP:                 settings["disable_utp"].(bool),
-		DisableUPNP:                settings["disable_upnp"].(bool),
-		EncryptionPolicy:           settings["encryption_policy"].(int),
-		ListenPortMin:              settings["listen_port_min"].(int),
-		ListenPortMax:              settings["listen_port_max"].(int),
-		ListenInterfaces:           settings["listen_interfaces"].(string),
-		ListenAutoDetectIP:         settings["listen_autodetect_ip"].(bool),
-		ListenAutoDetectPort:       settings["listen_autodetect_port"].(bool),
-		OutgoingInterfaces:         settings["outgoing_interfaces"].(string),
-		TunedStorage:               settings["tuned_storage"].(bool),
-		DiskCacheSize:              settings["disk_cache_size"].(int) * 1024 * 1024,
-		UseLibtorrentConfig:        settings["use_libtorrent_config"].(bool),
-		UseLibtorrentLogging:       settings["use_libtorrent_logging"].(bool),
-		UseLibtorrentDeadlines:     settings["use_libtorrent_deadline"].(bool),
-		UseLibtorrentPauseResume:   settings["use_libtorrent_pauseresume"].(bool),
-		LibtorrentProfile:          settings["libtorrent_profile"].(int),
-		MagnetResolveTimeout:       settings["magnet_resolve_timeout"].(int),
-		AddExtraTrackers:           settings["add_extra_trackers"].(int),
-		RemoveOriginalTrackers:     settings["remove_original_trackers"].(bool),
-		ConnectionsLimit:           settings["connections_limit"].(int),
-		ConnTrackerLimit:           settings["conntracker_limit"].(int),
-		ConnTrackerLimitAuto:       settings["conntracker_limit_auto"].(bool),
-		SessionSave:                settings["session_save"].(int),
-		Scrobble:                   settings["trakt_scrobble"].(bool),
+		DownloadStorage:            settings.ToInt("download_storage"),
+		SkipBurstSearch:            settings.ToBool("skip_burst_search"),
+		AutoMemorySize:             settings.ToBool("auto_memory_size"),
+		AutoAdjustMemorySize:       settings.ToBool("auto_adjust_memory_size"),
+		AutoMemorySizeStrategy:     settings.ToInt("auto_memory_size_strategy"),
+		MemorySize:                 settings.ToInt("memory_size") * 1024 * 1024,
+		AutoKodiBufferSize:         settings.ToBool("auto_kodi_buffer_size"),
+		AutoAdjustBufferSize:       settings.ToBool("auto_adjust_buffer_size"),
+		MinCandidateSize:           int64(settings.ToInt("min_candidate_size") * 1024 * 1024),
+		MinCandidateShowSize:       int64(settings.ToInt("min_candidate_show_size") * 1024 * 1024),
+		BufferTimeout:              settings.ToInt("buffer_timeout"),
+		BufferSize:                 settings.ToInt("buffer_size") * 1024 * 1024,
+		EndBufferSize:              settings.ToInt("end_buffer_size") * 1024 * 1024,
+		UploadRateLimit:            settings.ToInt("max_upload_rate") * 1024,
+		DownloadRateLimit:          settings.ToInt("max_download_rate") * 1024,
+		AutoloadTorrents:           settings.ToBool("autoload_torrents"),
+		AutoloadTorrentsPaused:     settings.ToBool("autoload_torrents_paused"),
+		SpoofUserAgent:             settings.ToInt("spoof_user_agent"),
+		LimitAfterBuffering:        settings.ToBool("limit_after_buffering"),
+		DownloadFileStrategy:       settings.ToInt("download_file_strategy"),
+		KeepDownloading:            settings.ToInt("keep_downloading"),
+		KeepFilesPlaying:           settings.ToInt("keep_files_playing"),
+		KeepFilesFinished:          settings.ToInt("keep_files_finished"),
+		UseTorrentHistory:          settings.ToBool("use_torrent_history"),
+		TorrentHistorySize:         settings.ToInt("torrent_history_size"),
+		UseFanartTv:                settings.ToBool("use_fanart_tv"),
+		DisableBgProgress:          settings.ToBool("disable_bg_progress"),
+		DisableBgProgressPlayback:  settings.ToBool("disable_bg_progress_playback"),
+		ForceUseTrakt:              settings.ToBool("force_use_trakt"),
+		UseCacheSelection:          settings.ToBool("use_cache_selection"),
+		UseCacheSearch:             settings.ToBool("use_cache_search"),
+		UseCacheTorrents:           settings.ToBool("use_cache_torrents"),
+		CacheSearchDuration:        settings.ToInt("cache_search_duration"),
+		ResultsPerPage:             settings.ToInt("results_per_page"),
+		ShowFilesWatched:           settings.ToBool("show_files_watched"),
+		GreetingEnabled:            settings.ToBool("greeting_enabled"),
+		EnableOverlayStatus:        settings.ToBool("enable_overlay_status"),
+		SilentStreamStart:          settings.ToBool("silent_stream_start"),
+		AutoYesEnabled:             settings.ToBool("autoyes_enabled"),
+		AutoYesTimeout:             settings.ToInt("autoyes_timeout"),
+		ChooseStreamAutoMovie:      settings.ToBool("choose_stream_auto_movie"),
+		ChooseStreamAutoShow:       settings.ToBool("choose_stream_auto_show"),
+		ChooseStreamAutoSearch:     settings.ToBool("choose_stream_auto_search"),
+		ForceLinkType:              settings.ToBool("force_link_type"),
+		UseOriginalTitle:           settings.ToBool("use_original_title"),
+		UseAnimeEnTitle:            settings.ToBool("use_anime_en_title"),
+		UseLowestReleaseDate:       settings.ToBool("use_lowest_release_date"),
+		AddSpecials:                settings.ToBool("add_specials"),
+		AddEpisodeNumbers:          settings.ToBool("add_episode_numbers"),
+		ShowUnairedSeasons:         settings.ToBool("unaired_seasons"),
+		ShowUnairedEpisodes:        settings.ToBool("unaired_episodes"),
+		ShowEpisodesOnReleaseDay:   settings.ToBool("show_episodes_on_release_day"),
+		ShowSeasonsAll:             settings.ToBool("seasons_all"),
+		ShowSeasonsOrder:           settings.ToInt("seasons_order"),
+		ShowSeasonsSpecials:        settings.ToBool("seasons_specials"),
+		PlaybackPercent:            settings.ToInt("playback_percent"),
+		SmartEpisodeStart:          settings.ToBool("smart_episode_start"),
+		SmartEpisodeMatch:          settings.ToBool("smart_episode_match"),
+		SmartEpisodeChoose:         settings.ToBool("smart_episode_choose"),
+		LibraryEnabled:             settings.ToBool("library_enabled"),
+		LibrarySyncEnabled:         settings.ToBool("library_sync_enabled"),
+		LibrarySyncPlaybackEnabled: settings.ToBool("library_sync_playback_enabled"),
+		LibraryUpdate:              settings.ToInt("library_update"),
+		StrmLanguage:               settings.ToString("strm_language"),
+		LibraryNFOMovies:           settings.ToBool("library_nfo_movies"),
+		LibraryNFOShows:            settings.ToBool("library_nfo_shows"),
+		SeedForever:                settings.ToBool("seed_forever"),
+		ShareRatioLimit:            settings.ToInt("share_ratio_limit"),
+		SeedTimeRatioLimit:         settings.ToInt("seed_time_ratio_limit"),
+		SeedTimeLimit:              settings.ToInt("seed_time_limit") * 3600,
+		DisableUpload:              settings.ToBool("disable_upload"),
+		DisableLSD:                 settings.ToBool("disable_lsd"),
+		DisableDHT:                 settings.ToBool("disable_dht"),
+		DisableTCP:                 settings.ToBool("disable_tcp"),
+		DisableUTP:                 settings.ToBool("disable_utp"),
+		DisableUPNP:                settings.ToBool("disable_upnp"),
+		EncryptionPolicy:           settings.ToInt("encryption_policy"),
+		ListenPortMin:              settings.ToInt("listen_port_min"),
+		ListenPortMax:              settings.ToInt("listen_port_max"),
+		ListenInterfaces:           settings.ToString("listen_interfaces"),
+		ListenAutoDetectIP:         settings.ToBool("listen_autodetect_ip"),
+		ListenAutoDetectPort:       settings.ToBool("listen_autodetect_port"),
+		OutgoingInterfaces:         settings.ToString("outgoing_interfaces"),
+		TunedStorage:               settings.ToBool("tuned_storage"),
+		DiskCacheSize:              settings.ToInt("disk_cache_size") * 1024 * 1024,
+		UseLibtorrentConfig:        settings.ToBool("use_libtorrent_config"),
+		UseLibtorrentLogging:       settings.ToBool("use_libtorrent_logging"),
+		UseLibtorrentDeadlines:     settings.ToBool("use_libtorrent_deadline"),
+		UseLibtorrentPauseResume:   settings.ToBool("use_libtorrent_pauseresume"),
+		LibtorrentProfile:          settings.ToInt("libtorrent_profile"),
+		MagnetResolveTimeout:       settings.ToInt("magnet_resolve_timeout"),
+		AddExtraTrackers:           settings.ToInt("add_extra_trackers"),
+		RemoveOriginalTrackers:     settings.ToBool("remove_original_trackers"),
+		ConnectionsLimit:           settings.ToInt("connections_limit"),
+		ConnTrackerLimit:           settings.ToInt("conntracker_limit"),
+		ConnTrackerLimitAuto:       settings.ToBool("conntracker_limit_auto"),
+		SessionSave:                settings.ToInt("session_save"),
+		Scrobble:                   settings.ToBool("trakt_scrobble"),
 
-		AutoScrapeEnabled:        settings["autoscrape_is_enabled"].(bool),
-		AutoScrapeLibraryEnabled: settings["autoscrape_library_enabled"].(bool),
-		AutoScrapeStrategy:       settings["autoscrape_strategy"].(int),
-		AutoScrapeStrategyExpect: settings["autoscrape_strategy_expect"].(int),
-		AutoScrapePerHours:       settings["autoscrape_per_hours"].(int),
-		AutoScrapeLimitMovies:    settings["autoscrape_limit_movies"].(int),
-		AutoScrapeInterval:       settings["autoscrape_interval"].(int),
+		AutoScrapeEnabled:        settings.ToBool("autoscrape_is_enabled"),
+		AutoScrapeLibraryEnabled: settings.ToBool("autoscrape_library_enabled"),
+		AutoScrapeStrategy:       settings.ToInt("autoscrape_strategy"),
+		AutoScrapeStrategyExpect: settings.ToInt("autoscrape_strategy_expect"),
+		AutoScrapePerHours:       settings.ToInt("autoscrape_per_hours"),
+		AutoScrapeLimitMovies:    settings.ToInt("autoscrape_limit_movies"),
+		AutoScrapeInterval:       settings.ToInt("autoscrape_interval"),
 
-		TraktUsername:                  settings["trakt_username"].(string),
-		TraktToken:                     settings["trakt_token"].(string),
-		TraktRefreshToken:              settings["trakt_refresh_token"].(string),
-		TraktTokenExpiry:               settings["trakt_token_expiry"].(int),
-		TraktSyncEnabled:               settings["trakt_sync_enabled"].(bool),
-		TraktSyncPlaybackEnabled:       settings["trakt_sync_playback_enabled"].(bool),
-		TraktSyncFrequencyMin:          settings["trakt_sync_frequency_min"].(int),
-		TraktSyncCollections:           settings["trakt_sync_collections"].(bool),
-		TraktSyncWatchlist:             settings["trakt_sync_watchlist"].(bool),
-		TraktSyncUserlists:             settings["trakt_sync_userlists"].(bool),
-		TraktSyncPlaybackProgress:      settings["trakt_sync_playback_progress"].(bool),
-		TraktSyncHidden:                settings["trakt_sync_hidden"].(bool),
-		TraktSyncWatched:               settings["trakt_sync_watched"].(bool),
-		TraktSyncWatchedBack:           settings["trakt_sync_watchedback"].(bool),
-		TraktSyncAddedMovies:           settings["trakt_sync_added_movies"].(bool),
-		TraktSyncAddedMoviesLocation:   settings["trakt_sync_added_movies_location"].(int),
-		TraktSyncAddedMoviesList:       settings["trakt_sync_added_movies_list"].(int),
-		TraktSyncAddedShows:            settings["trakt_sync_added_shows"].(bool),
-		TraktSyncAddedShowsLocation:    settings["trakt_sync_added_shows_location"].(int),
-		TraktSyncAddedShowsList:        settings["trakt_sync_added_shows_list"].(int),
-		TraktSyncRemovedMovies:         settings["trakt_sync_removed_movies"].(bool),
-		TraktSyncRemovedMoviesLocation: settings["trakt_sync_removed_movies_location"].(int),
-		TraktSyncRemovedMoviesList:     settings["trakt_sync_removed_movies_list"].(int),
-		TraktSyncRemovedShows:          settings["trakt_sync_removed_shows"].(bool),
-		TraktSyncRemovedShowsLocation:  settings["trakt_sync_removed_shows_location"].(int),
-		TraktSyncRemovedShowsList:      settings["trakt_sync_removed_shows_list"].(int),
-		TraktProgressUnaired:           settings["trakt_progress_unaired"].(bool),
-		TraktProgressSort:              settings["trakt_progress_sort"].(int),
-		TraktProgressDateFormat:        settings["trakt_progress_date_format"].(string),
-		TraktProgressColorDate:         settings["trakt_progress_color_date"].(string),
-		TraktProgressColorShow:         settings["trakt_progress_color_show"].(string),
-		TraktProgressColorEpisode:      settings["trakt_progress_color_episode"].(string),
-		TraktProgressColorUnaired:      settings["trakt_progress_color_unaired"].(string),
-		TraktCalendarsDateFormat:       settings["trakt_calendars_date_format"].(string),
-		TraktCalendarsColorDate:        settings["trakt_calendars_color_date"].(string),
-		TraktCalendarsColorShow:        settings["trakt_calendars_color_show"].(string),
-		TraktCalendarsColorEpisode:     settings["trakt_calendars_color_episode"].(string),
-		TraktCalendarsColorUnaired:     settings["trakt_calendars_color_unaired"].(string),
+		TraktUsername:                  settings.ToString("trakt_username"),
+		TraktToken:                     settings.ToString("trakt_token"),
+		TraktRefreshToken:              settings.ToString("trakt_refresh_token"),
+		TraktTokenExpiry:               settings.ToInt("trakt_token_expiry"),
+		TraktSyncEnabled:               settings.ToBool("trakt_sync_enabled"),
+		TraktSyncPlaybackEnabled:       settings.ToBool("trakt_sync_playback_enabled"),
+		TraktSyncFrequencyMin:          settings.ToInt("trakt_sync_frequency_min"),
+		TraktSyncCollections:           settings.ToBool("trakt_sync_collections"),
+		TraktSyncWatchlist:             settings.ToBool("trakt_sync_watchlist"),
+		TraktSyncUserlists:             settings.ToBool("trakt_sync_userlists"),
+		TraktSyncPlaybackProgress:      settings.ToBool("trakt_sync_playback_progress"),
+		TraktSyncHidden:                settings.ToBool("trakt_sync_hidden"),
+		TraktSyncWatched:               settings.ToBool("trakt_sync_watched"),
+		TraktSyncWatchedBack:           settings.ToBool("trakt_sync_watchedback"),
+		TraktSyncAddedMovies:           settings.ToBool("trakt_sync_added_movies"),
+		TraktSyncAddedMoviesLocation:   settings.ToInt("trakt_sync_added_movies_location"),
+		TraktSyncAddedMoviesList:       settings.ToInt("trakt_sync_added_movies_list"),
+		TraktSyncAddedShows:            settings.ToBool("trakt_sync_added_shows"),
+		TraktSyncAddedShowsLocation:    settings.ToInt("trakt_sync_added_shows_location"),
+		TraktSyncAddedShowsList:        settings.ToInt("trakt_sync_added_shows_list"),
+		TraktSyncRemovedMovies:         settings.ToBool("trakt_sync_removed_movies"),
+		TraktSyncRemovedMoviesLocation: settings.ToInt("trakt_sync_removed_movies_location"),
+		TraktSyncRemovedMoviesList:     settings.ToInt("trakt_sync_removed_movies_list"),
+		TraktSyncRemovedShows:          settings.ToBool("trakt_sync_removed_shows"),
+		TraktSyncRemovedShowsLocation:  settings.ToInt("trakt_sync_removed_shows_location"),
+		TraktSyncRemovedShowsList:      settings.ToInt("trakt_sync_removed_shows_list"),
+		TraktProgressUnaired:           settings.ToBool("trakt_progress_unaired"),
+		TraktProgressSort:              settings.ToInt("trakt_progress_sort"),
+		TraktProgressDateFormat:        settings.ToString("trakt_progress_date_format"),
+		TraktProgressColorDate:         settings.ToString("trakt_progress_color_date"),
+		TraktProgressColorShow:         settings.ToString("trakt_progress_color_show"),
+		TraktProgressColorEpisode:      settings.ToString("trakt_progress_color_episode"),
+		TraktProgressColorUnaired:      settings.ToString("trakt_progress_color_unaired"),
+		TraktCalendarsDateFormat:       settings.ToString("trakt_calendars_date_format"),
+		TraktCalendarsColorDate:        settings.ToString("trakt_calendars_color_date"),
+		TraktCalendarsColorShow:        settings.ToString("trakt_calendars_color_show"),
+		TraktCalendarsColorEpisode:     settings.ToString("trakt_calendars_color_episode"),
+		TraktCalendarsColorUnaired:     settings.ToString("trakt_calendars_color_unaired"),
 
-		UpdateFrequency:  settings["library_update_frequency"].(int),
-		UpdateDelay:      settings["library_update_delay"].(int),
-		UpdateAutoScan:   settings["library_auto_scan"].(bool),
-		PlayResumeAction: settings["play_resume_action"].(int),
-		PlayResumeBack:   settings["play_resume_back"].(int),
-		TMDBApiKey:       settings["tmdb_api_key"].(string),
+		UpdateFrequency:  settings.ToInt("library_update_frequency"),
+		UpdateDelay:      settings.ToInt("library_update_delay"),
+		UpdateAutoScan:   settings.ToBool("library_auto_scan"),
+		PlayResumeAction: settings.ToInt("play_resume_action"),
+		PlayResumeBack:   settings.ToInt("play_resume_back"),
+		TMDBApiKey:       settings.ToString("tmdb_api_key"),
 
-		OSDBUser:               settings["osdb_user"].(string),
-		OSDBPass:               settings["osdb_pass"].(string),
-		OSDBLanguage:           settings["osdb_language"].(string),
-		OSDBAutoLanguage:       settings["osdb_auto_language"].(bool),
-		OSDBAutoLoad:           settings["osdb_auto_load"].(bool),
-		OSDBAutoLoadCount:      settings["osdb_auto_load_count"].(int),
-		OSDBAutoLoadDelete:     settings["osdb_auto_load_delete"].(bool),
-		OSDBAutoLoadSkipExists: settings["osdb_auto_load_skipexists"].(bool),
-		OSDBIncludedEnabled:    settings["osdb_included_enabled"].(bool),
-		OSDBIncludedSkipExists: settings["osdb_included_skipexists"].(bool),
+		OSDBUser:               settings.ToString("osdb_user"),
+		OSDBPass:               settings.ToString("osdb_pass"),
+		OSDBLanguage:           settings.ToString("osdb_language"),
+		OSDBAutoLanguage:       settings.ToBool("osdb_auto_language"),
+		OSDBAutoLoad:           settings.ToBool("osdb_auto_load"),
+		OSDBAutoLoadCount:      settings.ToInt("osdb_auto_load_count"),
+		OSDBAutoLoadDelete:     settings.ToBool("osdb_auto_load_delete"),
+		OSDBAutoLoadSkipExists: settings.ToBool("osdb_auto_load_skipexists"),
+		OSDBIncludedEnabled:    settings.ToBool("osdb_included_enabled"),
+		OSDBIncludedSkipExists: settings.ToBool("osdb_included_skipexists"),
 
-		SortingModeMovies:           settings["sorting_mode_movies"].(int),
-		SortingModeShows:            settings["sorting_mode_shows"].(int),
-		ResolutionPreferenceMovies:  settings["resolution_preference_movies"].(int),
-		ResolutionPreferenceShows:   settings["resolution_preference_shows"].(int),
-		PercentageAdditionalSeeders: settings["percentage_additional_seeders"].(int),
+		SortingModeMovies:           settings.ToInt("sorting_mode_movies"),
+		SortingModeShows:            settings.ToInt("sorting_mode_shows"),
+		ResolutionPreferenceMovies:  settings.ToInt("resolution_preference_movies"),
+		ResolutionPreferenceShows:   settings.ToInt("resolution_preference_shows"),
+		PercentageAdditionalSeeders: settings.ToInt("percentage_additional_seeders"),
 
-		CustomProviderTimeoutEnabled: settings["custom_provider_timeout_enabled"].(bool),
-		CustomProviderTimeout:        settings["custom_provider_timeout"].(int),
+		CustomProviderTimeoutEnabled: settings.ToBool("custom_provider_timeout_enabled"),
+		CustomProviderTimeout:        settings.ToInt("custom_provider_timeout"),
 
-		InternalDNSEnabled:  settings["internal_dns_enabled"].(bool),
-		InternalDNSSkipIPv6: settings["internal_dns_skip_ipv6"].(bool),
+		InternalDNSEnabled:  settings.ToBool("internal_dns_enabled"),
+		InternalDNSSkipIPv6: settings.ToBool("internal_dns_skip_ipv6"),
 
-		InternalProxyEnabled:     settings["internal_proxy_enabled"].(bool),
-		InternalProxyLogging:     settings["internal_proxy_logging"].(bool),
-		InternalProxyLoggingBody: settings["internal_proxy_logging_body"].(bool),
+		InternalProxyEnabled:     settings.ToBool("internal_proxy_enabled"),
+		InternalProxyLogging:     settings.ToBool("internal_proxy_logging"),
+		InternalProxyLoggingBody: settings.ToBool("internal_proxy_logging_body"),
 
-		ProxyType:        settings["proxy_type"].(int),
-		ProxyEnabled:     settings["proxy_enabled"].(bool),
-		ProxyHost:        settings["proxy_host"].(string),
-		ProxyPort:        settings["proxy_port"].(int),
-		ProxyLogin:       settings["proxy_login"].(string),
-		ProxyPassword:    settings["proxy_password"].(string),
-		ProxyUseHTTP:     settings["use_proxy_http"].(bool),
-		ProxyUseTracker:  settings["use_proxy_tracker"].(bool),
-		ProxyUseDownload: settings["use_proxy_download"].(bool),
+		ProxyType:        settings.ToInt("proxy_type"),
+		ProxyEnabled:     settings.ToBool("proxy_enabled"),
+		ProxyHost:        settings.ToString("proxy_host"),
+		ProxyPort:        settings.ToInt("proxy_port"),
+		ProxyLogin:       settings.ToString("proxy_login"),
+		ProxyPassword:    settings.ToString("proxy_password"),
+		ProxyUseHTTP:     settings.ToBool("use_proxy_http"),
+		ProxyUseTracker:  settings.ToBool("use_proxy_tracker"),
+		ProxyUseDownload: settings.ToBool("use_proxy_download"),
 
-		CompletedMove:       settings["completed_move"].(bool),
-		CompletedMoviesPath: settings["completed_movies_path"].(string),
-		CompletedShowsPath:  settings["completed_shows_path"].(string),
+		CompletedMove:       settings.ToBool("completed_move"),
+		CompletedMoviesPath: settings.ToString("completed_movies_path"),
+		CompletedShowsPath:  settings.ToString("completed_shows_path"),
 
-		LocalOnlyClient: settings["local_only_client"].(bool),
-		LogLevel:        settings["log_level"].(int),
+		LocalOnlyClient: settings.ToBool("local_only_client"),
+		LogLevel:        settings.ToInt("log_level"),
 	}
 
 	updateLoggingLevel(newConfig.LogLevel)
@@ -993,4 +996,56 @@ func updateLoggingLevel(level int) {
 		logging.SetLevel(logging.DEBUG, "")
 	}
 
+}
+
+func (s *XbmcSettings) ToString(key string) (ret string) {
+	if _, ok := (*s)[key]; !ok {
+		log.Errorf("Setting '%s' not found!", key)
+		return ""
+	}
+
+	var err error
+	if ret, err = cast.ToStringE((*s)[key]); err != nil {
+		log.Errorf("Error casting property '%s' with value '%s' to 'string': %s", key, (*s)[key], err)
+	}
+	return
+}
+
+func (s *XbmcSettings) ToInt(key string) (ret int) {
+	if _, ok := (*s)[key]; !ok {
+		log.Errorf("Setting '%s' not found!", key)
+		return 0
+	}
+
+	var err error
+	if ret, err = cast.ToIntE((*s)[key]); err != nil {
+		log.Errorf("Error casting property '%s' with value '%s' to 'int': %s", key, (*s)[key], err)
+	}
+	return
+}
+
+func (s *XbmcSettings) ToInt64(key string) (ret int64) {
+	if _, ok := (*s)[key]; !ok {
+		log.Errorf("Setting '%s' not found!", key)
+		return 0
+	}
+
+	var err error
+	if ret, err = cast.ToInt64E((*s)[key]); err != nil {
+		log.Errorf("Error casting property '%s' with value '%s' to 'int64': %s", key, (*s)[key], err)
+	}
+	return
+}
+
+func (s *XbmcSettings) ToBool(key string) (ret bool) {
+	if _, ok := (*s)[key]; !ok {
+		log.Errorf("Setting '%s' not found!", key)
+		return false
+	}
+
+	var err error
+	if ret, err = cast.ToBoolE((*s)[key]); err != nil {
+		log.Errorf("Error casting property '%s' with value '%s' to 'bool': %s", key, (*s)[key], err)
+	}
+	return
 }
