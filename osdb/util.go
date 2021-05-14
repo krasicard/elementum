@@ -16,7 +16,6 @@ import (
 	"github.com/elgatito/elementum/proxy"
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/xbmc"
-	"github.com/scakemyer/quasar/osdb"
 )
 
 // DoSearch ...
@@ -176,7 +175,7 @@ func appendLocalFilePayloads(playingFile string, payloads *[]SearchPayload) erro
 	defer file.Close()
 
 	hashPayload := SearchPayload{}
-	if h, err := osdb.HashFile(file); err == nil {
+	if h, err := HashFile(file); err == nil {
 		hashPayload.Hash = h
 	}
 	if s, err := file.Stat(); err == nil {
