@@ -2019,7 +2019,7 @@ func (t *Torrent) GetPlayURL(fileIndex string) string {
 }
 
 // TorrentInfo writes torrent status to io.Writer
-func (t *Torrent) TorrentInfo(w io.Writer) {
+func (t *Torrent) TorrentInfo(w io.Writer, showTrackers, showPieces bool) {
 	if t.Closer.IsSet() {
 		return
 	}
@@ -2086,58 +2086,63 @@ func (t *Torrent) TorrentInfo(w io.Writer) {
 	lt.DeleteStdVectorInt(filePriorities)
 
 	fmt.Fprint(w, "\n")
-	fmt.Fprint(w, "    Libtorrent Trackers:\n")
 
-	trackers := t.th.Trackers()
-	trackersSize := trackers.Size()
-	for i := 0; i < int(trackersSize); i++ {
-		tracker := trackers.Get(i)
-		fmt.Fprintf(w, "        %-60s: %-3s seeds, %-3s peers, updating: %-5v, is_working: %-5v, message: %s\n",
-			tracker.GetUrl(),
-			peerNumToString(tracker.GetScrapeComplete()),
-			peerNumToString(tracker.GetScrapeIncomplete()),
-			tracker.GetUpdating(),
-			tracker.IsWorking(),
-			tracker.GetMessage())
+	if showTrackers {
+		fmt.Fprint(w, "    Libtorrent Trackers:\n")
+
+		trackers := t.th.Trackers()
+		trackersSize := trackers.Size()
+		for i := 0; i < int(trackersSize); i++ {
+			tracker := trackers.Get(i)
+			fmt.Fprintf(w, "        %-60s: %-3s seeds, %-3s peers, updating: %-5v, is_working: %-5v, message: %s\n",
+				tracker.GetUrl(),
+				peerNumToString(tracker.GetScrapeComplete()),
+				peerNumToString(tracker.GetScrapeIncomplete()),
+				tracker.GetUpdating(),
+				tracker.IsWorking(),
+				tracker.GetMessage())
+		}
+
+		fmt.Fprint(w, "\n")
+		fmt.Fprint(w, "    Invernal Trackers:\n")
+
+		t.trackers.Range(func(t, p interface{}) bool {
+			fmt.Fprintf(w, "        %-60s: %-3d peers\n", t, p)
+			return true
+		})
+		fmt.Fprint(w, "\n")
 	}
-
-	fmt.Fprint(w, "\n")
-	fmt.Fprint(w, "    Invernal Trackers:\n")
-
-	t.trackers.Range(func(t, p interface{}) bool {
-		fmt.Fprintf(w, "        %-60s: %-3d peers\n", t, p)
-		return true
-	})
-	fmt.Fprint(w, "\n")
 
 	if t.Closer.IsSet() || t.ti == nil || t.ti.Swigcptr() == 0 || t.th == nil || t.th.Swigcptr() == 0 {
 		return
 	}
 
-	// TODO: Do we need pieces into?
-	// Emulate piece status get to update pieces states
-	t.hasPiece(0)
+	if showPieces {
+		// TODO: Do we need pieces into?
+		// Emulate piece status get to update pieces states
+		t.hasPiece(0)
 
-	piecesStatus := bytebufferpool.Get()
-	piecesStatus.Reset()
-	piecesStatus.WriteString("        ")
-	for i := 0; i < t.ti.NumPieces(); i++ {
-		if t.hasPiece(i) {
-			piecesStatus.WriteString("+")
-		} else if pr := t.th.PiecePriority(i).(int); pr == 0 {
-			piecesStatus.WriteString("-")
-		} else {
-			piecesStatus.WriteString(strconv.Itoa(pr))
-		}
+		piecesStatus := bytebufferpool.Get()
+		piecesStatus.Reset()
+		piecesStatus.WriteString("        ")
+		for i := 0; i < t.ti.NumPieces(); i++ {
+			if t.hasPiece(i) {
+				piecesStatus.WriteString("+")
+			} else if pr := t.th.PiecePriority(i).(int); pr == 0 {
+				piecesStatus.WriteString("-")
+			} else {
+				piecesStatus.WriteString(strconv.Itoa(pr))
+			}
 
-		if i > 0 && (i+1)%100 == 0 {
-			piecesStatus.WriteString("\n        ")
+			if i > 0 && (i+1)%100 == 0 {
+				piecesStatus.WriteString("\n        ")
+			}
 		}
+		fmt.Fprint(w, "    Pieces:\n")
+		fmt.Fprint(w, piecesStatus.String())
+		bytebufferpool.Put(piecesStatus)
+		fmt.Fprint(w, "\n")
 	}
-	fmt.Fprint(w, "    Pieces:\n")
-	fmt.Fprint(w, piecesStatus.String())
-	bytebufferpool.Put(piecesStatus)
-	fmt.Fprint(w, "\n")
 }
 
 // IsMemoryStorage is a shortcut for checking whether we run memory storage

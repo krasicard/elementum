@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -23,6 +22,7 @@ import (
 	"github.com/anacrolix/missinggo/perf"
 	"github.com/cespare/xxhash"
 	"github.com/dustin/go-humanize"
+	"github.com/gin-gonic/gin"
 	"github.com/radovskyb/watcher"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/zeebo/bencode"
@@ -1600,16 +1600,21 @@ func (s *Service) PlayerSeek() {
 }
 
 // ClientInfo ...
-func (s *Service) ClientInfo(_w io.Writer) {
-	w := bufio.NewWriter(_w)
+func (s *Service) ClientInfo(ctx *gin.Context) {
+	torrentID := ctx.Query("torrentid")
+
+	showTrackers := ctx.DefaultQuery("trackers", "true") == "true"
+	showPieces := ctx.DefaultQuery("pieces", "true") == "true"
+
+	w := bufio.NewWriter(ctx.Writer)
 	defer w.Flush()
 
 	for _, t := range s.q.All() {
-		if t == nil || t.th == nil {
+		if t == nil || t.th == nil || (torrentID != "" && t.infoHash != torrentID) {
 			continue
 		}
 
-		t.TorrentInfo(w)
+		t.TorrentInfo(w, showTrackers, showPieces)
 
 		fmt.Fprint(w, "\n\n")
 	}
