@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/elgatito/elementum/bittorrent"
@@ -25,7 +26,7 @@ const (
 var seekCatched = false
 
 // Notification serves callbacks from Kodi
-func Notification(w http.ResponseWriter, r *http.Request, s *bittorrent.Service) {
+func Notification(r *http.Request, s *bittorrent.Service) {
 	sender := r.URL.Query().Get("sender")
 	method := r.URL.Query().Get("method")
 	data := r.URL.Query().Get("data")
@@ -47,6 +48,10 @@ func Notification(w http.ResponseWriter, r *http.Request, s *bittorrent.Service)
 	}
 
 	switch method {
+	case "System.OnQuit":
+		log.Infof("Sending SIGHUP signal to shutdown Elementum properly")
+		syscall.Kill(syscall.Getpid(), syscall.SIGHUP)
+
 	case "Playlist.OnAdd":
 		p := s.GetActivePlayer()
 		if p == nil || p.Params().VideoDuration == 0 {

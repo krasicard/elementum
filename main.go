@@ -176,15 +176,19 @@ func main() {
 	}))
 	http.Handle("/reload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.Reconfigure()
+		w.Write([]byte("true"))
 	}))
 	http.Handle("/notification", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		Notification(w, r, s)
+		Notification(r, s)
+		w.Write([]byte("true"))
 	}))
 	http.Handle("/shutdown", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shutdown(ExitCodeSuccess)
+		w.Write([]byte("true"))
 	}))
 	http.Handle("/restart", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shutdown(ExitCodeRestart)
+		w.Write([]byte("true"))
 	}))
 
 	if config.Get().GreetingEnabled {
