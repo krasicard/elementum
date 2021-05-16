@@ -18,8 +18,6 @@ import (
 // ContextPlaySelector plays/downloads media from Kodi in elementum
 func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		action := ctx.Params.ByName("action")
 		id := ctx.Params.ByName("kodiID")
 		kodiID, _ := strconv.Atoi(id)
@@ -72,8 +70,6 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 // ContextAssignKodiSelector assigns torrent to movie/episode by Kodi library ID
 func ContextAssignKodiSelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		torrentID := ctx.Params.ByName("torrentId")
 		id := ctx.Params.ByName("kodiID")
 		kodiID, _ := strconv.Atoi(id)
@@ -114,8 +110,6 @@ func ContextAssignKodiSelector(s *bittorrent.Service) gin.HandlerFunc {
 // ContextAssignTMDBMovieSelector assigns torrent to movie by TMDB ID
 func ContextAssignTMDBMovieSelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		torrentID := ctx.Params.ByName("torrentId")
 		id := ctx.Params.ByName("tmdbId")
 		tmdbID, _ := strconv.Atoi(id)
@@ -137,8 +131,6 @@ func ContextAssignTMDBMovieSelector(s *bittorrent.Service) gin.HandlerFunc {
 // ContextAssignTMDBSeasonSelector assigns torrent to season by show TMDB ID and season number
 func ContextAssignTMDBSeasonSelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		torrentID := ctx.Params.ByName("torrentId")
 		id := ctx.Params.ByName("tmdbId")
 		showID, _ := strconv.Atoi(id)
@@ -171,8 +163,6 @@ func ContextAssignTMDBSeasonSelector(s *bittorrent.Service) gin.HandlerFunc {
 // ContextAssignTMDBEpisodeSelector assigns torrent to episode by show TMDB ID and season/episode numbers
 func ContextAssignTMDBEpisodeSelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		torrentID := ctx.Params.ByName("torrentId")
 		id := ctx.Params.ByName("tmdbId")
 		showID, _ := strconv.Atoi(id)

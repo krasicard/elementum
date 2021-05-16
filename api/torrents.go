@@ -76,8 +76,6 @@ func AddToTorrentsMap(tmdbID string, torrent *bittorrent.TorrentFile) {
 // AssignTorrent assigns torrent by its id to elementum's item by its TMDB id
 func AssignTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
 		if err != nil {
@@ -313,7 +311,6 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 
 		items := make([]*TorrentsWeb, 0, len(s.GetTorrents()))
 		if len(s.GetTorrents()) == 0 {
-			ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 			ctx.JSON(200, items)
 			return
 		}
@@ -382,7 +379,6 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 			items = append(items, ti)
 		}
 
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.JSON(200, items)
 	}
 }
@@ -394,7 +390,6 @@ func PauseSession(s *bittorrent.Service) gin.HandlerFunc {
 
 		// TODO: Add Global Pause
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -406,7 +401,6 @@ func ResumeSession(s *bittorrent.Service) gin.HandlerFunc {
 
 		// TODO: Add Global Resume
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -426,8 +420,6 @@ func AddTorrent(s *bittorrent.Service) gin.HandlerFunc {
 				uri = t
 			}
 		}
-
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 		if uri == "" {
 			torrentsLog.Errorf("Torrent file/magnet url is empty")
@@ -481,7 +473,6 @@ func ResumeTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		torrent.Resume()
 
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -502,7 +493,6 @@ func MoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		s.MarkedToMove = torrent.InfoHash()
 
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -522,7 +512,6 @@ func PauseTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		torrent.Pause()
 
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -542,7 +531,6 @@ func RemoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		s.RemoveTorrent(torrent, true, deleteFiles == "true", false)
 
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -563,7 +551,6 @@ func DownloadAllTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		torrent.SaveDBFiles()
 
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -584,7 +571,6 @@ func UnDownloadAllTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		torrent.SaveDBFiles()
 
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -617,7 +603,6 @@ func SelectFileTorrent(s *bittorrent.Service, isPlay bool) gin.HandlerFunc {
 		}
 
 		xbmc.Refresh()
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }
@@ -633,7 +618,6 @@ func Versions(s *bittorrent.Service) gin.HandlerFunc {
 			Version:   util.GetVersion(),
 			UserAgent: s.UserAgent,
 		}
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.JSON(200, versions)
 	}
 }

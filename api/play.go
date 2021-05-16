@@ -97,8 +97,8 @@ func Play(s *bittorrent.Service) gin.HandlerFunc {
 		} else if t := s.GetTorrentByURI(uri); t != nil {
 			resume = t.InfoHash()
 			player.SetTorrent(t)
-		} 
-		
+		}
+
 		if player.Buffer() != nil || !player.HasChosenFile() || player.Params().Background {
 			player.Close()
 			return
@@ -182,7 +182,6 @@ func PlayURI(s *bittorrent.Service) gin.HandlerFunc {
 				"query", query,
 				"type", contentType))
 		}
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, "")
 	}
 }

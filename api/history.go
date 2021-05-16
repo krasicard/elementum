@@ -15,8 +15,6 @@ import (
 func History(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 	infohash := ctx.Query("infohash")
 	index := ctx.DefaultQuery("index", "")
 	if torrent := InTorrentsHistory(infohash); torrent != nil {

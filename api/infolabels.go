@@ -95,7 +95,6 @@ func InfoLabelsStored(s *bittorrent.Service) gin.HandlerFunc {
 			labelsString = encoded
 		}
 
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		ctx.String(200, labelsString)
 	}
 }

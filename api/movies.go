@@ -454,7 +454,6 @@ func MoviesMostVoted(ctx *gin.Context) {
 func SearchMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	query := ctx.Query("q")
 	keyboard := ctx.Query("keyboard")
 	historyType := "movies"
@@ -497,8 +496,6 @@ func MovieRun(action string, s *bittorrent.Service) gin.HandlerFunc {
 // MovieLinks ...
 func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		tmdbID := ctx.Params.ByName("tmdbId")
 		external := ctx.Query("external")
 		doresume := ctx.DefaultQuery("doresume", "true")

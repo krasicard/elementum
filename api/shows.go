@@ -357,7 +357,6 @@ func TVMostVoted(ctx *gin.Context) {
 func SearchShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	query := ctx.Query("q")
 	keyboard := ctx.Query("keyboard")
 	historyType := "shows"
@@ -379,7 +378,6 @@ func SearchShows(ctx *gin.Context) {
 func ShowSeasons(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	showID, _ := strconv.Atoi(ctx.Params.ByName("showId"))
 
 	show := tmdb.GetShow(showID, config.Get().Language)
@@ -434,7 +432,6 @@ func ShowSeasons(ctx *gin.Context) {
 func ShowEpisodes(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	showID, _ := strconv.Atoi(ctx.Params.ByName("showId"))
 	seasonParam := ctx.Params.ByName("season")
 	seasonNumber, _ := strconv.Atoi(seasonParam)
@@ -561,8 +558,6 @@ func ShowSeasonRun(action string, s *bittorrent.Service) gin.HandlerFunc {
 // ShowSeasonLinks ...
 func ShowSeasonLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		tmdbID := ctx.Params.ByName("showId")
 		showID, _ := strconv.Atoi(tmdbID)
 		seasonNumber, _ := strconv.Atoi(ctx.Params.ByName("season"))
@@ -750,8 +745,6 @@ func ShowEpisodeRun(action string, s *bittorrent.Service) gin.HandlerFunc {
 // ShowEpisodeLinks ...
 func ShowEpisodeLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 		tmdbID := ctx.Params.ByName("showId")
 		showID, _ := strconv.Atoi(tmdbID)
 		seasonNumber, _ := strconv.Atoi(ctx.Params.ByName("season"))

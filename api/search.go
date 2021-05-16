@@ -25,7 +25,6 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		query := ctx.Query("q")
 		keyboard := ctx.Query("keyboard")
 		action := ctx.Query("action")
