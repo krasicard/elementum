@@ -35,6 +35,7 @@ type TorrentsWeb struct {
 	Name          string  `json:"name"`
 	Size          string  `json:"size"`
 	Status        string  `json:"status"`
+	StatusCode    int     `json:"status_code"`
 	Progress      float64 `json:"progress"`
 	Ratio         float64 `json:"ratio"`
 	TimeRatio     float64 `json:"time_ratio"`
@@ -229,7 +230,8 @@ func ListTorrents(s *bittorrent.Service) gin.HandlerFunc {
 
 			torrentName := t.Name()
 			progress := t.GetProgress()
-			status := xbmc.Translate(t.GetStateString())
+			statusCode := t.GetSmartState()
+			status := xbmc.Translate(bittorrent.StatusStrings[statusCode])
 
 			torrentAction := []string{"LOCALIZE[30231]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/torrents/pause/%s", t.InfoHash()))}
 			sessionAction := []string{"LOCALIZE[30233]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/torrents/pause"))}
@@ -329,7 +331,9 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 			progress := float64(torrentStatus.GetProgress()) * 100
 
 			infoHash := t.InfoHash()
-			status := xbmc.Translate(t.GetStateString())
+
+			statusCode := t.GetSmartState()
+			status := xbmc.Translate(bittorrent.StatusStrings[statusCode])
 
 			ratio := float64(0)
 			allTimeDownload := float64(torrentStatus.GetAllTimeDownload())
@@ -361,6 +365,7 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 				Name:          torrentName,
 				Size:          size,
 				Status:        status,
+				StatusCode:    statusCode,
 				Progress:      progress,
 				Ratio:         ratio,
 				TimeRatio:     timeRatio,

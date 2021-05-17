@@ -798,12 +798,12 @@ func (t *Torrent) GetState() int {
 	return int(st.GetState())
 }
 
-// GetStateString ...
-func (t *Torrent) GetStateString() string {
+// GetSmartState ...
+func (t *Torrent) GetSmartState() int {
 	defer perf.ScopeTimer()()
 
 	if t.th == nil || t.th.Swigcptr() == 0 {
-		return StatusStrings[StatusQueued]
+		return StatusQueued
 	}
 
 	torrentStatus := t.GetLastStatus(false)
@@ -811,25 +811,25 @@ func (t *Torrent) GetStateString() string {
 	state := int(torrentStatus.GetState())
 
 	if t.Service.Session.IsPaused() {
-		return StatusStrings[StatusPaused]
+		return StatusPaused
 	} else if torrentStatus.GetPaused() && state != StatusFinished && state != StatusFinding {
 		if progress == 100 {
-			return StatusStrings[StatusFinished]
+			return StatusFinished
 		}
 
-		return StatusStrings[StatusPaused]
+		return StatusPaused
 	} else if !torrentStatus.GetPaused() && (state == StatusFinished || progress == 100) {
 		if progress < 100 {
-			return StatusStrings[StatusDownloading]
+			return StatusDownloading
 		}
 	} else if state != StatusQueued && t.IsBuffering {
-		return StatusStrings[StatusBuffering]
+		return StatusBuffering
 	}
 	if t.IsBuffering {
-		return StatusStrings[StatusBuffering]
+		return StatusBuffering
 	}
 
-	return StatusStrings[state]
+	return state
 }
 
 // GetBufferProgress ...
