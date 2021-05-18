@@ -27,10 +27,15 @@ func SubtitlesIndex(s *bittorrent.Service) gin.HandlerFunc {
 		// Check if we are reading a file from Elementum
 		if strings.HasPrefix(playingFile, util.GetContextHTTPHost(ctx)) {
 			playingFile = strings.Replace(playingFile, util.GetContextHTTPHost(ctx)+"/files", config.Get().DownloadPath, 1)
-			playingFile, _ = url.QueryUnescape(playingFile)
+			// not QueryUnescape in order to treat "+" as "+" in file name on FS
+			playingFile, _ = url.PathUnescape(playingFile)
 		}
 
-		payloads, preferredLanguage := osdb.GetPayloads(q.Get("searchstring"), strings.Split(q.Get("languages"), ","), q.Get("preferredlanguage"), s.GetActivePlayer().Params().ShowID, playingFile)
+		showID := 0
+		if s.GetActivePlayer() != nil {
+			showID = s.GetActivePlayer().Params().ShowID
+		}
+		payloads, preferredLanguage := osdb.GetPayloads(q.Get("searchstring"), strings.Split(q.Get("languages"), ","), q.Get("preferredlanguage"), showID, playingFile)
 		subLog.Infof("Subtitles payload: %#v", payloads)
 
 		results, err := osdb.DoSearch(payloads, preferredLanguage)
