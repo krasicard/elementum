@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"syscall"
 	"time"
@@ -50,7 +51,13 @@ func Notification(r *http.Request, s *bittorrent.Service) {
 	switch method {
 	case "System.OnQuit":
 		log.Infof("Sending SIGHUP signal to shutdown Elementum properly")
-		syscall.Kill(syscall.Getpid(), syscall.SIGHUP)
+		p, err := os.FindProcess(os.Getpid())
+
+		if err != nil {
+			return
+		}
+
+		p.Signal(syscall.SIGHUP)
 
 	case "Playlist.OnAdd":
 		p := s.GetActivePlayer()
