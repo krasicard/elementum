@@ -1,6 +1,9 @@
 package util
 
-import "strings"
+import (
+	"os"
+	"strings"
+)
 
 var audioExtensions = []string{
 	".nsv",
@@ -142,4 +145,22 @@ func HasAudioExt(filename string) bool {
 	}
 
 	return false
+}
+
+// FileExists check for file existence in a simple way
+func FileExists(name string) bool {
+	if _, err := os.Stat(name); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
+}
+
+// FileWithoutExtension returns file without extension
+func FileWithoutExtension(name string) string {
+	if pos := strings.LastIndexByte(name, '.'); pos != -1 {
+		return name[:pos]
+	}
+	return name
 }

@@ -1108,9 +1108,7 @@ func (s *Service) loadTorrentFiles() {
 	// Cleaning the queue
 	s.q.Clean()
 
-	// Not loading previous torrents on start
-	// Otherwise we can dig out all the memory and halt the device
-	if s.IsMemoryStorage() || !s.config.AutoloadTorrents {
+	if !s.config.AutoloadTorrents {
 		return
 	}
 
@@ -1134,11 +1132,15 @@ func (s *Service) loadTorrentFiles() {
 		if !strings.HasSuffix(torrentFile.Name(), ".torrent") {
 			continue
 		}
+		if s.IsMemoryStorage() &&
+			!util.FileExists(filepath.Join(s.config.TorrentsPath, util.FileWithoutExtension(torrentFile.Name())+".file")) {
+			continue
+		}
 
 		filePath := filepath.Join(s.config.TorrentsPath, torrentFile.Name())
 		log.Infof("Loading torrent file %s", torrentFile.Name())
 
-		t, err := s.AddTorrent(filePath, s.config.AutoloadTorrentsPaused, config.Get().DownloadStorage, false)
+		t, err := s.AddTorrent(filePath, s.config.AutoloadTorrentsPaused, StorageFile, false)
 		if err != nil {
 			log.Warningf("Cannot add torrent from existing file %s: %s", filePath, err)
 			continue

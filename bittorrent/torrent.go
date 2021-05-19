@@ -37,18 +37,20 @@ import (
 
 // Torrent ...
 type Torrent struct {
-	files           []*File
-	th              lt.TorrentHandle
-	ti              lt.TorrentInfo
-	lastStatus      lt.TorrentStatus
-	lastStatusTime  time.Time
-	lastProgress    float64
-	ms              lt.MemoryStorage
-	fastResumeFile  string
-	torrentFile     string
-	partsFile       string
-	addedTime       time.Time
-	DownloadStorage int
+	files             []*File
+	th                lt.TorrentHandle
+	ti                lt.TorrentInfo
+	lastStatus        lt.TorrentStatus
+	lastStatusTime    time.Time
+	lastProgress      float64
+	ms                lt.MemoryStorage
+	fastResumeFile    string
+	torrentFile       string
+	partsFile         string
+	memoryStorageFile string
+	fileStorageFile   string
+	addedTime         time.Time
+	DownloadStorage   int
 
 	title              string
 	name               string
@@ -1205,6 +1207,16 @@ func (t *Torrent) Drop(removeFiles, removeData bool) {
 				log.Infof("Deleting parts file at %s", t.partsFile)
 				defer os.Remove(t.partsFile)
 			}
+
+			// Removing .memory/.file file
+			if _, err := os.Stat(t.memoryStorageFile); err == nil {
+				log.Infof("Deleting storage type file at %s", t.memoryStorageFile)
+				defer os.Remove(t.memoryStorageFile)
+			}
+			if _, err := os.Stat(t.fileStorageFile); err == nil {
+				log.Infof("Deleting storage type file at %s", t.fileStorageFile)
+				defer os.Remove(t.fileStorageFile)
+			}
 		}
 
 		log.Infof("Removed %s from database", t.Name())
@@ -1518,8 +1530,16 @@ func (t *Torrent) onMetadataReceived() {
 	infoHash := t.InfoHash()
 	t.fastResumeFile = filepath.Join(t.Service.config.TorrentsPath, fmt.Sprintf("%s.fastresume", infoHash))
 	t.partsFile = filepath.Join(t.Service.config.DownloadPath, fmt.Sprintf(".%s.parts", infoHash))
+	t.memoryStorageFile = filepath.Join(t.Service.config.DownloadPath, fmt.Sprintf(".%s.memory", infoHash))
+	t.fileStorageFile = filepath.Join(t.Service.config.DownloadPath, fmt.Sprintf(".%s.file", infoHash))
 
 	go func() {
+		if t.IsMemoryStorage() {
+			os.Create(t.memoryStorageFile)
+		} else {
+			os.Create(t.fileStorageFile)
+		}
+
 		// After metadata is fetched for a torrent, we should
 		// save it to torrent file for re-adding after program restart.
 		t.UpdateTorrentMetadata()
