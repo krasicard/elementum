@@ -34,6 +34,7 @@ type TorrentsWeb struct {
 	ID            string  `json:"id"`
 	Name          string  `json:"name"`
 	Size          string  `json:"size"`
+	SizeBytes     int64   `json:"size_bytes"`
 	Status        string  `json:"status"`
 	StatusCode    int     `json:"status_code"`
 	Progress      float64 `json:"progress"`
@@ -353,7 +354,8 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 				seedingTime = time.Duration(finishedTime) * time.Second
 			}
 
-			size := humanize.Bytes(uint64(t.GetSelectedSize()))
+			sizeBytes := t.GetSelectedSize()
+			size := humanize.Bytes(uint64(sizeBytes))
 
 			downloadRate := float64(torrentStatus.GetDownloadPayloadRate()) / 1024
 			uploadRate := float64(torrentStatus.GetUploadPayloadRate()) / 1024
@@ -364,6 +366,7 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 				ID:            infoHash,
 				Name:          torrentName,
 				Size:          size,
+				SizeBytes:     sizeBytes,
 				Status:        status,
 				StatusCode:    statusCode,
 				Progress:      progress,
