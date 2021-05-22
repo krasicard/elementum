@@ -29,11 +29,14 @@ var (
 
 	// LastCallerIP represents the IP of last request, made by client to backend.
 	LastCallerIP = ""
+
+	// XBMCExJSONRPCPort is a port for XBMCExJSONRPC (RCP of python part of the plugin)
+	XBMCExJSONRPCPort = "65221"
 )
 
 func getXBMCExJSONRPCHosts() []string {
 	if LastCallerIP != "" {
-		return []string{net.JoinHostPort(LastCallerIP, "65221")}
+		return []string{net.JoinHostPort(LastCallerIP, XBMCExJSONRPCPort)}
 	}
 
 	return XBMCExJSONRPCHosts
