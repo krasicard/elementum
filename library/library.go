@@ -955,6 +955,7 @@ func deleteDBItem(tmdbID int, mediaType int, removal bool) error {
 		log.Debugf("Cannot update deleted item: %s", err)
 		return err
 	}
+
 	return nil
 }
 
@@ -981,7 +982,7 @@ func wasRemoved(id int, mediaType int) (wasRemoved bool) {
 	defer perf.ScopeTimer()()
 
 	var li database.LibraryItem
-	if err := database.GetStormDB().Select(q.Eq("ID", id), q.Eq("MediaType", mediaType), q.Eq("State", StateDeleted)).First(&li); err != nil && li.ID != 0 {
+	if err := database.GetStormDB().Select(q.Eq("ID", id), q.Eq("MediaType", mediaType), q.Eq("State", StateDeleted)).First(&li); err == nil && li.ID != 0 {
 		return true
 	}
 
