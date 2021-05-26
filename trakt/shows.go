@@ -762,12 +762,117 @@ func WatchedShowsProgress() (shows []*ProgressShow, err error) {
 	}
 	wg.Wait()
 
+	hiddenShowsMap := GetHiddenShowsMap("progress_watched")
 	for _, s := range showsList {
 		if s != nil {
-			shows = append(shows, s)
+			if !hiddenShowsMap[s.Show.IDs.Trakt] {
+				shows = append(shows, s)
+			} else {
+				log.Debugf("Will supress hidden show: %s", s.Show.Title)
+			}
 		}
 	}
 
+	return
+}
+
+// GetHiddenShowsMap returns a map with hidden shows that can be used for filtering
+func GetHiddenShowsMap(section string) map[int]bool {
+	hiddenShowsMap := make(map[int]bool)
+	if config.Get().TraktToken == "" || !config.Get().TraktSyncHidden {
+		return hiddenShowsMap
+	}
+
+	hiddenShowsProgress, _ := ListHiddenShows(section, false)
+	for _, show := range hiddenShowsProgress {
+		hiddenShowsMap[show.Show.IDs.Trakt] = true
+	}
+
+	return hiddenShowsMap
+}
+
+// FilterHiddenProgressShows returns a slice of ProgressShow without hidden shows
+func FilterHiddenProgressShows(inShows []*ProgressShow) (outShows []*ProgressShow) {
+	if config.Get().TraktToken == "" || !config.Get().TraktSyncHidden {
+		return inShows
+	}
+
+	hiddenShowsMap := GetHiddenShowsMap("progress_watched")
+
+	for _, s := range inShows {
+		if s != nil {
+			if !hiddenShowsMap[s.Show.IDs.Trakt] {
+				// append to new instead of delete in old b/c delete is O(n)
+				outShows = append(outShows, s)
+			} else {
+				log.Debugf("Will supress hidden show: %s", s.Show.Title)
+			}
+		}
+	}
+
+	return outShows
+}
+
+// ListHiddenShows updates list of hidden shows for a given section
+func ListHiddenShows(section string, isUpdateNeeded bool) (shows []*Shows, err error) {
+	if err := Authorized(); err != nil {
+		return shows, err
+	}
+
+	endPoint := "users/hidden/" + section
+
+	params := napping.Params{
+		"type":  "show",
+		"limit": "100",
+	}.AsUrlValues()
+
+	cacheStore := cache.NewDBStore()
+	var cacheKey string
+	var cacheExpiration time.Duration
+	switch section {
+	case "progress_watched":
+		cacheKey = cache.TraktShowsHiddenProgressKey
+		cacheExpiration = cache.TraktShowsHiddenProgressExpire
+	default:
+		return shows, fmt.Errorf("Unsupported section for hidden shows: %s", section)
+	}
+
+	if !isUpdateNeeded {
+		if err := cacheStore.Get(cacheKey, &shows); err == nil {
+			return shows, nil
+		}
+	}
+
+	totalPages := 1
+	for page := 1; page < totalPages+1; page++ {
+		params.Add("page", strconv.Itoa(page))
+
+		resp, err := GetWithAuth(endPoint, params)
+
+		if err != nil {
+			return shows, err
+		} else if resp.Status() != 200 {
+			log.Error(err)
+			return shows, fmt.Errorf("Bad status getting Trakt hidden items for shows: %d", resp.Status())
+		}
+
+		var hiddenShows []*HiddenShow
+		if err := resp.Unmarshal(&hiddenShows); err != nil {
+			log.Warning(err)
+		}
+
+		for _, show := range hiddenShows {
+			showItem := Shows{
+				Show: show.Show,
+			}
+			shows = append(shows, &showItem)
+		}
+
+		pagination := getPagination(resp.HttpResponse().Header)
+		totalPages = pagination.PageCount
+	}
+
+	cacheStore.Set(cacheKey, &shows, cacheExpiration)
 	return
 }
 
