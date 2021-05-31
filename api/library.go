@@ -90,7 +90,7 @@ func RemoveMovie(ctx *gin.Context) {
 
 	tmdbID, _ := strconv.Atoi(ctx.Params.ByName("tmdbId"))
 	tmdbStr := ctx.Params.ByName("tmdbId")
-	movie, err := library.RemoveMovie(tmdbID)
+	movie, paths, err := library.RemoveMovie(tmdbID)
 	if err != nil {
 		ctx.String(200, err.Error())
 	}
@@ -100,7 +100,12 @@ func RemoveMovie(ctx *gin.Context) {
 
 	if ctx != nil {
 		if movie != nil && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", movie.Title)) {
-			xbmc.VideoLibraryClean()
+			for _, path := range paths {
+				xbmc.VideoLibraryCleanDirectory(path, "movies", false)
+			}
+			if m, err := library.GetMovieByTMDB(movie.ID); err == nil && m != nil {
+				xbmc.VideoLibraryRemoveMovie(m.XbmcUIDs.Kodi)
+			}
 		} else {
 			ctx.Abort()
 			library.ClearPageCache()
@@ -164,7 +169,7 @@ func RemoveShow(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
 	tmdbID := ctx.Params.ByName("tmdbId")
-	show, err := library.RemoveShow(tmdbID)
+	show, paths, err := library.RemoveShow(tmdbID)
 	if err != nil {
 		ctx.String(200, err.Error())
 	}
@@ -173,8 +178,13 @@ func RemoveShow(ctx *gin.Context) {
 	}
 
 	if ctx != nil {
-		if show != nil && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", show.Name)) {
-			xbmc.VideoLibraryClean()
+		if show != nil && paths != nil && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", show.Name)) {
+			for _, path := range paths {
+				xbmc.VideoLibraryCleanDirectory(path, "tvshows", false)
+			}
+			if s, err := library.GetShowByTMDB(show.ID); err == nil && s != nil {
+				xbmc.VideoLibraryRemoveTVShow(s.XbmcUIDs.Kodi)
+			}
 		} else {
 			ctx.Abort()
 			library.ClearPageCache()

@@ -43,6 +43,17 @@ func VideoLibraryClean() (retVal string) {
 	return
 }
 
+// VideoLibraryClean initiates Kodi library cleanup for specific removed directory
+func VideoLibraryCleanDirectory(directory string, content string, showDialogs bool) (retVal string) {
+	params := map[string]interface{}{
+		"showdialogs": showDialogs,
+		"directory":   directory,
+		"content":     content,
+	}
+	executeJSONRPCO("VideoLibrary.Clean", &retVal, params)
+	return
+}
+
 // VideoLibraryGetMovies ...
 func VideoLibraryGetMovies() (movies *VideoLibraryMovies, err error) {
 	defer perf.ScopeTimer()()
@@ -120,6 +131,18 @@ func VideoLibraryGetElementumMovies() (movies *VideoLibraryMovies, err error) {
 
 	filteredMovies.Limits.Total = total
 	return filteredMovies, nil
+}
+
+// VideoLibraryRemoveMovie ...
+func VideoLibraryRemoveMovie(id int) (retVal string) {
+	executeJSONRPC("VideoLibrary.RemoveMovie", &retVal, Args{id})
+	return
+}
+
+// VideoLibraryRemoveTVShow ...
+func VideoLibraryRemoveTVShow(id int) (retVal string) {
+	executeJSONRPC("VideoLibrary.RemoveTVShow", &retVal, Args{id})
+	return
 }
 
 // PlayerGetActive ...

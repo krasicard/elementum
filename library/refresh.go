@@ -394,7 +394,7 @@ func RefreshMovie(kodiID, action int) {
 		}
 
 		if action == ActionDelete {
-			if _, err := RemoveMovie(uids.TMDB); err != nil {
+			if _, _, err := RemoveMovie(uids.TMDB); err != nil {
 				log.Warning("Nothing left to remove from Elementum")
 			}
 		}
@@ -429,7 +429,7 @@ func RefreshShow(kodiID, action int) {
 	if action == ActionDelete || action == ActionSafeDelete {
 		if action == ActionDelete {
 			id := strconv.Itoa(uids.TMDB)
-			if _, err := RemoveShow(id); err != nil {
+			if _, _, err := RemoveShow(id); err != nil {
 				log.Warning("Nothing left to remove from Elementum")
 			}
 		}

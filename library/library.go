@@ -197,7 +197,7 @@ func Init() {
 						}
 						if len(showEpisodes) == libraryTotal {
 							ID := strconv.Itoa(showEpisodes[0].ShowID)
-							if _, err := RemoveShow(ID); err != nil {
+							if _, _, err := RemoveShow(ID); err != nil {
 								log.Error("Unable to remove show after removing all episodes...")
 							}
 						} else {
@@ -342,7 +342,7 @@ func Init() {
 				// Remove from Elementum's library to prevent duplicates
 				if item.Type == movieType {
 					if IsDuplicateMovie(strconv.Itoa(item.ID)) {
-						if _, err := RemoveMovie(item.ID); err != nil {
+						if _, _, err := RemoveMovie(item.ID); err != nil {
 							log.Warning("Nothing left to remove from Elementum")
 						}
 					}
@@ -675,9 +675,9 @@ https://www.themoviedb.org/tv/%v
 //
 
 // RemoveMovie removes movie from the library
-func RemoveMovie(tmdbID int) (*tmdb.Movie, error) {
+func RemoveMovie(tmdbID int) (*tmdb.Movie, []string, error) {
 	if err := checkMoviesPath(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer func() {
 		deleteDBItem(tmdbID, MovieType, true)
@@ -686,38 +686,34 @@ func RemoveMovie(tmdbID int) (*tmdb.Movie, error) {
 	ID := strconv.Itoa(tmdbID)
 	movie := tmdb.GetMovieByID(ID, config.Get().StrmLanguage)
 	if movie == nil {
-		return nil, errors.New("Can't resolve movie")
+		return nil, nil, errors.New("Can't resolve movie")
 	}
 
-	titles := []string{movie.Title, movie.OriginalTitle}
-	path := ""
-	for _, t := range titles {
-		movieStrm := util.ToFileName(fmt.Sprintf("%s (%s)", t, strings.Split(movie.ReleaseDate, "-")[0]))
-		moviePath := filepath.Join(MoviesLibraryPath(), movieStrm)
+	paths := getMoviePaths(movie)
 
-		if _, err := os.Stat(moviePath); err == nil {
-			path = moviePath
-			break
+	if len(paths) == 0 {
+		log.Warningf("Cannot find directories with strm files")
+		return movie, nil, errors.New("LOCALIZE[30282]")
+	}
+	ret := []string{}
+	for path := range paths {
+		if err := os.RemoveAll(path); err != nil {
+			log.Error(err)
+			return movie, nil, err
 		}
-	}
 
-	if path == "" {
-		log.Warningf("Cannot stat movie strm file")
-		return movie, errors.New("LOCALIZE[30282]")
-	}
-	if err := os.RemoveAll(path); err != nil {
-		log.Warningf("Cannot remove movie strm file: %s", err)
-		return movie, err
+		ret = append(ret, path)
+		log.Warningf("Directory %s removed from disk", path)
 	}
 
 	log.Warningf("%s removed from library", movie.Title)
-	return movie, nil
+	return movie, ret, nil
 }
 
 // RemoveShow removes show from the library
-func RemoveShow(tmdbID string) (*tmdb.Show, error) {
+func RemoveShow(tmdbID string) (*tmdb.Show, []string, error) {
 	if err := checkShowsPath(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	ID, _ := strconv.Atoi(tmdbID)
 	defer func() {
@@ -727,34 +723,29 @@ func RemoveShow(tmdbID string) (*tmdb.Show, error) {
 	show := tmdb.GetShow(ID, config.Get().StrmLanguage)
 
 	if show == nil {
-		return nil, errors.New("Unable to find show to remove")
+		return nil, nil, errors.New("Unable to find show to remove")
 	}
 
-	titles := []string{show.Name, show.OriginalName}
-	path := ""
-	for _, t := range titles {
-		showStrm := util.ToFileName(fmt.Sprintf("%s (%s)", t, strings.Split(show.FirstAirDate, "-")[0]))
-		showPath := filepath.Join(ShowsLibraryPath(), showStrm)
+	paths := getShowPaths(show)
 
-		if _, err := os.Stat(showPath); err == nil {
-			path = showPath
-			break
+	if len(paths) == 0 {
+		log.Warningf("Cannot find directories with strm files")
+		return show, nil, errors.New("LOCALIZE[30282]")
+	}
+	ret := []string{}
+	for path := range paths {
+		if err := os.RemoveAll(path); err != nil {
+			log.Error(err)
+			return show, nil, err
 		}
+
+		ret = append(ret, path)
+		log.Warningf("Directory %s removed from disk", path)
 	}
 
-	if path == "" {
-		log.Warningf("Cannot stat show strm file")
-		return show, errors.New("LOCALIZE[30282]")
-	}
-	if err := os.RemoveAll(path); err != nil {
-		log.Error(err)
-		return show, err
-	}
-
-	log.Warningf("Directory %s removed from disk", path)
 	log.Warningf("%s removed from library", show.Name)
 
-	return show, nil
+	return show, ret, nil
 }
 
 // RemoveEpisode removes episode from the library
@@ -1430,6 +1421,15 @@ func GetShowForEpisode(kodiID int) (*Show, *Episode) {
 }
 
 func getShowPath(show *tmdb.Show) (showPath, showStrm string) {
+	// If this show already uses any directory - we should write there, to avoid having duplicates
+	paths := getShowPathsByTMDB(show.ID)
+	if len(paths) != 0 {
+		for path := range paths {
+			showPath = path
+			break
+		}
+	}
+
 	showName := show.OriginalName
 	if config.Get().StrmLanguage != config.Get().Language && show.Name != "" {
 		showName = show.Name
@@ -1439,4 +1439,68 @@ func getShowPath(show *tmdb.Show) (showPath, showStrm string) {
 	showPath = filepath.Join(ShowsLibraryPath(), showStrm)
 
 	return
+}
+
+func getMoviePathsByTMDB(id int) (ret map[string]bool) {
+	ret = map[string]bool{}
+
+	if m, err := GetMovieByTMDB(id); err == nil {
+		if m != nil && m.File != "" && strings.HasSuffix(m.File, ".strm") {
+			ret[filepath.Dir(m.File)] = true
+		}
+	}
+
+	return
+}
+
+func getShowPathsByTMDB(id int) (ret map[string]bool) {
+	ret = map[string]bool{}
+
+	if s, err := findShowByTMDB(id); err == nil {
+		for _, e := range s.Episodes {
+			if e != nil && e.File != "" && strings.HasSuffix(e.File, ".strm") {
+				ret[filepath.Dir(e.File)] = true
+			}
+		}
+	}
+
+	return
+}
+
+func getMoviePaths(movie *tmdb.Movie) map[string]bool {
+	paths := getMoviePathsByTMDB(movie.ID)
+	if len(paths) != 0 {
+		return paths
+	}
+
+	titles := []string{movie.Title, movie.OriginalTitle}
+	for _, t := range titles {
+		movieStrm := util.ToFileName(fmt.Sprintf("%s (%s)", t, strings.Split(movie.ReleaseDate, "-")[0]))
+		moviePath := filepath.Join(MoviesLibraryPath(), movieStrm)
+
+		if _, err := os.Stat(moviePath); err == nil {
+			paths[moviePath] = true
+		}
+	}
+
+	return paths
+}
+
+func getShowPaths(show *tmdb.Show) map[string]bool {
+	paths := getShowPathsByTMDB(show.ID)
+	if len(paths) != 0 {
+		return paths
+	}
+
+	titles := []string{show.Name, show.OriginalName}
+	for _, t := range titles {
+		showStrm := util.ToFileName(fmt.Sprintf("%s (%s)", t, strings.Split(show.FirstAirDate, "-")[0]))
+		showPath := filepath.Join(ShowsLibraryPath(), showStrm)
+
+		if _, err := os.Stat(showPath); err == nil {
+			paths[showPath] = true
+		}
+	}
+
+	return paths
 }
