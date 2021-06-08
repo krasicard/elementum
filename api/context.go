@@ -62,7 +62,7 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 		err := fmt.Errorf("Cound not find TMDB entry for requested Kodi item %d of type %s", kodiID, media)
 		log.Error(err.Error())
 		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
-		ctx.Error(errors.New("Cannot find TMDB for selected Kodi item"))
+		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}
 }
@@ -102,7 +102,7 @@ func ContextAssignKodiSelector(s *bittorrent.Service) gin.HandlerFunc {
 		err := fmt.Errorf("Cound not find TMDB entry for requested Kodi item %d of type %s", kodiID, media)
 		log.Error(err.Error())
 		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
-		ctx.Error(errors.New("Cannot find TMDB for selected Kodi item"))
+		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}
 }
@@ -123,7 +123,7 @@ func ContextAssignTMDBMovieSelector(s *bittorrent.Service) gin.HandlerFunc {
 		err := fmt.Errorf("Cound not find TMDB entry for requested Kodi item %d of type %s", tmdbID, media)
 		log.Error(err.Error())
 		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
-		ctx.Error(errors.New("Cannot find TMDB for selected Kodi item"))
+		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}
 }
@@ -155,7 +155,7 @@ func ContextAssignTMDBSeasonSelector(s *bittorrent.Service) gin.HandlerFunc {
 		err := fmt.Errorf("Cound not find TMDB entry for requested Kodi item %d of type %s #%d", showID, media, seasonNumber)
 		log.Error(err.Error())
 		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
-		ctx.Error(errors.New("Cannot find TMDB for selected Kodi item"))
+		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}
 }
@@ -189,7 +189,7 @@ func ContextAssignTMDBEpisodeSelector(s *bittorrent.Service) gin.HandlerFunc {
 		err := fmt.Errorf("Cound not find TMDB entry for requested Kodi item %d of type %s S%dE%d", showID, media, seasonNumber, episodeNumber)
 		log.Error(err.Error())
 		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
-		ctx.Error(errors.New("Cannot find TMDB for selected Kodi item"))
+		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}
 }
@@ -209,24 +209,27 @@ func ContextActionFromKodiLibrarySelector(s *bittorrent.Service) gin.HandlerFunc
 				if m := library.GetLibraryMovie(kodiID); m != nil && m.UIDs.TMDB != 0 {
 					tmdbID = m.UIDs.TMDB
 				}
-			} else if media == "show" {
+			} else if media == "tvshow" {
 				if s := library.GetLibraryShow(kodiID); s != nil && s.UIDs.TMDB != 0 {
 					tmdbID = s.UIDs.TMDB
 				}
+				media = "show"
 			} else {
 				err := fmt.Errorf("Unsupported media type: %s", media)
 				xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
 				ctx.Error(err)
 				return
 			}
-			ctx.Redirect(302, URLQuery(URLForXBMC("/library/%s/%s/%d", media, action, tmdbID)))
-			return
+			if tmdbID != 0 {
+				ctx.Redirect(302, URLQuery(URLForXBMC("/library/%s/%s/%d", media, action, tmdbID)))
+				return
+			}
 		}
 
 		err := fmt.Errorf("Cound not find TMDB entry for requested Kodi item %d of type %s", kodiID, media)
 		log.Error(err.Error())
 		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
-		ctx.Error(errors.New("Cannot find TMDB for selected Kodi item"))
+		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}
 }
