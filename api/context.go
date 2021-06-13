@@ -15,7 +15,7 @@ import (
 	"github.com/elgatito/elementum/xbmc"
 )
 
-// ContextPlaySelector plays/downloads media from Kodi in elementum
+// ContextPlaySelector plays/downloads/toggles_watched media from Kodi in elementum
 func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		action := ctx.Params.ByName("action")
@@ -32,12 +32,16 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 			mediaAction = "forceplay"
 		}
 
-		if action == "download" {
+		if action == "download" || action == "watched" || action == "unwatched" {
 			mediaAction = action
 		}
 
 		if kodiID == 0 {
-			ctx.Redirect(302, URLQuery(URLForXBMC("/search"), "q", id, "action", mediaAction))
+			if mediaAction != "watched" && mediaAction != "unwatched" {
+				ctx.Redirect(302, URLQuery(URLForXBMC("/search"), "q", id, "action", mediaAction))
+			} else {
+				log.Error("Can't set %q for non-library item of type %q: %q", mediaAction, media, id)
+			}
 			return
 		} else if media == "movie" {
 			if m := library.GetLibraryMovie(kodiID); m != nil && m.UIDs.TMDB != 0 {
@@ -55,6 +59,12 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 			if s, se := library.GetLibrarySeason(kodiID); s != nil && se != nil && s.UIDs.TMDB != 0 {
 				title := fmt.Sprintf("%s S%02d", s.Title, se.Season)
 				ctx.Redirect(302, URLQuery(URLForXBMC("/show/%d/season/%d/%s/%s", s.UIDs.TMDB, se.Season, mediaAction, url.PathEscape(title))))
+				return
+			}
+		} else if media == "tvshow" {
+			if s := library.GetLibraryShow(kodiID); s != nil && s.UIDs.TMDB != 0 {
+				title := fmt.Sprintf("%s", s.Title)
+				ctx.Redirect(302, URLQuery(URLForXBMC("/show/%d/%s/%s", s.UIDs.TMDB, mediaAction, url.PathEscape(title))))
 				return
 			}
 		}
