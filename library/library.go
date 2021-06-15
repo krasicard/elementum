@@ -895,6 +895,10 @@ func IsAddedToLibrary(id string, mediaType int) (isAdded bool) {
 //
 
 func updateDBItem(tmdbID int, state int, mediaType int, showID int) error {
+	if tmdbID <= 0 {
+		return fmt.Errorf("Cannot update DBItem due to missing TMDB ID")
+	}
+
 	defer perf.ScopeTimer()()
 
 	li := database.LibraryItem{
