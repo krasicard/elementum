@@ -40,6 +40,8 @@ import (
 const (
 	episodeMatchRegex       = `(?i)(^|\W|_|\w)(S0*%[1]d[x\W]?E?p?0*%[2]d|0*%[1]d[x\W]0*%[2]d|\W0*%[1]d0*%[2]d)(\W|_|\D)`
 	singleEpisodeMatchRegex = `(?i)(^|\W|_)(Ep?0*%[1]d|0*%[1]d)(\W|_)`
+	rarMatchRegex           = `(?i).*\.rar$`
+	skipFileRegex           = `(?i)(\.srt|\.dts|\.ac3)$`
 )
 
 var (

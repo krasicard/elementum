@@ -1730,11 +1730,18 @@ func (t *Torrent) GetCandidateFiles(btp *Player) ([]*CandidateFile, int, error) 
 
 	var candidateFiles []int
 
+	reRar := regexp.MustCompile(rarMatchRegex)
+	reSkip := regexp.MustCompile(skipFileRegex)
 	for i, f := range files {
 		size := f.Size
 		if size > maxSize {
 			maxSize = size
 			biggestFile = i
+		}
+
+		fileName := filepath.Base(f.Path)
+		if reSkip.MatchString(fileName) {
+			continue
 		}
 		if size > minSize {
 			candidateFiles = append(candidateFiles, i)
@@ -1744,9 +1751,7 @@ func (t *Torrent) GetCandidateFiles(btp *Player) ([]*CandidateFile, int, error) 
 			continue
 		}
 
-		fileName := filepath.Base(f.Path)
-		re := regexp.MustCompile(`(?i).*\.rar$`)
-		if re.MatchString(fileName) && size > 10*1024*1024 {
+		if reRar.MatchString(fileName) && size > 10*1024*1024 {
 			t.IsRarArchive = true
 			if !xbmc.DialogConfirm("Elementum", "LOCALIZE[30303]") {
 				if btp != nil {
