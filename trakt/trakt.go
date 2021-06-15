@@ -1426,13 +1426,13 @@ func DiffWatchedShows(current, previous []*WatchedShow) (diff []*WatchedShow) {
 }
 
 // DiffWatchedMovies ...
-func DiffWatchedMovies(previous, current []*WatchedMovie) []*WatchedMovie {
+func DiffWatchedMovies(previous, current []*WatchedMovie, checkDate bool) []*WatchedMovie {
 	ret := make([]*WatchedMovie, 0, len(current))
 	found := false
 	for _, ce := range current {
 		found = false
 		for _, pr := range previous {
-			if pr.Movie.IDs.Trakt == ce.Movie.IDs.Trakt {
+			if pr.Movie.IDs.Trakt == ce.Movie.IDs.Trakt && (!checkDate || pr.LastWatchedAt.Before(ce.LastWatchedAt)) {
 				found = true
 				break
 			}

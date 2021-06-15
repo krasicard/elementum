@@ -219,8 +219,8 @@ func refreshTraktMoviesWatched(isRefreshNeeded bool) error {
 
 	// Should parse all movies for Watched marks, but process only difference,
 	// to avoid overwriting Kodi unwatched items
-	watchedMovies := trakt.DiffWatchedMovies(previous, current)
-	unwatchedMovies := trakt.DiffWatchedMovies(current, previous)
+	watchedMovies := trakt.DiffWatchedMovies(previous, current, true)
+	unwatchedMovies := trakt.DiffWatchedMovies(current, previous, false)
 
 	fileKey := uint64(0)
 	missedItems := []uint64{}
