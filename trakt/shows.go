@@ -192,6 +192,28 @@ func GetShowByTVDB(tvdbID string) (show *Show) {
 	return
 }
 
+// GetSeasons returns list of seasons for show
+func GetSeasons(showID int) (seasons []*Season) {
+	endPoint := fmt.Sprintf("shows/%d/seasons", showID)
+
+	params := napping.Params{"extended": "full"}.AsUrlValues()
+
+	cacheStore := cache.NewDBStore()
+	key := fmt.Sprintf(cache.TraktSeasonsKey, showID)
+	if err := cacheStore.Get(key, &seasons); err != nil {
+		resp, err := Get(endPoint, params)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		if err := resp.Unmarshal(&seasons); err != nil {
+			log.Warning(err)
+		}
+		cacheStore.Set(key, seasons, cache.TraktSeasonsExpire)
+	}
+	return
+}
+
 // GetSeasonEpisodes ...
 func GetSeasonEpisodes(showID, seasonNumber int) (episodes []*Episode) {
 	endPoint := fmt.Sprintf("shows/%d/seasons/%d", showID, seasonNumber)
@@ -531,7 +553,7 @@ func ListItemsShows(user string, listID string, isUpdateNeeded bool) (shows []*S
 
 	endPoint := fmt.Sprintf("users/%s/lists/%s/items/shows", user, listID)
 
-	params := napping.Params{}.AsUrlValues()
+	params := napping.Params{"extended": "full"}.AsUrlValues()
 
 	var resp *napping.Response
 
@@ -886,6 +908,7 @@ func (show *Show) ToListItem() (item *xbmc.ListItem) {
 	}
 	if item == nil {
 		show = setShowFanart(show)
+		seasons := GetSeasons(show.IDs.Trakt)
 		item = &xbmc.ListItem{
 			Label: show.Title,
 			Info: &xbmc.ListItemInfo{
@@ -906,6 +929,11 @@ func (show *Show) ToListItem() (item *xbmc.ListItem) {
 				PlayCount:     playcount.GetWatchedShowByTMDB(show.IDs.TMDB).Int(),
 				DBTYPE:        "tvshow",
 				Mediatype:     "tvshow",
+				Studio:        []string{show.Network},
+			},
+			Properties: &xbmc.ListItemProperties{
+				TotalEpisodes: strconv.Itoa(show.AiredEpisodes),
+				TotalSeasons:  strconv.Itoa(len(seasons)),
 			},
 			Art: &xbmc.ListItemArt{
 				TvShowPoster: show.Images.Poster.Full,
@@ -917,6 +945,12 @@ func (show *Show) ToListItem() (item *xbmc.ListItem) {
 			},
 			Thumbnail: show.Images.Poster.Full,
 		}
+	}
+
+	if config.Get().ShowUnwatchedEpisodedNumber {
+		watchedEpisodes := show.watchedEpisodesNumber()
+		item.Properties.WatchedEpisodes = strconv.Itoa(watchedEpisodes)
+		item.Properties.UnWatchedEpisodes = strconv.Itoa(show.AiredEpisodes - watchedEpisodes)
 	}
 
 	item.Thumbnail = item.Art.Poster
@@ -968,6 +1002,7 @@ func (episode *Episode) ToListItem(show *Show) *xbmc.ListItem {
 			PlayCount:     playcount.GetWatchedEpisodeByTMDB(show.IDs.TMDB, episode.Season, episode.Number).Int(),
 			DBTYPE:        "episode",
 			Mediatype:     "episode",
+			Studio:        []string{show.Network},
 		},
 		Art: &xbmc.ListItemArt{
 			TvShowPoster: show.Images.Poster.Full,
@@ -999,4 +1034,26 @@ func (episode *Episode) ToListItem(show *Show) *xbmc.ListItem {
 	}
 
 	return item
+}
+
+// watchedEpisodesNumber returns number of watched episodes
+func (show *Show) watchedEpisodesNumber() int {
+	seasons := GetSeasons(show.IDs.Trakt)
+	watchedEpisodes := 0
+	if playcount.GetWatchedShowByTrakt(show.IDs.Trakt) {
+		watchedEpisodes = show.AiredEpisodes
+	} else {
+		for _, season := range seasons {
+			if playcount.GetWatchedSeasonByTrakt(show.IDs.Trakt, season.Number) {
+				watchedEpisodes += season.AiredEpisodes
+			} else {
+				for _, episode := range GetSeasonEpisodes(show.IDs.Trakt, season.Number) {
+					if playcount.GetWatchedEpisodeByTrakt(show.IDs.Trakt, season.Number, episode.Number) {
+						watchedEpisodes++
+					}
+				}
+			}
+		}
+	}
+	return watchedEpisodes
 }

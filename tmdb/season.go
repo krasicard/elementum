@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -170,12 +171,21 @@ func (season *Season) ToListItem(show *Show) *xbmc.ListItem {
 			Genre:         show.GetGenres(),
 			Studio:        show.GetStudios(),
 		},
+		Properties: &xbmc.ListItemProperties{
+			TotalEpisodes: strconv.Itoa(season.EpisodeCount),
+		},
 		Art: &xbmc.ListItemArt{
 			TvShowPoster: ImageURL(show.PosterPath, "w1280"),
 			FanArt:       ImageURL(season.Backdrop, "w1280"),
 			Poster:       ImageURL(season.Poster, "w1280"),
 			Thumbnail:    ImageURL(season.Poster, "w1280"),
 		},
+	}
+
+	if config.Get().ShowUnwatchedEpisodedNumber {
+		watchedEpisodes := season.watchedEpisodesNumber(show)
+		item.Properties.WatchedEpisodes = strconv.Itoa(watchedEpisodes)
+		item.Properties.UnWatchedEpisodes = strconv.Itoa(season.EpisodeCount - watchedEpisodes)
 	}
 
 	if item.Art.Poster == "" {
@@ -267,4 +277,19 @@ func (season *Season) findTranslation(language string) *Translation {
 	}
 
 	return nil
+}
+
+// watchedEpisodesNumber returns number of watched episodes
+func (season *Season) watchedEpisodesNumber(show *Show) int {
+	watchedEpisodes := 0
+	if playcount.GetWatchedSeasonByTMDB(show.ID, season.Season) {
+		watchedEpisodes += season.EpisodeCount
+	} else {
+		for _, episode := range season.Episodes {
+			if playcount.GetWatchedEpisodeByTMDB(show.ID, season.Season, episode.EpisodeNumber) {
+				watchedEpisodes++
+			}
+		}
+	}
+	return watchedEpisodes
 }
