@@ -121,7 +121,7 @@ type Release struct {
 const (
 	githubUserContentURL    = "https://elementumorg.github.io/packages/%s"
 	githubAltUserContentURL = "https://elementum.surge.sh/packages/%s"
-	githubLatestReleaseURL  = "https://api.github.com/repos/%s/releases/latest"
+	githubLatestReleaseURL  = "https://api.github.com/repos/%s/%s/releases/latest"
 
 	releaseChangelog = "[B]%s[/B] - %s\n%s\n\n"
 )
@@ -203,7 +203,7 @@ func getAddonXML(repository string) (string, error) {
 	return string(retBytes), nil
 }
 
-func getAddons(user string, repository string) (*xbmc.AddonList, error) {
+func getAddons() (*xbmc.AddonList, error) {
 	defer perf.ScopeTimer()()
 	var addons []xbmc.Addon
 
@@ -225,9 +225,7 @@ func getAddons(user string, repository string) (*xbmc.AddonList, error) {
 
 // GetAddonsXML ...
 func GetAddonsXML(ctx *gin.Context) {
-	user := ctx.Params.ByName("user")
-	repository := ctx.Params.ByName("repository")
-	addons, err := getAddons(user, repository)
+	addons, err := getAddons()
 	if err != nil {
 		ctx.AbortWithError(404, errors.New("Unable to retrieve the remote's addons.xml file"))
 	}
@@ -236,9 +234,7 @@ func GetAddonsXML(ctx *gin.Context) {
 
 // GetAddonsXMLChecksum ...
 func GetAddonsXMLChecksum(ctx *gin.Context) {
-	user := ctx.Params.ByName("user")
-	repository := ctx.Params.ByName("repository")
-	addons, err := getAddons(user, repository)
+	addons, err := getAddons()
 	if len(addons.Addons) > 0 {
 		for _, a := range addons.Addons {
 			log.Infof("Last available release of %s: v%s", a.ID, a.Version)
@@ -257,6 +253,9 @@ func GetAddonFiles(ctx *gin.Context) {
 	user := ctx.Params.ByName("user")
 	repository := ctx.Params.ByName("repository")
 	filepath := ctx.Params.ByName("filepath")[1:] // strip the leading "/"
+	if repository == "service.lt2http" {
+		user = "ElementumOrg"
+	}
 
 	lastReleaseTag := getLastRelease(user + "/" + repository)
 
