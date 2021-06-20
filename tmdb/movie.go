@@ -13,6 +13,7 @@ import (
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/fanart"
 	"github.com/elgatito/elementum/library/playcount"
+	"github.com/elgatito/elementum/library/uid"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 
@@ -460,6 +461,15 @@ func (movie *Movie) ToListItem() *xbmc.ListItem {
 		UniqueIDs: &xbmc.UniqueIDs{
 			TMDB: strconv.Itoa(movie.ID),
 		},
+	}
+
+	if lm, err := uid.GetMovieByTMDB(movie.ID); lm != nil && err == nil {
+		item.Info.DBID = lm.UIDs.Kodi
+	} else {
+		fakeDBID := util.GetMovieFakeDBID(movie.ID)
+		if fakeDBID > 0 {
+			item.Info.DBID = fakeDBID
+		}
 	}
 
 	if movie.Images != nil && movie.Images.Backdrops != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/library/playcount"
+	"github.com/elgatito/elementum/library/uid"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 	"github.com/jmcvetta/napping"
@@ -125,6 +126,20 @@ func (episode *Episode) ToListItem(show *Show, season *Season) *xbmc.ListItem {
 		UniqueIDs: &xbmc.UniqueIDs{
 			TMDB: strconv.Itoa(episode.ID),
 		},
+	}
+
+	episodeInLibrary := false
+	if ls, err := uid.GetShowByTMDB(show.ID); ls != nil && err == nil {
+		if le := ls.GetEpisode(episode.SeasonNumber, episode.EpisodeNumber); le != nil {
+			item.Info.DBID = le.UIDs.Kodi
+			episodeInLibrary = true
+		}
+	}
+	if !episodeInLibrary {
+		fakeDBID := util.GetEpisodeFakeDBID(episode.ID)
+		if fakeDBID > 0 {
+			item.Info.DBID = fakeDBID
+		}
 	}
 
 	if show.PosterPath != "" {

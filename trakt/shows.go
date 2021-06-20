@@ -12,6 +12,7 @@ import (
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/fanart"
 	"github.com/elgatito/elementum/library/playcount"
+	"github.com/elgatito/elementum/library/uid"
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
@@ -790,7 +791,7 @@ func WatchedShowsProgress() (shows []*ProgressShow, err error) {
 			if !hiddenShowsMap[s.Show.IDs.Trakt] {
 				shows = append(shows, s)
 			} else {
-				log.Debugf("Will supress hidden show: %s", s.Show.Title)
+				log.Debugf("Will suppress hidden show: %s", s.Show.Title)
 			}
 		}
 	}
@@ -827,7 +828,7 @@ func FilterHiddenProgressShows(inShows []*ProgressShow) (outShows []*ProgressSho
 				// append to new instead of delete in old b/c delete is O(n)
 				outShows = append(outShows, s)
 			} else {
-				log.Debugf("Will supress hidden show: %s", s.Show.Title)
+				log.Debugf("Will suppress hidden show: %s", s.Show.Title)
 			}
 		}
 	}
@@ -950,7 +951,16 @@ func (show *Show) ToListItem() (item *xbmc.ListItem) {
 		}
 	}
 
-	if config.Get().ShowUnwatchedEpisodedNumber {
+	if ls, err := uid.GetShowByTMDB(show.IDs.TMDB); ls != nil && err == nil {
+		item.Info.DBID = ls.UIDs.Kodi
+	} else {
+		fakeDBID := util.GetShowFakeDBID(show.IDs.TMDB)
+		if fakeDBID > 0 {
+			item.Info.DBID = fakeDBID
+		}
+	}
+
+	if config.Get().ShowUnwatchedEpisodesNumber {
 		watchedEpisodes := show.watchedEpisodesNumber()
 		item.Properties.WatchedEpisodes = strconv.Itoa(watchedEpisodes)
 		item.Properties.UnWatchedEpisodes = strconv.Itoa(show.AiredEpisodes - watchedEpisodes)
@@ -1019,6 +1029,20 @@ func (episode *Episode) ToListItem(show *Show) *xbmc.ListItem {
 		UniqueIDs: &xbmc.UniqueIDs{
 			TMDB: strconv.Itoa(episode.IDs.TMDB),
 		},
+	}
+
+	episodeInLibrary := false
+	if ls, err := uid.GetShowByTMDB(show.IDs.TMDB); ls != nil && err == nil {
+		if le := ls.GetEpisode(episode.Season, episode.Number); le != nil {
+			item.Info.DBID = le.UIDs.Kodi
+			episodeInLibrary = true
+		}
+	}
+	if !episodeInLibrary {
+		fakeDBID := util.GetEpisodeFakeDBID(episode.IDs.TMDB)
+		if fakeDBID > 0 {
+			item.Info.DBID = fakeDBID
+		}
 	}
 
 	if config.Get().UseFanartTv {

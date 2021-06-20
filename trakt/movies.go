@@ -12,6 +12,7 @@ import (
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/library/playcount"
+	"github.com/elgatito/elementum/library/uid"
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
@@ -688,6 +689,15 @@ func (movie *Movie) ToListItem() (item *xbmc.ListItem) {
 			UniqueIDs: &xbmc.UniqueIDs{
 				TMDB: strconv.Itoa(movie.IDs.TMDB),
 			},
+		}
+	}
+
+	if lm, err := uid.GetMovieByTMDB(movie.IDs.TMDB); lm != nil && err == nil {
+		item.Info.DBID = lm.UIDs.Kodi
+	} else {
+		fakeDBID := util.GetMovieFakeDBID(movie.IDs.TMDB)
+		if fakeDBID > 0 {
+			item.Info.DBID = fakeDBID
 		}
 	}
 
