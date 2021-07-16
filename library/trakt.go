@@ -587,13 +587,13 @@ func updateMovieWatched(m *trakt.WatchedMovie, watched bool) {
 
 	// Resetting Resume state to avoid having old resume states,
 	// when item is watched on another device
-	if watched && !r.IsWatched() {
+	if watched {
 		if m.Plays <= 0 {
 			return
 		}
 
-		r.UIDs.Playcount = 1
-		xbmc.SetMovieWatchedWithDate(r.UIDs.Kodi, 1, 0, 0, m.LastWatchedAt)
+		r.UIDs.Playcount++
+		xbmc.SetMovieWatchedWithDate(r.UIDs.Kodi, r.UIDs.Playcount, 0, 0, m.LastWatchedAt)
 		// TODO: There should be a check for allowing resume state, otherwise we always reset it for already searched items
 		// } else if watched && r.IsWatched() && r.Resume != nil && r.Resume.Position > 0 {
 		// 	xbmc.SetMovieWatchedWithDate(r.UIDs.Kodi, 1, 0, 0, m.LastWatchedAt)
