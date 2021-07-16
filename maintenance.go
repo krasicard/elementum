@@ -168,7 +168,12 @@ func Notification(r *http.Request, s *bittorrent.Service) {
 				log.Infof("OnPlay. Seeking to %v", resume)
 
 				// Waiting max 9 seconds for having video duration, only then seek is accepted by Kodi.
-				for i := 1; i <= 30; i++ {
+				maxRetry := 30
+				if resume == 0 {
+					maxRetry = 3
+				}
+
+				for i := 1; i <= maxRetry; i++ {
 					if p.IsClosed() {
 						log.Infof("OnPlay. Seek aborted due to Player close")
 						return
