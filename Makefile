@@ -212,7 +212,11 @@ binaries:
 	git config --global push.default simple
 	git clone --depth=1 https://github.com/elgatito/elementum-binaries binaries
 	cp -Rf build/* binaries/
-	cd binaries && git add * && git commit -m "Update to ${GIT_VERSION}"
+	cd binaries && \
+	git add * && \
+	git commit -m "Update to ${GIT_VERSION}" \
+	git tag -f ${GIT_VERSION} && \
+	git push origin master --tags
 
 pull-all:
 	for i in $(PLATFORMS); do \
