@@ -43,6 +43,8 @@ var (
 
 // Reload ...
 func Reload() {
+	reloadDns()
+
 	if config.Get().ProxyURL == "" || !config.Get().ProxyUseHTTP {
 		directTransport.Proxy = nil
 	} else {

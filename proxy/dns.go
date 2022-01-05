@@ -9,6 +9,8 @@ import (
 	"github.com/bogdanovich/dns_resolver"
 	"github.com/likexian/doh-go"
 	"github.com/likexian/doh-go/dns"
+
+	"github.com/elgatito/elementum/config"
 )
 
 var (
@@ -43,8 +45,8 @@ var (
 		"uu",
 	}
 
-	commonResolver  = doh.Use(doh.CloudflareProvider, doh.GoogleProvider)
-	opennicResolver = dns_resolver.New([]string{"163.172.168.171", "152.70.189.130", "167.86.112.174"})
+	commonResolver  = doh.Use(doh.CloudflareProvider, doh.GoogleProvider, doh.Quad9Provider)
+	opennicResolver = dns_resolver.New(config.Get().InternalDNSOpenNic)
 
 	dnsCacheResults sync.Map
 	dnsCacheLocks   sync.Map
@@ -52,6 +54,10 @@ var (
 
 func init() {
 	commonResolver.EnableCache(true)
+}
+
+func reloadDns() {
+	opennicResolver = dns_resolver.New(config.Get().InternalDNSOpenNic)
 }
 
 func resolve(addr string) ([]string, error) {

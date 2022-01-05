@@ -238,6 +238,7 @@ type Configuration struct {
 
 	InternalDNSEnabled  bool
 	InternalDNSSkipIPv6 bool
+	InternalDNSOpenNic  []string
 
 	InternalProxyEnabled     bool
 	InternalProxyLogging     bool
@@ -710,6 +711,9 @@ func Reload() *Configuration {
 		LocalOnlyClient: settings.ToBool("local_only_client"),
 		LogLevel:        settings.ToInt("log_level"),
 	}
+
+	reDns := regexp.MustCompile(`\s*,\s*`)
+	newConfig.InternalDNSOpenNic = reDns.Split(settings.ToString("internal_dns_opennic"), -1)
 
 	updateLoggingLevel(newConfig.LogLevel)
 
