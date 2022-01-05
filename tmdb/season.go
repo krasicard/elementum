@@ -296,6 +296,8 @@ func (season *Season) watchedEpisodesNumber(show *Show) int {
 		return 0
 	}
 
+	c := config.Get()
+
 	watchedEpisodes := 0
 	if playcount.GetWatchedSeasonByTMDB(show.ID, season.Season) {
 		watchedEpisodes += season.EpisodeCount
@@ -303,6 +305,13 @@ func (season *Season) watchedEpisodesNumber(show *Show) int {
 		for _, episode := range season.Episodes {
 			if episode == nil {
 				continue
+			} else if !c.ShowUnairedEpisodes {
+				if episode.AirDate == "" {
+					continue
+				}
+				if _, isExpired := util.AirDateWithExpireCheck(episode.AirDate, c.ShowEpisodesOnReleaseDay); isExpired {
+					continue
+				}
 			}
 
 			if playcount.GetWatchedEpisodeByTMDB(show.ID, season.Season, episode.EpisodeNumber) {
