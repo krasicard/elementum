@@ -14,8 +14,12 @@ GIT_VERSION=`cd ${GOPATH}/src/github.com/elgatito/elementum; git describe --tags
 
 if [ "$1" == "local" ]
 then
-  # This will run with local go
-  # cd $GOPATH
+  # This will run with local go using libtorrent-go/local-env/ locally copied dependencies compilation.
+  export LOCAL_ENV=$GOPATH/src/github.com/ElementumOrg/libtorrent-go/local-env/
+  export PATH=$PATH:$LOCAL_ENV/bin/
+  export PKG_CONFIG_PATH=$LOCAL_ENV/lib/pkgconfig
+  export SWIG_LIB=$LOCAL_ENV/share/swig/4.1.0/
+
   cd $GOPATH/src/github.com/elgatito/elementum
   set -e
   test go build -ldflags="-w -X github.com/elgatito/elementum/util.Version=${GIT_VERSION}" -o /var/tmp/elementum .
