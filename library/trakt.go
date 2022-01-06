@@ -593,14 +593,12 @@ func updateMovieWatched(m *trakt.WatchedMovie, watched bool) {
 		}
 
 		r.UIDs.Playcount++
-		log.Debugf("updateMovieWatched 111 %#v", *m)
 		xbmc.SetMovieWatchedWithDate(r.UIDs.Kodi, r.UIDs.Playcount, 0, 0, m.LastWatchedAt)
 		// TODO: There should be a check for allowing resume state, otherwise we always reset it for already searched items
 		// } else if watched && r.IsWatched() && r.Resume != nil && r.Resume.Position > 0 {
 		// 	xbmc.SetMovieWatchedWithDate(r.UIDs.Kodi, 1, 0, 0, m.LastWatchedAt)
 	} else if !watched && r.IsWatched() {
 		r.UIDs.Playcount = 0
-		log.Debugf("updateMovieWatched 222 %#v", *m)
 		xbmc.SetMoviePlaycount(r.UIDs.Kodi, 0)
 	}
 }
@@ -613,7 +611,6 @@ func updateShowWatched(s *trakt.WatchedShow, watched bool) {
 
 	if watched && s.Watched && !r.IsWatched() {
 		r.UIDs.Playcount = 1
-		log.Debugf("updateShowWatched 111 %#v", *s)
 		xbmc.SetShowWatchedWithDate(r.UIDs.Kodi, 1, s.LastWatchedAt)
 	}
 
@@ -629,14 +626,12 @@ func updateShowWatched(s *trakt.WatchedShow, watched bool) {
 				// when item is watched on another device
 				if watched && !e.IsWatched() {
 					e.UIDs.Playcount = 1
-					log.Debugf("updateShowWatched 222 %#v", *e)
 					xbmc.SetEpisodeWatchedWithDate(e.UIDs.Kodi, 1, 0, 0, episode.LastWatchedAt)
 					// TODO: There should be a check for allowing resume state, otherwise we always reset it for already searched items
 					// } else if watched && e.IsWatched() && e.Resume != nil && e.Resume.Position > 0 {
 					//   xbmc.SetEpisodeWatchedWithDate(e.UIDs.Kodi, 1, 0, 0, episode.LastWatchedAt)
 				} else if !watched && e.IsWatched() {
 					e.UIDs.Playcount = 0
-					log.Debugf("updateShowWatched 333 %#v", *e)
 					xbmc.SetEpisodePlaycount(e.UIDs.Kodi, 0)
 				}
 			}
