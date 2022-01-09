@@ -1676,6 +1676,10 @@ func (s *Service) DetachPlayer(p *Player) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if p == nil || p.t == nil {
+		return
+	}
+
 	delete(s.Players, p.t.InfoHash())
 }
 
