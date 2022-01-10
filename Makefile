@@ -214,7 +214,7 @@ binaries:
 	cp -Rf build/* binaries/
 	cd binaries && \
 	git add * && \
-	git commit -m "Update to ${GIT_VERSION}" \
+	git commit -m "Update to ${GIT_VERSION}" && \
 	git tag --force ${GIT_VERSION} && \
 	git push origin master --tags
 
