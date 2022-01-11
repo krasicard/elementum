@@ -180,7 +180,7 @@ func main() {
 		w.Write([]byte("true"))
 	}))
 	http.Handle("/shutdown", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		shutdown(ExitCodeSuccess)
+		go shutdown(ExitCodeSuccess)
 		w.Write([]byte("true"))
 	}))
 	http.Handle("/restart", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
