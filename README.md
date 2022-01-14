@@ -3,6 +3,34 @@ Elementum daemon [![Build Status](https://travis-ci.org/elgatito/elementum.svg?b
 
 Fork of the great [Pulsar daemon](https://github.com/steeve/pulsar) and [Quasar daemon](https://github.com/scakemyer/quasar)
 
+# Easy development environment set up
+
+There is an easy way to prepare local environment for running/compiling Elementum.
+
+1. Clone `libtorrent-go` repository:
+```
+git clone git@github.com:ElementumOrg/libtorrent-go.git
+```
+2. Run `make local-env` that will create `local-env` directory will all required components.
+```
+make local-env
+```
+3. Modify `LOCAL-ENV` variable in `test_build.sh` to use `local-env` directory:
+```
+  export LOCAL_ENV=$GOPATH/src/github.com/ElementumOrg/libtorrent-go/local-env/
+```
+
+Or you can apply environment variables and compile in any other way:
+```
+  export LOCAL_ENV=$GOPATH/src/github.com/ElementumOrg/libtorrent-go/local-env/
+  export PATH=$PATH:$LOCAL_ENV/bin/
+  export PKG_CONFIG_PATH=$LOCAL_ENV/lib/pkgconfig
+  export SWIG_LIB=$LOCAL_ENV/share/swig/4.1.0/
+```
+
+
+# How to run
+
 1. Build the [cross-compiler](https://github.com/ElementumOrg/cross-compiler) images,
     or alternatively, pull the cross-compiler images from [Docker Hub](https://hub.docker.com/r/elementumorg/cross-compiler):
 
