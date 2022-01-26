@@ -207,14 +207,19 @@ func (as *AddonSearcher) GetMovieSearchObject(movie *tmdb.Movie) *MovieSearchObj
 		}
 	}
 
+	sObject.Titles[strings.ToLower(movie.OriginalLanguage)] = NormalizeTitle(sObject.Titles["source"])
+	sObject.Titles[strings.ToLower(config.Get().Language)] = NormalizeTitle(movie.Title)
+
 	// Collect titles from AlternativeTitles
 	if movie.AlternativeTitles != nil && movie.AlternativeTitles.Titles != nil {
 		for _, title := range movie.AlternativeTitles.Titles {
-			sObject.Titles[strings.ToLower(title.Iso3166_1)] = NormalizeTitle(title.Title)
+			lang := strings.ToLower(title.Iso3166_1)
+			sObject.Titles[lang] = NormalizeTitle(title.Title)
+			if lang == "us" {
+				sObject.Titles["en"] = sObject.Titles[lang]
+			}
 		}
 	}
-	sObject.Titles[strings.ToLower(movie.OriginalLanguage)] = NormalizeTitle(sObject.Titles["source"])
-	sObject.Titles[strings.ToLower(config.Get().Language)] = NormalizeTitle(movie.Title)
 
 	// Collect titles from Translations
 	if movie.Translations != nil && movie.Translations.Translations != nil {
@@ -254,14 +259,19 @@ func (as *AddonSearcher) GetSeasonSearchObject(show *tmdb.Show, season *tmdb.Sea
 		Anime:      show.IsAnime(),
 	}
 
+	sObject.Titles[strings.ToLower(show.OriginalLanguage)] = NormalizeTitle(sObject.Titles["source"])
+	sObject.Titles[strings.ToLower(config.Get().Language)] = NormalizeTitle(show.Name)
+
 	// Collect titles from AlternativeTitles
 	if show.AlternativeTitles != nil && show.AlternativeTitles.Titles != nil {
 		for _, title := range show.AlternativeTitles.Titles {
-			sObject.Titles[strings.ToLower(title.Iso3166_1)] = NormalizeTitle(title.Title)
+			lang := strings.ToLower(title.Iso3166_1)
+			sObject.Titles[lang] = NormalizeTitle(title.Title)
+			if lang == "us" {
+				sObject.Titles["en"] = sObject.Titles[lang]
+			}
 		}
 	}
-	sObject.Titles[strings.ToLower(show.OriginalLanguage)] = NormalizeTitle(sObject.Titles["source"])
-	sObject.Titles[strings.ToLower(config.Get().Language)] = NormalizeTitle(show.Name)
 
 	// Collect titles from Translations
 	if show.Translations != nil && show.Translations.Translations != nil {
@@ -326,14 +336,19 @@ func (as *AddonSearcher) GetEpisodeSearchObject(show *tmdb.Show, episode *tmdb.E
 		Anime:          show.IsAnime(),
 	}
 
+	sObject.Titles[strings.ToLower(show.OriginalLanguage)] = NormalizeTitle(sObject.Titles["source"])
+	sObject.Titles[strings.ToLower(config.Get().Language)] = NormalizeTitle(show.Name)
+
 	// Collect titles from AlternativeTitles
 	if show.AlternativeTitles != nil && show.AlternativeTitles.Titles != nil {
 		for _, title := range show.AlternativeTitles.Titles {
-			sObject.Titles[strings.ToLower(title.Iso3166_1)] = NormalizeTitle(title.Title)
+			lang := strings.ToLower(title.Iso3166_1)
+			sObject.Titles[lang] = NormalizeTitle(title.Title)
+			if lang == "us" {
+				sObject.Titles["en"] = sObject.Titles[lang]
+			}
 		}
 	}
-	sObject.Titles[strings.ToLower(show.OriginalLanguage)] = NormalizeTitle(sObject.Titles["source"])
-	sObject.Titles[strings.ToLower(config.Get().Language)] = NormalizeTitle(show.Name)
 
 	// Collect titles from Translations
 	if show.Translations != nil && show.Translations.Translations != nil {
