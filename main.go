@@ -46,6 +46,11 @@ func init() {
 }
 
 func ensureSingleInstance(conf *config.Configuration) (lock *lockfile.LockFile, err error) {
+	// Avoid killing any process when running as a shared library
+	if exit.IsShared {
+		return
+	}
+
 	file := filepath.Join(conf.Info.Path, ".lockfile")
 	lock, err = lockfile.New(file)
 	if err != nil {
@@ -103,10 +108,12 @@ func main() {
 	log.Infof("Addon: %s v%s", conf.Info.ID, conf.Info.Version)
 
 	lock, err := ensureSingleInstance(conf)
-	defer lock.Unlock()
 	if err != nil {
 		log.Warningf("Unable to acquire lock %q: %v, exiting...", lock.File, err)
-		os.Exit(ExitCodeError)
+		exit.Exit(exit.ExitCodeError)
+	}
+	if lock != nil {
+		defer lock.Unlock()
 	}
 
 	db, err := database.InitStormDB(conf)
