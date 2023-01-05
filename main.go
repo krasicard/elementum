@@ -22,6 +22,7 @@ import (
 	"github.com/elgatito/elementum/broadcast"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/database"
+	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/library"
 	"github.com/elgatito/elementum/lockfile"
 	"github.com/elgatito/elementum/scrape"
@@ -30,16 +31,11 @@ import (
 	"github.com/elgatito/elementum/xbmc"
 )
 
-const (
-	// ExitCodeSuccess = exit code 0
-	ExitCodeSuccess = 0
-	// ExitCodeError = exit code 1
-	ExitCodeError = 1
-	// ExitCodeRestart = exit code 5
-	ExitCodeRestart = 5
+var (
+	log        = logging.MustGetLogger("main")
+	logPath    = ""
+	mainCloser util.Event
 )
-
-var log = logging.MustGetLogger("main")
 
 func init() {
 	sync.Enable()
@@ -99,7 +95,11 @@ func main() {
 	))
 	logging.SetBackend(logging.NewLogBackend(ioutil.Discard, "", 0), logging.NewLogBackend(os.Stdout, "", 0))
 
+	if exit.IsShared {
+		log.Infof("Starting Elementum daemon in shared library mode")
+	} else {
 	log.Infof("Starting Elementum daemon")
+	}
 	log.Infof("Version: %s LibTorrent: %s Go: %s, Threads: %d", util.GetVersion(), util.GetTorrentVersion(), runtime.Version(), runtime.GOMAXPROCS(0))
 
 	conf := config.Reload()
@@ -153,14 +153,14 @@ func main() {
 		// If we don't give an exit code - python treat as well done and not
 		// restarting the daemon. So when we come here from Signal -
 		// we should properly exit with non-0 exitcode.
-		os.Exit(code)
+		exit.Exit(code)
 	}
 
 	var watchParentProcess = func() {
 		for {
 			if os.Getppid() == 1 {
 				log.Warning("Parent shut down, shutting down too...")
-				go shutdown(ExitCodeSuccess)
+				go shutdown(exit.ExitCodeSuccess)
 				break
 			}
 			time.Sleep(1 * time.Second)
@@ -187,11 +187,11 @@ func main() {
 		w.Write([]byte("true"))
 	}))
 	http.Handle("/shutdown", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		go shutdown(ExitCodeSuccess)
+		go shutdown(exit.ExitCodeSuccess)
 		w.Write([]byte("true"))
 	}))
 	http.Handle("/restart", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		shutdown(ExitCodeRestart)
+		shutdown(exit.ExitCodeRestart)
 		w.Write([]byte("true"))
 	}))
 
@@ -215,8 +215,10 @@ func main() {
 			select {
 			case <-closer:
 				return
+			case <-mainCloser.C():
+				shutdown(exit.ExitCodeSuccess)
 			case <-sigc:
-				shutdown(ExitCodeError)
+				shutdown(exit.ExitCodeError)
 			}
 		}
 	}()
@@ -240,7 +242,13 @@ func main() {
 
 	log.Infof("Prepared in %s", time.Since(now))
 	log.Infof("Starting HTTP server")
-	if err = http.ListenAndServe(":"+strconv.Itoa(config.Args.LocalPort), nil); err != nil {
-		panic(err)
+
+	exit.Server = &http.Server{
+		Addr:    ":" + strconv.Itoa(config.Args.LocalPort),
+		Handler: nil,
+	}
+
+	if err = exit.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Panicf("Error running HTTP server: %s", err)
 	}
 }

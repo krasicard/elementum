@@ -15,6 +15,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/elgatito/elementum/config"
+	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 )
@@ -53,7 +54,7 @@ func CreateBoltDB(conf *config.Configuration, fileName string, backupFileName st
 		if r := recover(); r != nil {
 			log.Errorf("Got critical error while creating Bolt: %v", r)
 			RestoreBackup(databasePath, backupPath)
-			os.Exit(1)
+			exit.Exit(exit.ExitCodeError)
 		}
 	}()
 

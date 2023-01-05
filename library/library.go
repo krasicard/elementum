@@ -363,9 +363,7 @@ func ShowsLibraryPath() string {
 	return filepath.Join(config.Get().LibraryPath, "Shows")
 }
 
-//
 // Library updates
-//
 func updateLibraryShows() error {
 	if !config.Get().LibraryEnabled || !config.Get().LibrarySyncEnabled || (!config.Get().LibrarySyncPlaybackEnabled && xbmc.PlayerIsPlaying()) {
 		return nil
@@ -400,9 +398,7 @@ func updateLibraryShows() error {
 	return nil
 }
 
-//
 // Path checks
-//
 func checkLibraryPath() error {
 	libraryPath := config.Get().LibraryPath
 	if libraryPath == "" || libraryPath == "." {

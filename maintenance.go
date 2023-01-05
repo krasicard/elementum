@@ -13,6 +13,7 @@ import (
 	"github.com/elgatito/elementum/bittorrent"
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
+	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/library"
 	"github.com/elgatito/elementum/xbmc"
 )
@@ -50,6 +51,13 @@ func Notification(r *http.Request, s *bittorrent.Service) {
 
 	switch method {
 	case "System.OnQuit":
+		// Do not send SIGHUP when running as a shared library, because we will kill ourselves
+		if exit.IsShared {
+			log.Infof("Sending main closer to shutdown Elementum properly")
+			mainCloser.Set()
+			return
+		}
+
 		log.Infof("Sending SIGHUP signal to shutdown Elementum properly")
 		p, err := os.FindProcess(os.Getpid())
 

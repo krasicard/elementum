@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/xbmc"
 
 	"github.com/dustin/go-humanize"
@@ -339,7 +340,7 @@ func Reload() *Configuration {
 			waitForSettingsClosed()
 
 			// Custom code to say python not to report this error
-			os.Exit(5)
+			exit.Exit(exit.ExitCodeRestart)
 		}
 	}()
 
