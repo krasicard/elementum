@@ -168,6 +168,8 @@ func main() {
 	}
 	go watchParentProcess()
 
+	// Make sure HTTP mux is empty
+	http.DefaultServeMux = new(http.ServeMux)
 	http.Handle("/", api.Routes(s))
 
 	http.Handle("/debug/all", bittorrent.DebugAll(s))

@@ -80,14 +80,17 @@ func Routes(s *bittorrent.Service) *gin.Engine {
 		search.GET("/infolabels/:tmdbId", InfoLabelsSearch(s))
 	}
 
-	r.LoadHTMLGlob(filepath.Join(config.Get().Info.Path, "resources", "web", "*.html"))
-	web := r.Group("/web")
-	{
-		web.GET("/", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "index.html", nil)
-		})
-		web.Static("/static", filepath.Join(config.Get().Info.Path, "resources", "web", "static"))
-		web.StaticFile("/favicon.ico", filepath.Join(config.Get().Info.Path, "resources", "web", "favicon.ico"))
+	// Make sure to load static files if they exist locally
+	if config.PathExists(filepath.Join(config.Get().Info.Path, "resources", "web")) {
+		r.LoadHTMLGlob(filepath.Join(config.Get().Info.Path, "resources", "web", "*.html"))
+		web := r.Group("/web")
+		{
+			web.GET("/", func(c *gin.Context) {
+				c.HTML(http.StatusOK, "index.html", nil)
+			})
+			web.Static("/static", filepath.Join(config.Get().Info.Path, "resources", "web", "static"))
+			web.StaticFile("/favicon.ico", filepath.Join(config.Get().Info.Path, "resources", "web", "favicon.ico"))
+		}
 	}
 
 	torrents := r.Group("/torrents")
