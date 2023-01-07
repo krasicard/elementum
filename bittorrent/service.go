@@ -45,6 +45,7 @@ type Service struct {
 	config *config.Configuration
 	q      *Queue
 	mu     sync.Mutex
+	wg     sync.WaitGroup
 
 	Session       lt.SessionHandle
 	SessionGlobal lt.Session
@@ -70,6 +71,7 @@ type Service struct {
 
 	alertsBroadcaster *broadcast.Broadcaster
 	Closer            util.Event
+	CloserNotifier    util.Event
 	isShutdown        bool
 }
 
@@ -104,6 +106,7 @@ func NewService() *Service {
 		return s
 	}
 
+	s.wg.Add(4)
 	go s.alertsConsumer()
 	go s.logAlerts()
 
@@ -139,11 +142,16 @@ func (s *Service) Close(isShutdown bool) {
 
 	log.Info("Stopping Libtorrent session...")
 	s.CloseSession()
+
+	s.CloserNotifier.Set()
 }
 
 // CloseSession tries to close libtorrent session with a timeout,
 // because it takes too much to close and Kodi hangs.
 func (s *Service) CloseSession() {
+	log.Infof("Waiting for completion of all goroutines")
+	s.wg.Wait()
+
 	now := time.Now()
 	defer func() {
 		log.Infof("Closed session in %s", time.Since(now))
@@ -938,6 +946,8 @@ func (s *Service) GetTorrentByURI(uri string) *Torrent {
 }
 
 func (s *Service) saveResumeDataLoop() {
+	defer s.wg.Done()
+
 	saveResumeWait := time.NewTicker(time.Duration(s.config.SessionSave) * time.Second)
 	closing := s.Closer.C()
 	defer saveResumeWait.Stop()
@@ -964,6 +974,8 @@ func (s *Service) saveResumeDataLoop() {
 }
 
 func (s *Service) saveResumeDataConsumer() {
+	defer s.wg.Done()
+
 	alerts, alertsDone := s.Alerts()
 	closing := s.Closer.C()
 	defer close(alertsDone)
@@ -999,10 +1011,13 @@ func (s *Service) saveResumeDataConsumer() {
 }
 
 func (s *Service) alertsConsumer() {
+	defer s.wg.Done()
+
 	closing := s.Closer.C()
 	defer s.alertsBroadcaster.Close()
 
-	ltOneSecond := lt.Seconds(ltAlertWaitTime)
+	// ltOneSecond := lt.Seconds(ltAlertWaitTime)
+	ltHalfSecond := lt.Milliseconds(500)
 	log.Info("Consuming alerts...")
 	for {
 		select {
@@ -1011,7 +1026,7 @@ func (s *Service) alertsConsumer() {
 
 			return
 		default:
-			if s.Session == nil || s.Session.Swigcptr() == 0 || s.Session.WaitForAlert(ltOneSecond).Swigcptr() == 0 {
+			if s.Session == nil || s.Session.Swigcptr() == 0 || s.Session.WaitForAlert(ltHalfSecond).Swigcptr() == 0 {
 				continue
 			} else if s.Closer.IsSet() {
 				return
@@ -1220,6 +1235,8 @@ func (s *Service) cleanStaleFiles(dir string, ext string) {
 }
 
 func (s *Service) downloadProgress() {
+	defer s.wg.Done()
+
 	closing := s.Closer.C()
 	rotateTicker := time.NewTicker(5 * time.Second)
 	defer rotateTicker.Stop()
