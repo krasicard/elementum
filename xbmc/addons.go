@@ -131,6 +131,13 @@ type AddonSkinResolution struct {
 	Folder  string   `xml:"folder,attr"`
 }
 
+// AddonDir ...
+type AddonDir struct {
+	Info     *AddonRepositoryInfo    `xml:"info,omitempty"`
+	Checksum string                  `xml:"checksum,omitempty"`
+	Datadir  *AddonRepositoryDataDir `xml:"datadir,omitempty"`
+}
+
 // AddonExtension ...
 type AddonExtension struct {
 	Point string `xml:"point,attr"`
@@ -159,10 +166,8 @@ type AddonExtension struct {
 	Descriptions []*AddonText `xml:"description,omitempty"`
 
 	// xbmc.addon.repository
-	Name     string                  `xml:"name,attr,omitempty"`
-	Info     *AddonRepositoryInfo    `xml:"info,omitempty"`
-	Checksum string                  `xml:"checksum,omitempty"`
-	Datadir  *AddonRepositoryDataDir `xml:"datadir,omitempty"`
+	Name string      `xml:"name,attr,omitempty"`
+	Dirs []*AddonDir `xml:"dir,omitempty"`
 
 	// xbmc.gui.skin
 	DefaultResolution     string                 `xml:"defaultresolution,omitempty"`

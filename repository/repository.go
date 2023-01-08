@@ -43,14 +43,18 @@ func MakeElementumRepositoryAddon() error {
 			{
 				Point: "xbmc.addon.repository",
 				Name:  addonName,
-				Info: &xbmc.AddonRepositoryInfo{
-					Text:       elementumHost + "/repository/elgatito/plugin.video.elementum/addons.xml",
-					Compressed: false,
-				},
-				Checksum: elementumHost + "/repository/elgatito/plugin.video.elementum/addons.xml.md5",
-				Datadir: &xbmc.AddonRepositoryDataDir{
-					Text: elementumHost + "/repository/elgatito/",
-					Zip:  true,
+				Dirs: []*xbmc.AddonDir{
+					{
+						Info: &xbmc.AddonRepositoryInfo{
+							Text:       elementumHost + "/repository/elgatito/plugin.video.elementum/addons.xml",
+							Compressed: false,
+						},
+						Checksum: elementumHost + "/repository/elgatito/plugin.video.elementum/addons.xml.md5",
+						Datadir: &xbmc.AddonRepositoryDataDir{
+							Text: elementumHost + "/repository/elgatito/",
+							Zip:  true,
+						},
+					},
 				},
 			},
 			{
