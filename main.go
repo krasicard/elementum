@@ -9,13 +9,16 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/anacrolix/sync"
 	"github.com/anacrolix/tagflag"
 	"github.com/op/go-logging"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/elgatito/elementum/api"
 	"github.com/elgatito/elementum/bittorrent"
@@ -81,23 +84,55 @@ func ensureSingleInstance(conf *config.Configuration) (lock *lockfile.LockFile, 
 	return
 }
 
-func main() {
-	now := time.Now()
+func setupLogging() {
+	var backend *logging.LogBackend
 
-	tagflag.Parse(&config.Args)
-
-	// Make sure we are properly multithreaded.
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	if config.Args.LogPath != "" {
+		logPath = config.Args.LogPath
+	}
+	if logPath != "" {
+		backend = logging.NewLogBackend(&lumberjack.Logger{
+			Filename:   logPath,
+			MaxSize:    10, // Size in Megabytes
+			MaxBackups: 5,
+		}, "", 0)
+	} else {
+		backend = logging.NewLogBackend(os.Stdout, "", 0)
+	}
 
 	logging.SetFormatter(logging.MustStringFormatter(
 		`%{color}%{level:.4s}  %{module:-12s} ▶ %{shortfunc:-15s}  %{color:reset}%{message}`,
 	))
-	logging.SetBackend(logging.NewLogBackend(ioutil.Discard, "", 0), logging.NewLogBackend(os.Stdout, "", 0))
+	logging.SetBackend(logging.NewLogBackend(ioutil.Discard, "", 0), backend)
+}
+
+func main() {
+	now := time.Now()
+
+	// If running in shared library mode, parse Args from variable, provided by library caller.
+	if !exit.IsShared || exit.Args == "" {
+		tagflag.Parse(&config.Args)
+	} else {
+		tagflag.ParseArgs(&config.Args, strings.Fields(exit.Args))
+	}
+
+	// Make sure we are properly multithreaded.
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	setupLogging()
+
+	defer func() {
+		if r := recover(); r != nil {
+			log.Errorf("Got a panic: %s", r)
+			log.Errorf("Stacktrace: \n" + string(debug.Stack()))
+			exit.Exit(exit.ExitCodeError)
+		}
+	}()
 
 	if exit.IsShared {
 		log.Infof("Starting Elementum daemon in shared library mode")
 	} else {
-	log.Infof("Starting Elementum daemon")
+		log.Infof("Starting Elementum daemon")
 	}
 	log.Infof("Version: %s LibTorrent: %s Go: %s, Threads: %d", util.GetVersion(), util.GetTorrentVersion(), runtime.Version(), runtime.GOMAXPROCS(0))
 
@@ -145,13 +180,16 @@ func main() {
 
 		s.Closer.Set()
 
-		log.Info("Shutting down...")
+		log.Infof("Shutting down with code %d ...", code)
 		scrape.Stop()
 		library.CloseLibrary()
 		s.Close(true)
 
 		db.Close()
 		cacheDb.Close()
+
+		// Wait until service is finally stopped
+		<-s.CloserNotifier.C()
 
 		log.Info("Goodbye")
 
@@ -222,7 +260,7 @@ func main() {
 			select {
 			case <-closer:
 				return
-			case <-mainCloser.C():
+			case <-exit.Closer.C():
 				shutdown(exit.ExitCodeSuccess)
 			case <-sigc:
 				shutdown(exit.ExitCodeError)
@@ -256,6 +294,7 @@ func main() {
 	}
 
 	if err = exit.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Panicf("Error running HTTP server: %s", err)
+		exit.Panic(err)
+		return
 	}
 }

@@ -297,6 +297,8 @@ var (
 
 		LocalHost string `help:"local host"`
 		LocalPort int    `help:"local port"`
+
+		LogPath string `help:"Log location path"`
 	}{
 		DisableBackup: false,
 
@@ -305,6 +307,8 @@ var (
 
 		LocalHost: "127.0.0.1",
 		LocalPort: 65220,
+
+		LogPath: "",
 	}
 )
 
