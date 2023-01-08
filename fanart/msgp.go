@@ -9,19 +9,14 @@ import (
 // MarshalMsg implements msgp.Marshaler
 func (z *Disk) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 6
-	// string "ID"
-	o = append(o, 0x86, 0xa2, 0x49, 0x44)
-	o = msgp.AppendString(o, z.ID)
-	// string "URL"
-	o = append(o, 0xa3, 0x55, 0x52, 0x4c)
-	o = msgp.AppendString(o, z.URL)
-	// string "Lang"
-	o = append(o, 0xa4, 0x4c, 0x61, 0x6e, 0x67)
-	o = msgp.AppendString(o, z.Lang)
-	// string "Likes"
-	o = append(o, 0xa5, 0x4c, 0x69, 0x6b, 0x65, 0x73)
-	o = msgp.AppendString(o, z.Likes)
+	// map header, size 3
+	// string "Image"
+	o = append(o, 0x83, 0xa5, 0x49, 0x6d, 0x61, 0x67, 0x65)
+	o, err = z.Image.MarshalMsg(o)
+	if err != nil {
+		err = msgp.WrapError(err, "Image")
+		return
+	}
 	// string "Disc"
 	o = append(o, 0xa4, 0x44, 0x69, 0x73, 0x63)
 	o = msgp.AppendString(o, z.Disc)
@@ -49,28 +44,10 @@ func (z *Disk) UnmarshalMsg(bts []byte) (o []byte, err error) {
 			return
 		}
 		switch msgp.UnsafeString(field) {
-		case "ID":
-			z.ID, bts, err = msgp.ReadStringBytes(bts)
+		case "Image":
+			bts, err = z.Image.UnmarshalMsg(bts)
 			if err != nil {
-				err = msgp.WrapError(err, "ID")
-				return
-			}
-		case "URL":
-			z.URL, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "URL")
-				return
-			}
-		case "Lang":
-			z.Lang, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Lang")
-				return
-			}
-		case "Likes":
-			z.Likes, bts, err = msgp.ReadStringBytes(bts)
-			if err != nil {
-				err = msgp.WrapError(err, "Likes")
+				err = msgp.WrapError(err, "Image")
 				return
 			}
 		case "Disc":
@@ -99,7 +76,7 @@ func (z *Disk) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *Disk) Msgsize() (s int) {
-	s = 1 + 3 + msgp.StringPrefixSize + len(z.ID) + 4 + msgp.StringPrefixSize + len(z.URL) + 5 + msgp.StringPrefixSize + len(z.Lang) + 6 + msgp.StringPrefixSize + len(z.Likes) + 5 + msgp.StringPrefixSize + len(z.Disc) + 9 + msgp.StringPrefixSize + len(z.DiscType)
+	s = 1 + 6 + z.Image.Msgsize() + 5 + msgp.StringPrefixSize + len(z.Disc) + 9 + msgp.StringPrefixSize + len(z.DiscType)
 	return
 }
 
@@ -258,11 +235,20 @@ func (z *Movie) MarshalMsg(b []byte) (o []byte, err error) {
 		if z.MovieDisc[za0005] == nil {
 			o = msgp.AppendNil(o)
 		} else {
-			o, err = z.MovieDisc[za0005].MarshalMsg(o)
+			// map header, size 3
+			// string "Image"
+			o = append(o, 0x83, 0xa5, 0x49, 0x6d, 0x61, 0x67, 0x65)
+			o, err = z.MovieDisc[za0005].Image.MarshalMsg(o)
 			if err != nil {
-				err = msgp.WrapError(err, "MovieDisc", za0005)
+				err = msgp.WrapError(err, "MovieDisc", za0005, "Image")
 				return
 			}
+			// string "Disc"
+			o = append(o, 0xa4, 0x44, 0x69, 0x73, 0x63)
+			o = msgp.AppendString(o, z.MovieDisc[za0005].Disc)
+			// string "DiscType"
+			o = append(o, 0xa8, 0x44, 0x69, 0x73, 0x63, 0x54, 0x79, 0x70, 0x65)
+			o = msgp.AppendString(o, z.MovieDisc[za0005].DiscType)
 		}
 	}
 	// string "MovieThumb"
@@ -517,24 +503,59 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 					if z.MovieDisc[za0005] == nil {
 						z.MovieDisc[za0005] = new(Disk)
 					}
-					bts, err = z.MovieDisc[za0005].UnmarshalMsg(bts)
+					var zb0007 uint32
+					zb0007, bts, err = msgp.ReadMapHeaderBytes(bts)
 					if err != nil {
 						err = msgp.WrapError(err, "MovieDisc", za0005)
 						return
 					}
+					for zb0007 > 0 {
+						zb0007--
+						field, bts, err = msgp.ReadMapKeyZC(bts)
+						if err != nil {
+							err = msgp.WrapError(err, "MovieDisc", za0005)
+							return
+						}
+						switch msgp.UnsafeString(field) {
+						case "Image":
+							bts, err = z.MovieDisc[za0005].Image.UnmarshalMsg(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "MovieDisc", za0005, "Image")
+								return
+							}
+						case "Disc":
+							z.MovieDisc[za0005].Disc, bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "MovieDisc", za0005, "Disc")
+								return
+							}
+						case "DiscType":
+							z.MovieDisc[za0005].DiscType, bts, err = msgp.ReadStringBytes(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "MovieDisc", za0005, "DiscType")
+								return
+							}
+						default:
+							bts, err = msgp.Skip(bts)
+							if err != nil {
+								err = msgp.WrapError(err, "MovieDisc", za0005)
+								return
+							}
+						}
+					}
 				}
 			}
 		case "MovieThumb":
-			var zb0007 uint32
-			zb0007, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0008 uint32
+			zb0008, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "MovieThumb")
 				return
 			}
-			if cap(z.MovieThumb) >= int(zb0007) {
-				z.MovieThumb = (z.MovieThumb)[:zb0007]
+			if cap(z.MovieThumb) >= int(zb0008) {
+				z.MovieThumb = (z.MovieThumb)[:zb0008]
 			} else {
-				z.MovieThumb = make([]*Image, zb0007)
+				z.MovieThumb = make([]*Image, zb0008)
 			}
 			for za0006 := range z.MovieThumb {
 				if msgp.IsNil(bts) {
@@ -555,16 +576,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				}
 			}
 		case "MovieArt":
-			var zb0008 uint32
-			zb0008, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0009 uint32
+			zb0009, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "MovieArt")
 				return
 			}
-			if cap(z.MovieArt) >= int(zb0008) {
-				z.MovieArt = (z.MovieArt)[:zb0008]
+			if cap(z.MovieArt) >= int(zb0009) {
+				z.MovieArt = (z.MovieArt)[:zb0009]
 			} else {
-				z.MovieArt = make([]*Image, zb0008)
+				z.MovieArt = make([]*Image, zb0009)
 			}
 			for za0007 := range z.MovieArt {
 				if msgp.IsNil(bts) {
@@ -585,16 +606,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				}
 			}
 		case "MovieClearArt":
-			var zb0009 uint32
-			zb0009, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0010 uint32
+			zb0010, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "MovieClearArt")
 				return
 			}
-			if cap(z.MovieClearArt) >= int(zb0009) {
-				z.MovieClearArt = (z.MovieClearArt)[:zb0009]
+			if cap(z.MovieClearArt) >= int(zb0010) {
+				z.MovieClearArt = (z.MovieClearArt)[:zb0010]
 			} else {
-				z.MovieClearArt = make([]*Image, zb0009)
+				z.MovieClearArt = make([]*Image, zb0010)
 			}
 			for za0008 := range z.MovieClearArt {
 				if msgp.IsNil(bts) {
@@ -615,16 +636,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				}
 			}
 		case "MovieLogo":
-			var zb0010 uint32
-			zb0010, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0011 uint32
+			zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "MovieLogo")
 				return
 			}
-			if cap(z.MovieLogo) >= int(zb0010) {
-				z.MovieLogo = (z.MovieLogo)[:zb0010]
+			if cap(z.MovieLogo) >= int(zb0011) {
+				z.MovieLogo = (z.MovieLogo)[:zb0011]
 			} else {
-				z.MovieLogo = make([]*Image, zb0010)
+				z.MovieLogo = make([]*Image, zb0011)
 			}
 			for za0009 := range z.MovieLogo {
 				if msgp.IsNil(bts) {
@@ -645,16 +666,16 @@ func (z *Movie) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				}
 			}
 		case "MovieBanner":
-			var zb0011 uint32
-			zb0011, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			var zb0012 uint32
+			zb0012, bts, err = msgp.ReadArrayHeaderBytes(bts)
 			if err != nil {
 				err = msgp.WrapError(err, "MovieBanner")
 				return
 			}
-			if cap(z.MovieBanner) >= int(zb0011) {
-				z.MovieBanner = (z.MovieBanner)[:zb0011]
+			if cap(z.MovieBanner) >= int(zb0012) {
+				z.MovieBanner = (z.MovieBanner)[:zb0012]
 			} else {
-				z.MovieBanner = make([]*Image, zb0011)
+				z.MovieBanner = make([]*Image, zb0012)
 			}
 			for za0010 := range z.MovieBanner {
 				if msgp.IsNil(bts) {
@@ -725,7 +746,7 @@ func (z *Movie) Msgsize() (s int) {
 		if z.MovieDisc[za0005] == nil {
 			s += msgp.NilSize
 		} else {
-			s += z.MovieDisc[za0005].Msgsize()
+			s += 1 + 6 + z.MovieDisc[za0005].Image.Msgsize() + 5 + msgp.StringPrefixSize + len(z.MovieDisc[za0005].Disc) + 9 + msgp.StringPrefixSize + len(z.MovieDisc[za0005].DiscType)
 		}
 	}
 	s += 11 + msgp.ArrayHeaderSize

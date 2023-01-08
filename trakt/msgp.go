@@ -4228,9 +4228,9 @@ func (z *ProgressShow) Msgsize() (s int) {
 // MarshalMsg implements msgp.Marshaler
 func (z *Season) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.Require(b, z.Msgsize())
-	// map header, size 9
+	// map header, size 10
 	// string "Number"
-	o = append(o, 0x89, 0xa6, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72)
+	o = append(o, 0x8a, 0xa6, 0x4e, 0x75, 0x6d, 0x62, 0x65, 0x72)
 	o = msgp.AppendInt(o, z.Number)
 	// string "Overview"
 	o = append(o, 0xa8, 0x4f, 0x76, 0x65, 0x72, 0x76, 0x69, 0x65, 0x77)
@@ -4250,6 +4250,20 @@ func (z *Season) MarshalMsg(b []byte) (o []byte, err error) {
 	// string "Network"
 	o = append(o, 0xa7, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b)
 	o = msgp.AppendString(o, z.Network)
+	// string "Episodes"
+	o = append(o, 0xa8, 0x45, 0x70, 0x69, 0x73, 0x6f, 0x64, 0x65, 0x73)
+	o = msgp.AppendArrayHeader(o, uint32(len(z.Episodes)))
+	for za0001 := range z.Episodes {
+		if z.Episodes[za0001] == nil {
+			o = msgp.AppendNil(o)
+		} else {
+			o, err = z.Episodes[za0001].MarshalMsg(o)
+			if err != nil {
+				err = msgp.WrapError(err, "Episodes", za0001)
+				return
+			}
+		}
+	}
 	// string "Images"
 	o = append(o, 0xa6, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x73)
 	if z.Images == nil {
@@ -4335,6 +4349,36 @@ func (z *Season) UnmarshalMsg(bts []byte) (o []byte, err error) {
 				err = msgp.WrapError(err, "Network")
 				return
 			}
+		case "Episodes":
+			var zb0002 uint32
+			zb0002, bts, err = msgp.ReadArrayHeaderBytes(bts)
+			if err != nil {
+				err = msgp.WrapError(err, "Episodes")
+				return
+			}
+			if cap(z.Episodes) >= int(zb0002) {
+				z.Episodes = (z.Episodes)[:zb0002]
+			} else {
+				z.Episodes = make([]*Episode, zb0002)
+			}
+			for za0001 := range z.Episodes {
+				if msgp.IsNil(bts) {
+					bts, err = msgp.ReadNilBytes(bts)
+					if err != nil {
+						return
+					}
+					z.Episodes[za0001] = nil
+				} else {
+					if z.Episodes[za0001] == nil {
+						z.Episodes[za0001] = new(Episode)
+					}
+					bts, err = z.Episodes[za0001].UnmarshalMsg(bts)
+					if err != nil {
+						err = msgp.WrapError(err, "Episodes", za0001)
+						return
+					}
+				}
+			}
 		case "Images":
 			if msgp.IsNil(bts) {
 				bts, err = msgp.ReadNilBytes(bts)
@@ -4383,7 +4427,15 @@ func (z *Season) UnmarshalMsg(bts []byte) (o []byte, err error) {
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *Season) Msgsize() (s int) {
-	s = 1 + 7 + msgp.IntSize + 9 + msgp.StringPrefixSize + len(z.Overview) + 13 + msgp.IntSize + 14 + msgp.IntSize + 7 + msgp.Float32Size + 6 + msgp.IntSize + 8 + msgp.StringPrefixSize + len(z.Network) + 7
+	s = 1 + 7 + msgp.IntSize + 9 + msgp.StringPrefixSize + len(z.Overview) + 13 + msgp.IntSize + 14 + msgp.IntSize + 7 + msgp.Float32Size + 6 + msgp.IntSize + 8 + msgp.StringPrefixSize + len(z.Network) + 9 + msgp.ArrayHeaderSize
+	for za0001 := range z.Episodes {
+		if z.Episodes[za0001] == nil {
+			s += msgp.NilSize
+		} else {
+			s += z.Episodes[za0001].Msgsize()
+		}
+	}
+	s += 7
 	if z.Images == nil {
 		s += msgp.NilSize
 	} else {
