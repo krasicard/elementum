@@ -12,6 +12,7 @@ import (
 	"github.com/op/go-logging"
 
 	"github.com/elgatito/elementum/bittorrent"
+	"github.com/elgatito/elementum/broadcast"
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/database"
@@ -61,21 +62,24 @@ func Stop() {
 
 // Start initiates timeout for updates
 func Start() {
-	updateTicker = time.NewTicker(180 * time.Second)
 	go runUpdater()
 
-	go func() {
-		closing := closer.C()
+	updateTicker = time.NewTicker(180 * time.Second)
+	defer updateTicker.Stop()
+	closing := closer.C()
+	globalCloser := broadcast.Closer.C()
 
-		select {
-		case <-closing:
-			log.Info("Closing scraper...")
-			return
-		case <-updateTicker.C:
-			go runUpdater()
-			updateTicker.Stop()
-		}
-	}()
+	select {
+	case <-globalCloser:
+		log.Info("Closing scraper...")
+		return
+	case <-closing:
+		log.Info("Closing scraper...")
+		return
+	case <-updateTicker.C:
+		go runUpdater()
+		updateTicker.Stop()
+	}
 }
 
 func runUpdater() {
