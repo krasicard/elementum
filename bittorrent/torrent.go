@@ -32,6 +32,7 @@ import (
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/tvdb"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/event"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -97,8 +98,8 @@ type Torrent struct {
 	pieceLength int64
 	pieceCount  int
 
-	gotMetainfo    util.Event
-	Closer         util.Event
+	gotMetainfo    event.Event
+	Closer         event.Event
 	bufferFinished chan struct{}
 
 	piecesMx          sync.RWMutex
@@ -2248,7 +2249,7 @@ func (t *Torrent) UpdateMetadataTitle(title string, in []byte) []byte {
 }
 
 // UpdateDatabaseMetadata in decoding torrent bencoded,
-// 	adding proper Title and then returning encoded bencoded.
+// adding proper Title and then returning encoded bencoded.
 func (t *Torrent) UpdateDatabaseMetadata(in []byte) ([]byte, error) {
 	defer perf.ScopeTimer()()
 

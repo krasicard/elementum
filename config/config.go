@@ -316,7 +316,7 @@ func Get() *Configuration {
 }
 
 // Reload ...
-func Reload() *Configuration {
+func Reload() (ret *Configuration, err error) {
 	log.Info("Reloading configuration...")
 
 	// Reloading RPC Hosts
@@ -339,8 +339,8 @@ func Reload() *Configuration {
 
 			waitForSettingsClosed()
 
-			// Custom code to say python not to report this error
-			exit.Exit(exit.ExitCodeRestart)
+			err = fmt.Errorf("Could not reload configuration")
+			exit.PanicWithCode(err, exit.ExitCodeRestart)
 		}
 	}()
 
@@ -348,7 +348,7 @@ func Reload() *Configuration {
 	if info == nil || info.ID == "" {
 		log.Warningf("Can't continue because addon info is empty")
 		settingsWarning = "LOCALIZE[30113]"
-		panic(settingsWarning)
+		return nil, fmt.Errorf("Could not get addon information from Kodi")
 	}
 
 	info.Path = xbmc.TranslatePath(info.Path)
@@ -421,32 +421,37 @@ func Reload() *Configuration {
 
 	if downloadStorage != 1 {
 		if downloadPath == "." {
-			log.Warningf("Can't continue because download path is empty")
+			err = fmt.Errorf("Can't continue because download path is empty")
 			settingsWarning = "LOCALIZE[30113]"
-			panic(settingsWarning)
+			exit.Panic(err)
+			return nil, err
 		} else if err := IsWritablePath(downloadPath); err != nil {
-			log.Errorf("Cannot write to download location '%s': %#v", downloadPath, err)
+			err = fmt.Errorf("Cannot write to download location '%s': %#v", downloadPath, err)
 			settingsWarning = err.Error()
-			panic(settingsWarning)
+			exit.Panic(err)
+			return nil, err
 		}
 	}
 	log.Infof("Using download path: %s", downloadPath)
 
 	if libraryPath == "." {
-		log.Errorf("Cannot use library location '%s'", libraryPath)
+		err = fmt.Errorf("Cannot use library location '%s'", libraryPath)
 		settingsWarning = "LOCALIZE[30220]"
-		panic(settingsWarning)
+		exit.Panic(err)
+		return nil, err
 	} else if strings.Contains(libraryPath, "elementum_library") {
 		if err := os.MkdirAll(libraryPath, 0777); err != nil {
-			log.Errorf("Could not create temporary library directory: %#v", err)
+			err = fmt.Errorf("Could not create temporary library directory: %#v", err)
 			settingsWarning = err.Error()
-			panic(settingsWarning)
+			exit.Panic(err)
+			return nil, err
 		}
 	}
 	if err := IsWritablePath(libraryPath); err != nil {
-		log.Errorf("Cannot write to library location '%s': %#v", libraryPath, err)
+		err = fmt.Errorf("Cannot write to library location '%s': %#v", libraryPath, err)
 		settingsWarning = err.Error()
-		panic(settingsWarning)
+		exit.Panic(err)
+		return nil, err
 	}
 	log.Infof("Using library path: %s", libraryPath)
 
@@ -454,15 +459,17 @@ func Reload() *Configuration {
 		torrentsPath = filepath.Join(downloadPath, "Torrents")
 	} else if strings.Contains(torrentsPath, "elementum_torrents") {
 		if err := os.MkdirAll(torrentsPath, 0777); err != nil {
-			log.Errorf("Could not create temporary torrents directory: %#v", err)
+			err = fmt.Errorf("Could not create temporary torrents directory: %#v", err)
 			settingsWarning = err.Error()
-			panic(settingsWarning)
+			exit.Panic(err)
+			return nil, err
 		}
 	}
 	if err := IsWritablePath(torrentsPath); err != nil {
-		log.Errorf("Cannot write to location '%s': %#v", torrentsPath, err)
+		err = fmt.Errorf("Cannot write to location '%s': %#v", torrentsPath, err)
 		settingsWarning = err.Error()
-		panic(settingsWarning)
+		exit.Panic(err)
+		return nil, err
 	}
 	log.Infof("Using torrents path: %s", torrentsPath)
 
@@ -823,7 +830,7 @@ func Reload() *Configuration {
 
 	log.Infof("Using configuration: %s", configOutput)
 
-	return config
+	return config, nil
 }
 
 // AddonIcon ...

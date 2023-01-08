@@ -102,7 +102,13 @@ func main() {
 	}
 	log.Infof("Version: %s LibTorrent: %s Go: %s, Threads: %d", util.GetVersion(), util.GetTorrentVersion(), runtime.Version(), runtime.GOMAXPROCS(0))
 
-	conf := config.Reload()
+	conf, err := config.Reload()
+	if err != nil || conf == nil {
+		log.Errorf("Could not get addon configuration: %s", err)
+		exit.Exit(exit.ExitCodeError)
+		return
+	}
+
 	xbmc.KodiVersion = conf.Platform.Kodi
 
 	log.Infof("Addon: %s v%s", conf.Info.ID, conf.Info.Version)
