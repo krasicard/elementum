@@ -12,6 +12,11 @@ endif
 
 include platform_target.mk
 
+IS_SHARED = no
+ifneq (,$(findstring shared, $(TARGET_SHARED)))
+    IS_SHARED = yes
+endif
+
 ifeq ($(TARGET_ARCH), x86)
 	GOARCH = 386
 else ifeq ($(TARGET_ARCH), x64)
@@ -32,35 +37,48 @@ else ifeq ($(TARGET_ARCH), arm64)
 endif
 
 ifeq ($(TARGET_OS), windows)
-	EXT = .exe
+	ifeq ($(IS_SHARED), no)
+		EXT = .exe
+	else
+		EXT = .dll
+	endif
+
 	GOOS = windows
-	# TODO Remove for golang 1.8
-	# https://github.com/golang/go/issues/8756
-	# GO_LDFLAGS = -extldflags=-Wl,--allow-multiple-definition -v
-	# GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-static-libgcc -static-libstdc++ -Wl,--allow-multiple-definition -v"
 else ifeq ($(TARGET_OS), darwin)
-	EXT =
+	ifeq ($(IS_SHARED), no)
+		EXT = 
+	else
+		EXT = .so
+	endif
+
 	GOOS = darwin
 	# Needs this or cgo will try to link with libgcc, which will fail
 	CC := $(CROSS_ROOT)/bin/$(CROSS_TRIPLE)-clang
 	CXX := $(CROSS_ROOT)/bin/$(CROSS_TRIPLE)-clang++
 	GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-lm"
 else ifeq ($(TARGET_OS), linux)
-	EXT =
+	ifeq ($(IS_SHARED), no)
+		EXT = 
+		GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-L $(CROSS_ROOT)/lib/ -lm -lstdc++"
+	else
+		EXT = .so
+	endif
+
 	GOOS = linux
-	GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-L $(CROSS_ROOT)/lib/ -lm -lstdc++"
-	# GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-static -L $(CROSS_ROOT)/lib/ -lm -lstdc++"
 else ifeq ($(TARGET_OS), android)
-	EXT =
+	ifeq ($(IS_SHARED), no)
+		EXT = 
+		GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-pie -lm" 
+	else
+		EXT = .so
+	endif
+
 	GOOS = android
 	ifeq ($(TARGET_ARCH), arm)
 		GOARM = 7
 	else
 		GOARM =
 	endif
-	# GO_LDFLAGS += -extldflags=-pie
-	GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-pie -lm" 
-	# GO_LDFLAGS += -linkmode=external -extldflags "-pie"
 	CC := $(CROSS_ROOT)/bin/$(CROSS_TRIPLE)-clang
 	CXX := $(CROSS_ROOT)/bin/$(CROSS_TRIPLE)-clang++
 endif
@@ -76,25 +94,52 @@ UPX = upx
 GIT_VERSION = $(shell $(GIT) describe --tags)
 CGO_ENABLED = 1
 OUTPUT_NAME = $(NAME)$(EXT)
-BUILD_PATH = build/$(TARGET_OS)_$(TARGET_ARCH)
 LIBTORRENT_GO = github.com/ElementumOrg/libtorrent-go
 LIBTORRENT_GO_HOME = $(shell go env GOPATH)/src/$(LIBTORRENT_GO)
 GO_BUILD_TAGS =
 GO_LDFLAGS += -s -w -X $(GO_PKG)/util.Version=$(GIT_VERSION)
 GO_EXTRALDFLAGS =
-PLATFORMS = \
+
+ifeq ($(IS_SHARED), no)
+	BUILD_PATH = build/$(TARGET_OS)_$(TARGET_ARCH)
+	BUILD_MODE = -tags binary
+else
+	BUILD_PATH = build/$(TARGET_OS)_$(TARGET_ARCH)
+	BUILD_MODE = -buildmode=c-shared -tags shared
+endif
+
+
+ANDROID_PLATFORMS = \
 	android-arm \
+	android-arm-shared \
 	android-arm64 \
+	android-arm64-shared \
 	android-x64 \
+	android-x64-shared \
 	android-x86 \
+	android-x86-shared
+LINUX_PLATFORMS = \
 	linux-armv6 \
+	linux-armv6-shared \
 	linux-armv7 \
+	linux-armv7-shared \
 	linux-arm64 \
+	linux-arm64-shared \
 	linux-x64 \
+	linux-x64-shared \
 	linux-x86 \
+	linux-x86-shared
+WINDOWS_PLATFORMS = \
 	windows-x64 \
+	windows-x64-shared \
 	windows-x86 \
-	darwin-x64
+	windows-x86-shared
+DARWIN_PLATFORMS = \
+	darwin-x64 \
+	darwin-x64-shared
+
+PLATFORMS =	$(ANDROID_PLATFORMS) $(LINUX_PLATFORMS) $(WINDOWS_PLATFORMS) $(DARWIN_PLATFORMS)
+
 
 .PHONY: $(PLATFORMS)
 
@@ -107,7 +152,7 @@ client:
 	mkdir -p $(BUILD_PATH)/client
 
 $(PLATFORMS):
-	$(MAKE) build TARGET_OS=$(firstword $(subst -, ,$@)) TARGET_ARCH=$(word 2, $(subst -, ,$@))
+	$(MAKE) build TARGET_OS=$(firstword $(subst -, ,$@)) TARGET_ARCH=$(word 2, $(subst -, ,$@)) TARGET_SHARED=$(word 3, $(subst -, ,$@))
 
 force:
 	@true
@@ -127,6 +172,7 @@ $(BUILD_PATH)/$(OUTPUT_NAME): $(BUILD_PATH) force
 	$(GO) build -v \
 		-gcflags '$(GO_GCFLAGS)' \
 		-ldflags '$(GO_LDFLAGS)' \
+		$(BUILD_MODE) \
 		-o '$(BUILD_PATH)/$(OUTPUT_NAME)' \
 		$(PKGDIR)
 	# set -x && \
@@ -170,7 +216,7 @@ build: force
 ifeq ($(TARGET_OS), windows)
 	GOOS=windows $(GO) get -u github.com/StackExchange/wmi
 endif
-	$(DOCKER) run --rm -v $(GOPATH):/go -e GOPATH=/go -e GOCACHE=/go-cache -v $(shell pwd):/go/src/$(GO_PKG) -v $(shell go env GOCACHE):/go-cache -u `stat -c "%u:%g" $(shell go env GOCACHE)` --ulimit memlock=67108864 -w /go/src/$(GO_PKG) $(DOCKER_IMAGE):$(TARGET_OS)-$(TARGET_ARCH) make dist TARGET_OS=$(TARGET_OS) TARGET_ARCH=$(TARGET_ARCH) GIT_VERSION=$(GIT_VERSION)
+	$(DOCKER) run --rm -v $(GOPATH):/go -e GOPATH=/go -e GOCACHE=/go-cache -v $(shell pwd):/go/src/$(GO_PKG) -v $(shell go env GOCACHE):/go-cache -u `stat -c "%u:%g" $(shell go env GOCACHE)` --ulimit memlock=67108864 -w /go/src/$(GO_PKG) $(DOCKER_IMAGE):$(TARGET_OS)-$(TARGET_ARCH) make dist TARGET_OS=$(TARGET_OS) TARGET_ARCH=$(TARGET_ARCH) TARGET_SHARED=$(TARGET_SHARED) GIT_VERSION=$(GIT_VERSION)
 
 docker: force
 	$(DOCKER) run --rm -v $(GOPATH):/go -e GOPATH=/go -e GOCACHE=/go-cache -v $(shell pwd):/go/src/$(GO_PKG) -v $(shell go env GOCACHE):/go-cache -u `stat -c "%u:%g" $(shell go env GOCACHE)` --ulimit memlock=67108864 -w /go/src/$(GO_PKG) $(DOCKER_IMAGE):$(TARGET_OS)-$(TARGET_ARCH)

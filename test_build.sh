@@ -27,23 +27,30 @@ if [ ! -z "${WSL_USER}" ]; then
   DEST_MAKE=windows-x64
 fi
 
+LOCAL_ENV=$GOPATH/src/github.com/ElementumOrg/libtorrent-go/local-env/
+if [ -d "$CROSS_ROOT" ];
+then
+    LOCAL_ENV=$CROSS_ROOT
+fi
+
+# This will run with local go using libtorrent-go/local-env/ locally copied dependencies compilation.
+export LOCAL_ENV=$LOCAL_ENV
+export PATH=$PATH:$LOCAL_ENV/bin/
+export PKG_CONFIG_PATH=$LOCAL_ENV/lib/pkgconfig
+export SWIG_LIB=$LOCAL_ENV/share/swig/4.1.0/
+
 if [ "$1" == "local" ]
 then
-  LOCAL_ENV=$GOPATH/src/github.com/ElementumOrg/libtorrent-go/local-env/
-  if [ -d "$CROSS_ROOT" ];
-  then
-      LOCAL_ENV=$CROSS_ROOT
-  fi
-
-  # This will run with local go using libtorrent-go/local-env/ locally copied dependencies compilation.
-  export LOCAL_ENV=$LOCAL_ENV
-  export PATH=$PATH:$LOCAL_ENV/bin/
-  export PKG_CONFIG_PATH=$LOCAL_ENV/lib/pkgconfig
-  export SWIG_LIB=$LOCAL_ENV/share/swig/4.1.0/
-
   set -e
   test go build -ldflags="-w -X github.com/elgatito/elementum/util.Version=${GIT_VERSION}" -o /var/tmp/elementum .
-  test chmod +x /var/tmp/elementum
+  test chmod +x /var/tmp/elementum*
+  test cp -rf /var/tmp/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
+  test cp -rf /var/tmp/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
+elif [ "$1" == "library" ]
+then
+  set -e
+  test go build -ldflags="-w -X github.com/elgatito/elementum/util.Version=${GIT_VERSION}" -tags shared -buildmode=c-shared -o /var/tmp/elementum.so .
+  test chmod +x /var/tmp/elementum*
   test cp -rf /var/tmp/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
 elif [ "$1" == "sanitize" ]
@@ -51,7 +58,7 @@ then
   # This will run with local go
   set -e
   CGO_ENABLED=1 CGO_LDFLAGS='-fsanitize=leak -fsanitize=address' CGO_CFLAGS='-fsanitize=leak -fsanitize=address' test go build -ldflags="-w -X github.com/elgatito/elementum/util.Version=${GIT_VERSION}" -o /var/tmp/elementum github.com/elgatito/elementum
-  test chmod +x /var/tmp/elementum
+  test chmod +x /var/tmp/elementum*
   test cp -rf /var/tmp/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
 elif [ "$1" == "docker" ]
@@ -59,6 +66,11 @@ then
   # This will run with docker libtorrent:$DEST_MAKE image
   test make $DEST_MAKE
   test cp -rf build/$DEST_PLATFORM/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
-  # Windows is blocking this WSL path?
-  # test cp -rf build/$DEST_PLATFORM/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
+  test cp -rf build/$DEST_PLATFORM/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
+elif [ "$1" == "docker-library" ]
+then
+  # This will run with docker libtorrent:$DEST_MAKE image
+  test make ${DEST_MAKE}-shared
+  test cp -rf build/${DEST_PLATFORM}/elementum.* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
+  test cp -rf build/${DEST_PLATFORM}/elementum.* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
 fi
