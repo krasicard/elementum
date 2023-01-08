@@ -37,6 +37,7 @@ import (
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/trakt"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/event"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -70,8 +71,8 @@ type Service struct {
 	MarkedToMove string
 
 	alertsBroadcaster *broadcast.Broadcaster
-	Closer            util.Event
-	CloserNotifier    util.Event
+	Closer            event.Event
+	CloserNotifier    event.Event
 	isShutdown        bool
 }
 

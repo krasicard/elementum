@@ -32,9 +32,8 @@ import (
 )
 
 var (
-	log        = logging.MustGetLogger("main")
-	logPath    = ""
-	mainCloser util.Event
+	log     = logging.MustGetLogger("main")
+	logPath = ""
 )
 
 func init() {

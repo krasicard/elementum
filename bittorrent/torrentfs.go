@@ -14,6 +14,7 @@ import (
 
 	"github.com/elgatito/elementum/database"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/event"
 )
 
 const (
@@ -38,8 +39,8 @@ type TorrentFSEntry struct {
 	pieceLength int
 	numPieces   int
 
-	seeked  util.Event
-	removed util.Event
+	seeked  event.Event
+	removed event.Event
 
 	dbItem *database.BTItem
 

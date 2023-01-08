@@ -1,8 +1,8 @@
 package broadcast
 
-import "github.com/elgatito/elementum/util"
+import "github.com/elgatito/elementum/util/event"
 
 var (
 	// Closer is a global shutdown closer.
-	Closer util.Event
+	Closer event.Event
 )

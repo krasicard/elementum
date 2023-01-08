@@ -12,6 +12,7 @@ import (
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/fanart"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/event"
 	"github.com/elgatito/elementum/xbmc"
 	"github.com/jmcvetta/napping"
 	"github.com/op/go-logging"
@@ -402,7 +403,7 @@ var (
 	}
 	apiKey = apiKeys[rand.Intn(len(apiKeys))]
 	// WarmingUp ...
-	WarmingUp = util.Event{}
+	WarmingUp = event.Event{}
 )
 
 var rl = util.NewRateLimiter(burstRate, burstTime, simultaneousConnections)

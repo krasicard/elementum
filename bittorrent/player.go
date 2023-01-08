@@ -34,6 +34,7 @@ import (
 	"github.com/elgatito/elementum/tvdb"
 	"github.com/elgatito/elementum/upnext"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/event"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -82,7 +83,7 @@ type Player struct {
 	bufferPiecesProgressLock sync.RWMutex
 
 	diskStatus *diskusage.DiskStatus
-	closer     util.Event
+	closer     event.Event
 	closed     bool
 }
 

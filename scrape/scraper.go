@@ -20,7 +20,7 @@ import (
 	"github.com/elgatito/elementum/providers"
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/trakt"
-	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/event"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -40,10 +40,10 @@ const (
 )
 
 var (
-	log = logging.MustGetLogger("proxy")
+	log = logging.MustGetLogger("scraper")
 
 	updateTicker *time.Ticker
-	closer       = util.Event{}
+	closer       = event.Event{}
 
 	libraryUpdated = false
 )

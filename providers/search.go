@@ -15,6 +15,7 @@ import (
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/event"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -166,7 +167,7 @@ func processLinks(torrentsChan chan *bittorrent.TorrentFile, sortType int, isSil
 	progress := 0
 	progressTotal := 1
 	progressUpdate := make(chan string)
-	closed := util.Event{}
+	closed := event.Event{}
 
 	defer func() {
 		log.Debug("Closing progressupdate")

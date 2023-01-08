@@ -25,6 +25,7 @@ import (
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/trakt"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/event"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -95,8 +96,8 @@ const (
 )
 
 var (
-	removedEpisodes = make(chan *removedEpisode)
-	closer          = util.Event{}
+	removedEpisodes chan *removedEpisode
+	closer          = event.Event{}
 
 	log = logging.MustGetLogger("library")
 
@@ -120,6 +121,8 @@ func InitDB() {
 
 // Init makes preparations on program start
 func Init() {
+	removedEpisodes = make(chan *removedEpisode)
+
 	InitDB()
 
 	if err := checkMoviesPath(); err != nil {
