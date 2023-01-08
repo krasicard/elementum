@@ -40,6 +40,7 @@ require (
 require (
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Sereal/Sereal v0.0.0-20221130110801-16a4f76670cd // indirect
+	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/anacrolix/log v0.13.1 // indirect
 	github.com/anacrolix/missinggo/v2 v2.7.1 // indirect
 	github.com/bits-and-blooms/bitset v1.4.0 // indirect

@@ -54,7 +54,7 @@ func Notification(r *http.Request, s *bittorrent.Service) {
 		// Do not send SIGHUP when running as a shared library, because we will kill ourselves
 		if exit.IsShared {
 			log.Infof("Sending main closer to shutdown Elementum properly")
-			mainCloser.Set()
+			exit.Closer.Set()
 			return
 		}
 
