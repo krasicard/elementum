@@ -22,7 +22,12 @@ import (
 
 // InitCacheDB ...
 func InitCacheDB(conf *config.Configuration) (*BoltDatabase, error) {
-	db, err := CreateBoltDB(conf, cacheFileName, backupCacheFileName)
+	compressPath := filepath.Join(conf.Info.Profile, compressCacheFileName)
+
+	if err := CompressBoltDB(conf, databasePath, compressPath); err != nil {
+		return nil, err
+	}
+
 	if err != nil || db == nil {
 		return nil, errors.New("database not created")
 	}
@@ -71,14 +76,92 @@ func CreateBoltDB(conf *config.Configuration, fileName string, backupFileName st
 	return db, nil
 }
 
-// GetBolt returns common database
-func GetBolt() *BoltDatabase {
-	return boltDatabase
-}
+// CompressBoltDB ...
+func CompressBoltDB(conf *config.Configuration, databasePath, compressPath string) error {
+	if config.Args.DisableCompress {
+		return nil
+	}
 
-// GetCache returns Cache database
-func GetCache() *BoltDatabase {
-	return cacheDatabase
+	// Checking previous compress date and whether we should proceed
+	stampFile := databasePath + ".compress"
+	stampTime, err := util.GetTimeFromFile(stampFile)
+	if err == nil && !stampTime.IsZero() {
+		if !util.IsTimePassed(stampTime, compressPeriod) {
+			return nil
+		}
+	}
+
+	if util.FileExists(compressPath) {
+		if err := os.Remove(compressPath); err != nil {
+			log.Errorf("Could not remove file %s: %s", compressPath, err)
+			return err
+		}
+	}
+
+	// Ensure source file exists.
+	fi, err := os.Stat(databasePath)
+	if os.IsNotExist(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	initialSize := fi.Size()
+
+	// Open source database.
+	src, err := bolt.Open(databasePath, 0444, &bolt.Options{ReadOnly: true})
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if src != nil {
+			src.Close()
+		}
+	}()
+
+	// Open destination database.
+	dst, err := bolt.Open(compressPath, fi.Mode(), nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if dst != nil {
+			dst.Close()
+		}
+	}()
+
+	// Run compaction.
+	if err := bolt.Compact(dst, src, 65536); err != nil {
+		return err
+	}
+
+	// Report stats on new size.
+	fi, err = os.Stat(compressPath)
+	if err != nil {
+		return err
+	} else if fi.Size() == 0 {
+		return fmt.Errorf("zero db size")
+	}
+	log.Infof("Database %s compessed to %s with %d -> %d bytes (gain=%.2fx)\n",
+		databasePath, compressPath, initialSize, fi.Size(), float64(initialSize)/float64(fi.Size()))
+
+	src.Close()
+	dst.Close()
+
+	// Replace database with compact version
+	if err := os.Remove(databasePath); err != nil {
+		log.Errorf("Could not remove old database file '%s': %s", databasePath, err)
+		return err
+	}
+	if err := os.Rename(compressPath, databasePath); err != nil {
+		log.Errorf("Could not rename old database file '%s' into '%s': %s", compressPath, databasePath, err)
+		return err
+	}
+
+	if _, err := util.SetTimeIntoFile(stampFile); err != nil {
+		log.Errorf("Could not write stamp file %s: %s", stampFile, err)
+	}
+
+	return nil
 }
 
 // GetFilename returns bolt filename

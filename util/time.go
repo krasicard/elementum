@@ -1,6 +1,9 @@
 package util
 
 import (
+	"fmt"
+	"io/ioutil"
+	"strconv"
 	"time"
 )
 
@@ -40,4 +43,29 @@ func AirDateWithExpireCheck(dt string, allowSameDay bool) (time.Time, bool) {
 	}
 
 	return aired, false
+}
+
+func GetTimeFromFile(timeFile string) (time.Time, error) {
+	stamp, err := ioutil.ReadFile(timeFile)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	val, err := strconv.ParseInt(string(stamp), 10, 64)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Unix(val, 0).UTC(), nil
+}
+
+func SetTimeIntoFile(timeFile string) (time.Time, error) {
+	t := time.Now().UTC()
+	err := ioutil.WriteFile(timeFile, []byte(fmt.Sprintf("%d", t.Unix())), 0666)
+
+	return t, err
+}
+
+func IsTimePassed(last time.Time, period time.Duration) bool {
+	return time.Since(last) > period
 }

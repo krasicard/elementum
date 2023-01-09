@@ -30,7 +30,12 @@ func GetStormDB() *storm.DB {
 
 // InitStormDB ...
 func InitStormDB(conf *config.Configuration) (*StormDatabase, error) {
-	db, err := CreateStormDB(conf, stormFileName, backupStormFileName)
+	compressPath := filepath.Join(conf.Info.Profile, compressStormFileName)
+
+	if err := CompressBoltDB(conf, databasePath, compressPath); err != nil {
+		return nil, err
+	}
+
 	if err != nil || db == nil {
 		return nil, errors.New("database not created")
 	}
