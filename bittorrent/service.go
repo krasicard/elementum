@@ -956,6 +956,7 @@ func (s *Service) saveResumeDataLoop() {
 	for {
 		select {
 		case <-closing:
+			log.Info("Closing ...")
 			return
 		case <-saveResumeWait.C:
 			for _, t := range s.q.All() {
@@ -984,6 +985,7 @@ func (s *Service) saveResumeDataConsumer() {
 	for {
 		select {
 		case <-closing:
+			log.Info("Closing ...")
 			return
 		case alert, ok := <-alerts:
 			if !ok { // was the alerts channel closed?
@@ -1249,6 +1251,7 @@ func (s *Service) downloadProgress() {
 	for {
 		select {
 		case <-closing:
+			log.Info("Closing ...")
 			return
 
 		case <-rotateTicker.C:
