@@ -5,6 +5,8 @@
 *.o
 *.a
 *.so
+*.exe
+*.db
 
 # Folders
 _obj
@@ -23,7 +25,6 @@ _cgo_export.*
 _testmain.go
 
 elementum
-*.exe
 *.test
 /debug
 /build
