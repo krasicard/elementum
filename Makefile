@@ -1,6 +1,7 @@
 CC = cc
 CXX = c++
 STRIP = strip
+RACE = 
 
 include platform_host.mk
 
@@ -15,6 +16,10 @@ include platform_target.mk
 IS_SHARED = no
 ifneq (,$(findstring shared, $(TARGET_SHARED)))
     IS_SHARED = yes
+endif
+
+ifneq ($(IS_RACE),)
+	RACE := -race
 endif
 
 ifeq ($(TARGET_ARCH), x86)
@@ -172,7 +177,7 @@ $(BUILD_PATH)/$(OUTPUT_NAME): $(BUILD_PATH) force
 	$(GO) build -v \
 		-gcflags '$(GO_GCFLAGS)' \
 		-ldflags '$(GO_LDFLAGS)' \
-		$(BUILD_MODE) \
+		$(BUILD_MODE) $(RACE) \
 		-o '$(BUILD_PATH)/$(OUTPUT_NAME)' \
 		$(PKGDIR)
 	# set -x && \
@@ -216,7 +221,7 @@ build: force
 ifeq ($(TARGET_OS), windows)
 	GOOS=windows $(GO) get -u github.com/StackExchange/wmi
 endif
-	$(DOCKER) run --rm -v $(GOPATH):/go -e GOPATH=/go -e GOCACHE=/go-cache -v $(shell pwd):/go/src/$(GO_PKG) -v $(shell go env GOCACHE):/go-cache -u `stat -c "%u:%g" $(shell go env GOCACHE)` --ulimit memlock=67108864 -w /go/src/$(GO_PKG) $(DOCKER_IMAGE):$(TARGET_OS)-$(TARGET_ARCH) make dist TARGET_OS=$(TARGET_OS) TARGET_ARCH=$(TARGET_ARCH) TARGET_SHARED=$(TARGET_SHARED) GIT_VERSION=$(GIT_VERSION)
+	$(DOCKER) run --rm -v $(GOPATH):/go -e GOPATH=/go -e GOCACHE=/go-cache -v $(shell pwd):/go/src/$(GO_PKG) -v $(shell go env GOCACHE):/go-cache -u `stat -c "%u:%g" $(shell go env GOCACHE)` --ulimit memlock=67108864 -w /go/src/$(GO_PKG) $(DOCKER_IMAGE):$(TARGET_OS)-$(TARGET_ARCH) make dist TARGET_OS=$(TARGET_OS) TARGET_ARCH=$(TARGET_ARCH) TARGET_SHARED=$(TARGET_SHARED) GIT_VERSION=$(GIT_VERSION) IS_RACE=$(IS_RACE)
 
 docker: force
 	$(DOCKER) run --rm -v $(GOPATH):/go -e GOPATH=/go -e GOCACHE=/go-cache -v $(shell pwd):/go/src/$(GO_PKG) -v $(shell go env GOCACHE):/go-cache -u `stat -c "%u:%g" $(shell go env GOCACHE)` --ulimit memlock=67108864 -w /go/src/$(GO_PKG) $(DOCKER_IMAGE):$(TARGET_OS)-$(TARGET_ARCH)
