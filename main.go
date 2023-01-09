@@ -158,13 +158,15 @@ func main() {
 
 	db, err := database.InitStormDB(conf)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("Could not open application database: %s", err)
+		exit.Exit(exit.ExitCodeError)
 		return
 	}
 
 	cacheDb, errCache := database.InitCacheDB(conf)
 	if errCache != nil {
-		log.Error(errCache)
+		log.Errorf("Could not open cache database: %s", errCache)
+		exit.Exit(exit.ExitCodeError)
 		return
 	}
 
@@ -296,5 +298,8 @@ func main() {
 	if err = exit.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		exit.Panic(err)
 		return
+	}
+	if !exit.IsShared {
+		os.Exit(exit.Code)
 	}
 }
