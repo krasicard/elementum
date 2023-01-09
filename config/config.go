@@ -299,6 +299,10 @@ var (
 		LocalPort int    `help:"local port"`
 
 		LogPath string `help:"Log location path"`
+
+		ProfilePath  string `help:"Custom path to addon files folder"`
+		LibraryPath  string `help:"Custom path to addon library folder"`
+		TorrentsPath string `help:"Custom path to addon downloads folder"`
 	}{
 		DisableBackup: false,
 
@@ -309,6 +313,10 @@ var (
 		LocalPort: 65220,
 
 		LogPath: "",
+
+		ProfilePath:  "",
+		LibraryPath:  "",
+		TorrentsPath: "",
 	}
 )
 
@@ -399,6 +407,12 @@ func Reload() (ret *Configuration, err error) {
 			log.Info("Using /storage/emulated/legacy path.")
 		}
 	}
+
+	// Apply custom Profile folder
+	if Args.ProfilePath != "" {
+		info.Profile = Args.ProfilePath
+	}
+
 	if !PathExists(info.Profile) {
 		log.Infof("Profile path does not exist, creating it at: %s", info.Profile)
 		if err := os.MkdirAll(info.Profile, 0777); err != nil {
@@ -422,6 +436,14 @@ func Reload() (ret *Configuration, err error) {
 	}
 
 	log.Noticef("Paths translated by Kodi: Download = %s , Library = %s , Torrents = %s , Storage = %d", downloadPath, libraryPath, torrentsPath, downloadStorage)
+
+	// Apply custom Library/Torrents folders
+	if Args.LibraryPath != "" {
+		libraryPath = Args.LibraryPath
+	}
+	if Args.TorrentsPath != "" {
+		torrentsPath = Args.TorrentsPath
+	}
 
 	if downloadStorage != 1 {
 		if downloadPath == "." {
