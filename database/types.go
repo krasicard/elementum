@@ -10,28 +10,38 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+// Database ...
+type Database struct {
+	mu sync.RWMutex
+
+	IsClosed  bool
+	isCaching bool
+
+	quit chan struct{}
+
+	filePath string
+	fileName string
+
+	backupFilePath string
+	backupFileName string
+}
+
 // StormDatabase ...
 type StormDatabase struct {
-	db             *storm.DB
-	quit           chan struct{}
-	fileName       string
-	backupFileName string
+	Database
+	db *storm.DB
 }
 
 // BoltDatabase ...
 type BoltDatabase struct {
-	db             *bolt.DB
-	quit           chan struct{}
-	fileName       string
-	backupFileName string
+	Database
+	db *bolt.DB
 }
 
 // SqliteDatabase ...
 type SqliteDatabase struct {
-	*sql.DB
-	quit           chan struct{}
-	fileName       string
-	backupFileName string
+	Database
+	db *sql.DB
 }
 
 type schemaChange func(*int, *SqliteDatabase) (bool, error)
@@ -98,14 +108,17 @@ type TorrentHistory struct {
 }
 
 var (
-	stormFileName        = "storm.db"
-	backupStormFileName  = "storm-backup.db"
-	sqliteFileName       = "app.db"
-	backupSqliteFileName = "app-backup.db"
+	stormFileName         = "storm.db"
+	backupStormFileName   = "storm-backup.db"
+	compressStormFileName = "storm-compress.db"
+
 	boltFileName         = "library.db"
 	backupBoltFileName   = "library-backup.db"
-	cacheFileName        = "cache.db"
-	backupCacheFileName  = "cache-backup.db"
+	compressBoltFileName = "library-compress.db"
+
+	cacheFileName         = "cache.db"
+	backupCacheFileName   = "cache-backup.db"
+	compressCacheFileName = "cache-compress.db"
 
 	log = logging.MustGetLogger("database")
 
@@ -125,7 +138,10 @@ const (
 
 const (
 	historyMaxSize = 50
+
 	backupPeriod   = 5 * time.Hour
+	cleanupPeriod  = 24 * time.Hour
+	compressPeriod = 7 * 24 * time.Hour
 )
 
 var (

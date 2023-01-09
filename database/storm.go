@@ -3,7 +3,6 @@ package database
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -30,31 +29,42 @@ func GetStormDB() *storm.DB {
 
 // InitStormDB ...
 func InitStormDB(conf *config.Configuration) (*StormDatabase, error) {
+	databasePath := filepath.Join(conf.Info.Profile, stormFileName)
+	backupPath := filepath.Join(conf.Info.Profile, backupStormFileName)
 	compressPath := filepath.Join(conf.Info.Profile, compressStormFileName)
 
 	if err := CompressBoltDB(conf, databasePath, compressPath); err != nil {
 		return nil, err
 	}
 
+	db, err := CreateStormDB(conf, databasePath, backupPath, compressPath)
 	if err != nil || db == nil {
 		return nil, errors.New("database not created")
 	}
 
 	stormDatabase = &StormDatabase{
-		db:             db,
-		quit:           make(chan struct{}, 2),
-		fileName:       stormFileName,
-		backupFileName: backupStormFileName,
+		db: db,
+		Database: Database{
+			isCaching: false,
+
+			quit: make(chan struct{}, 5),
+
+			fileName: stormFileName,
+			filePath: databasePath,
+
+			backupFileName: backupStormFileName,
+			backupFilePath: backupPath,
+		},
 	}
+
+	stormDatabase.mu.Lock()
+	defer stormDatabase.mu.Unlock()
 
 	return stormDatabase, nil
 }
 
 // CreateStormDB ...
-func CreateStormDB(conf *config.Configuration, fileName string, backupFileName string) (*storm.DB, error) {
-	databasePath := filepath.Join(conf.Info.Profile, fileName)
-	backupPath := filepath.Join(conf.Info.Profile, backupFileName)
-
+func CreateStormDB(conf *config.Configuration, databasePath, backupPath, compressPath string) (*storm.DB, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf("Got critical error while creating Storm: %v", r)
@@ -70,7 +80,7 @@ func CreateStormDB(conf *config.Configuration, fileName string, backupFileName s
 	}))
 
 	if err != nil {
-		log.Warningf("Could not open database at %s: %#v", databasePath, err)
+		log.Warningf("Could not open database at %s: %s", databasePath, err)
 		return nil, err
 	}
 
@@ -79,57 +89,44 @@ func CreateStormDB(conf *config.Configuration, fileName string, backupFileName s
 
 // MaintenanceRefreshHandler ...
 func (d *StormDatabase) MaintenanceRefreshHandler() {
-	backupPath := filepath.Join(config.Get().Info.Profile, d.backupFileName)
-
-	d.CreateBackup(backupPath)
+	CreateBackup(d.db.Bolt, d.backupFilePath)
 
 	tickerBackup := time.NewTicker(backupPeriod)
+	tickerCleanup := time.NewTicker(cleanupPeriod)
 
 	defer tickerBackup.Stop()
+	defer tickerCleanup.Stop()
 	defer close(d.quit)
 
 	for {
 		select {
 		case <-tickerBackup.C:
-			go func() {
-				d.CreateBackup(backupPath)
-			}()
-			// case <-tickerCache.C:
-			// 	go d.CacheCleanup()
+			go CreateBackup(d.db.Bolt, d.backupFilePath)
+		case <-tickerCleanup.C:
+			go CacheCleanup(d.db.Bolt)
 		case <-d.quit:
 			return
 		}
 	}
 }
 
-// CreateBackup ...
-func (d *StormDatabase) CreateBackup(backupPath string) {
-	if config.Args.DisableBackup {
-		return
-	}
-	if stat, err := os.Stat(backupPath); err == nil && time.Now().Sub(stat.ModTime()) < backupPeriod {
-		log.Infof("Skipping backup due to newer modification date of %s", backupPath)
-		return
-	}
-
-	defer perf.ScopeTimer()()
-
-	d.db.Bolt.View(func(tx *bolt.Tx) error {
-		tx.CopyFile(backupPath, 0600)
-		log.Infof("Storm Database backup saved at: %s", backupPath)
-		return nil
-	})
-}
-
 // Close ...
 func (d *StormDatabase) Close() {
-	log.Debug("Closing Storm Database")
+	log.Info("Closing Storm Database")
+
+	d.IsClosed = true
+	// Let it sleep to keep up all the active tasks
+	time.Sleep(100 * time.Millisecond)
+
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	d.quit <- struct{}{}
 	d.db.Close()
 }
 
 // GetFilename returns bolt filename
-func (d *StormDatabase) GetFilename() string {
+func (d *Database) GetFilename() string {
 	return d.fileName
 }
 

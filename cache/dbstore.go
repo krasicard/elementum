@@ -69,6 +69,10 @@ func (c *DBStore) Set(key string, value interface{}, expires time.Duration) (err
 		}
 	}()
 
+	if c.db.IsClosed {
+		return errors.New("database is closed")
+	}
+
 	b, err := msgpack.Marshal(item)
 	if err != nil {
 		return err
@@ -89,6 +93,10 @@ func (c *DBStore) Replace(key string, value interface{}, expires time.Duration) 
 
 // Get ...
 func (c *DBStore) Get(key string, value interface{}) (err error) {
+	if c.db.IsClosed {
+		return errors.New("database is closed")
+	}
+
 	data, errGet := c.db.GetBytes(database.CommonBucket, key)
 	if errGet != nil {
 		return errGet
@@ -113,6 +121,10 @@ func (c *DBStore) Get(key string, value interface{}) (err error) {
 	if expires, _ := database.ParseCacheItem(data); expires > 0 && expires < util.NowInt64() {
 		go c.db.Delete(database.CommonBucket, key)
 		return errors.New("key is expired")
+	}
+
+	if c.db.IsClosed {
+		return errors.New("database is closed")
 	}
 
 	if errDecode := msgpack.Unmarshal(data[10:], &item); errDecode != nil {

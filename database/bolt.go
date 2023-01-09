@@ -20,27 +20,51 @@ import (
 	"github.com/elgatito/elementum/xbmc"
 )
 
+// GetBolt returns common database
+func GetBolt() *BoltDatabase {
+	return boltDatabase
+}
+
+// GetCache returns Cache database
+func GetCache() *BoltDatabase {
+	return cacheDatabase
+}
+
 // InitCacheDB ...
 func InitCacheDB(conf *config.Configuration) (*BoltDatabase, error) {
+	databasePath := filepath.Join(conf.Info.Profile, cacheFileName)
+	backupPath := filepath.Join(conf.Info.Profile, backupCacheFileName)
 	compressPath := filepath.Join(conf.Info.Profile, compressCacheFileName)
 
 	if err := CompressBoltDB(conf, databasePath, compressPath); err != nil {
 		return nil, err
 	}
 
+	db, err := CreateBoltDB(conf, databasePath, backupPath)
 	if err != nil || db == nil {
 		return nil, errors.New("database not created")
 	}
 
 	cacheDatabase = &BoltDatabase{
-		db:             db,
-		quit:           make(chan struct{}, 2),
-		fileName:       cacheFileName,
-		backupFileName: backupCacheFileName,
+		db: db,
+		Database: Database{
+			isCaching: true,
+
+			quit: make(chan struct{}, 5),
+
+			fileName: cacheFileName,
+			filePath: databasePath,
+
+			backupFileName: backupCacheFileName,
+			backupFilePath: backupPath,
+		},
 	}
 
+	cacheDatabase.mu.Lock()
+	defer cacheDatabase.mu.Unlock()
+
 	for _, bucket := range CacheBuckets {
-		if err = cacheDatabase.CheckBucket(bucket); err != nil {
+		if err = CheckBucket(cacheDatabase.db, bucket); err != nil {
 			xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
 			log.Error(err)
 			return cacheDatabase, err
@@ -51,10 +75,7 @@ func InitCacheDB(conf *config.Configuration) (*BoltDatabase, error) {
 }
 
 // CreateBoltDB ...
-func CreateBoltDB(conf *config.Configuration, fileName string, backupFileName string) (*bolt.DB, error) {
-	databasePath := filepath.Join(conf.Info.Profile, fileName)
-	backupPath := filepath.Join(conf.Info.Profile, backupFileName)
-
+func CreateBoltDB(conf *config.Configuration, databasePath, backupPath string) (*bolt.DB, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf("Got critical error while creating Bolt: %v", r)
@@ -171,22 +192,31 @@ func (d *BoltDatabase) GetFilename() string {
 
 // Close ...
 func (d *BoltDatabase) Close() {
-	log.Debug("Closing Bolt Database")
+	log.Info("Closing Bolt Database")
+
+	d.IsClosed = true
 	d.quit <- struct{}{}
+
+	// Let it sleep to keep up all the active tasks
+	time.Sleep(100 * time.Millisecond)
+
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	d.db.Close()
 }
 
 // CheckBucket ...
-func (d *BoltDatabase) CheckBucket(bucket []byte) error {
-	return d.db.Update(func(tx *bolt.Tx) error {
+func CheckBucket(db *bolt.DB, bucket []byte) error {
+	return db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists(bucket)
 		return err
 	})
 }
 
 // BucketExists checks if bucket already exists in the database
-func (d *BoltDatabase) BucketExists(bucket []byte) (res bool) {
-	d.db.View(func(tx *bolt.Tx) error {
+func BucketExists(db *bolt.DB, bucket []byte) (res bool) {
+	db.View(func(tx *bolt.Tx) error {
 		res = tx.Bucket(bucket) != nil
 		return nil
 	})
@@ -209,28 +239,45 @@ func (d *BoltDatabase) RecreateBucket(bucket []byte) error {
 
 // MaintenanceRefreshHandler ...
 func (d *BoltDatabase) MaintenanceRefreshHandler() {
-	backupPath := filepath.Join(config.Get().Info.Profile, d.backupFileName)
-
-	d.CreateBackup(backupPath)
-	d.CacheCleanup()
+	CreateBackup(d.db, d.backupFilePath)
+	CacheCleanup(d.db)
 
 	tickerBackup := time.NewTicker(backupPeriod)
+	tickerCleanup := time.NewTicker(cleanupPeriod)
 
 	defer tickerBackup.Stop()
+	defer tickerCleanup.Stop()
 	defer close(d.quit)
 
 	for {
 		select {
 		case <-tickerBackup.C:
-			go func() {
-				d.CreateBackup(backupPath)
-			}()
-			// case <-tickerCache.C:
-			// 	go d.CacheCleanup()
+			go CreateBackup(d.db, d.backupFilePath)
+		case <-tickerCleanup.C:
+			go CacheCleanup(d.db)
 		case <-d.quit:
 			return
 		}
 	}
+}
+
+// CreateBackup ...
+func CreateBackup(db *bolt.DB, backupPath string) {
+	if config.Args.DisableBackup {
+		return
+	}
+	if stat, err := os.Stat(backupPath); err == nil && time.Now().Sub(stat.ModTime()) < backupPeriod {
+		log.Infof("Skipping backup due to newer modification date of %s", backupPath)
+		return
+	}
+
+	defer perf.ScopeTimer()()
+
+	db.View(func(tx *bolt.Tx) error {
+		tx.CopyFile(backupPath, 0600)
+		log.Infof("Database backup saved at: %s", backupPath)
+		return nil
+	})
 }
 
 // RestoreBackup ...
@@ -277,37 +324,18 @@ func RestoreBackup(databasePath string, backupPath string) {
 	}
 }
 
-// CreateBackup ...
-func (d *BoltDatabase) CreateBackup(backupPath string) {
-	if config.Args.DisableBackup {
-		return
-	}
-	if stat, err := os.Stat(backupPath); err == nil && time.Now().Sub(stat.ModTime()) < backupPeriod {
-		log.Infof("Skipping backup due to newer modification date of %s", backupPath)
-		return
-	}
-
-	defer perf.ScopeTimer()()
-
-	d.db.View(func(tx *bolt.Tx) error {
-		tx.CopyFile(backupPath, 0600)
-		log.Infof("Bolt Database backup saved at: %s", backupPath)
-		return nil
-	})
-}
-
 // CacheCleanup ...
-func (d *BoltDatabase) CacheCleanup() {
+func CacheCleanup(db *bolt.DB) {
 	defer perf.ScopeTimer()()
 
 	now := util.NowInt64()
 	for _, bucket := range CacheBuckets {
-		if !d.BucketExists(bucket) {
+		if !BucketExists(db, bucket) {
 			continue
 		}
 
 		toRemove := []string{}
-		d.ForEach(bucket, func(key []byte, value []byte) error {
+		ForEach(db, bucket, func(key []byte, value []byte) error {
 			expire, _ := ParseCacheItem(value)
 			if (expire > 0 && expire < now) || expire == 0 {
 				toRemove = append(toRemove, string(key))
@@ -318,15 +346,18 @@ func (d *BoltDatabase) CacheCleanup() {
 
 		if len(toRemove) > 0 {
 			log.Debugf("Removing %d invalidated items from cache", len(toRemove))
-			d.BatchDelete(bucket, toRemove)
+			BatchDelete(db, bucket, toRemove)
 		}
 	}
 }
 
 // DeleteWithPrefix ...
 func (d *BoltDatabase) DeleteWithPrefix(bucket []byte, prefix []byte) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	toRemove := []string{}
-	d.ForEach(bucket, func(key []byte, v []byte) error {
+	ForEach(d.db, bucket, func(key []byte, v []byte) error {
 		if bytes.HasPrefix(key, prefix) {
 			toRemove = append(toRemove, string(key))
 		}
@@ -336,7 +367,7 @@ func (d *BoltDatabase) DeleteWithPrefix(bucket []byte, prefix []byte) {
 
 	if len(toRemove) > 0 {
 		log.Debugf("Deleting %d items from cache", len(toRemove))
-		d.BatchDelete(bucket, toRemove)
+		BatchDelete(d.db, bucket, toRemove)
 	}
 }
 
@@ -345,8 +376,8 @@ func (d *BoltDatabase) DeleteWithPrefix(bucket []byte, prefix []byte) {
 //
 
 // Seek ...
-func (d *BoltDatabase) Seek(bucket []byte, prefix string, callback callBack) error {
-	return d.db.View(func(tx *bolt.Tx) error {
+func Seek(db *bolt.DB, bucket []byte, prefix string, callback callBack) error {
+	return db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket(bucket).Cursor()
 		bytePrefix := []byte(prefix)
 		for k, v := c.Seek(bytePrefix); k != nil && bytes.HasPrefix(k, bytePrefix); k, v = c.Next() {
@@ -357,8 +388,8 @@ func (d *BoltDatabase) Seek(bucket []byte, prefix string, callback callBack) err
 }
 
 // ForEach ...
-func (d *BoltDatabase) ForEach(bucket []byte, callback callBackWithError) error {
-	return d.db.View(func(tx *bolt.Tx) error {
+func ForEach(db *bolt.DB, bucket []byte, callback callBackWithError) error {
+	return db.View(func(tx *bolt.Tx) error {
 		tx.Bucket(bucket).ForEach(callback)
 		return nil
 	})
@@ -380,6 +411,9 @@ func ParseCacheItem(item []byte) (int64, []byte) {
 
 // GetCachedBytes ...
 func (d *BoltDatabase) GetCachedBytes(bucket []byte, key string) (cacheValue []byte, err error) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
 	var value []byte
 	err = d.db.View(func(tx *bolt.Tx) error {
 		value = tx.Bucket(bucket).Get([]byte(key))
@@ -439,6 +473,9 @@ func (d *BoltDatabase) GetCachedObject(bucket []byte, key string, item interface
 
 // Has checks for existence of a key
 func (d *BoltDatabase) Has(bucket []byte, key string) (ret bool) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
 	d.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucket)
 		ret = len(b.Get([]byte(key))) > 0
@@ -450,6 +487,9 @@ func (d *BoltDatabase) Has(bucket []byte, key string) (ret bool) {
 
 // GetBytes ...
 func (d *BoltDatabase) GetBytes(bucket []byte, key string) (value []byte, err error) {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+
 	err = d.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucket)
 		value = b.Get([]byte(key))
@@ -486,6 +526,9 @@ func (d *BoltDatabase) GetObject(bucket []byte, key string, item interface{}) (e
 
 // SetCachedBytes ...
 func (d *BoltDatabase) SetCachedBytes(bucket []byte, seconds int, key string, value []byte) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	return d.db.Update(func(tx *bolt.Tx) error {
 		value = append([]byte(strconv.Itoa(util.NowPlusSecondsInt(seconds))+"|"), value...)
 		return tx.Bucket(bucket).Put([]byte(key), value)
@@ -515,6 +558,9 @@ func (d *BoltDatabase) SetCachedObject(bucket []byte, seconds int, key string, i
 
 // SetBytes ...
 func (d *BoltDatabase) SetBytes(bucket []byte, key string, value []byte) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	return d.db.Update(func(tx *bolt.Tx) error {
 		return tx.Bucket(bucket).Put([]byte(key), value)
 	})
@@ -538,6 +584,9 @@ func (d *BoltDatabase) SetObject(bucket []byte, key string, item interface{}) er
 
 // BatchSet ...
 func (d *BoltDatabase) BatchSet(bucket []byte, objects map[string]string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	return d.db.Batch(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucket)
 		for key, value := range objects {
@@ -551,6 +600,9 @@ func (d *BoltDatabase) BatchSet(bucket []byte, objects map[string]string) error 
 
 // BatchSetBytes ...
 func (d *BoltDatabase) BatchSetBytes(bucket []byte, objects map[string][]byte) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	return d.db.Batch(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucket)
 		for key, value := range objects {
@@ -578,14 +630,17 @@ func (d *BoltDatabase) BatchSetObject(bucket []byte, objects map[string]interfac
 
 // Delete ...
 func (d *BoltDatabase) Delete(bucket []byte, key string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	return d.db.Update(func(tx *bolt.Tx) error {
 		return tx.Bucket(bucket).Delete([]byte(key))
 	})
 }
 
 // BatchDelete ...
-func (d *BoltDatabase) BatchDelete(bucket []byte, keys []string) error {
-	return d.db.Batch(func(tx *bolt.Tx) error {
+func BatchDelete(db *bolt.DB, bucket []byte, keys []string) error {
+	return db.Batch(func(tx *bolt.Tx) error {
 		b := tx.Bucket(bucket)
 		for _, key := range keys {
 			b.Delete([]byte(key))
