@@ -11,7 +11,7 @@ function test {
   return $status
 }
 
-if [ -d "${GOPATH}/src/github.com/elgatito/elementum" ];
+if [ -d "${GOPATH}/src/github.com/elgatito/elementum" ] && [ -f "${GOPATH}/src/github.com/elgatito/elementum/main.go" ];
 then
   GIT_VERSION=`cd ${GOPATH}/src/github.com/elgatito/elementum; git describe --tags`
 else
