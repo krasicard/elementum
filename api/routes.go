@@ -311,6 +311,7 @@ func Routes(s *bittorrent.Service) *gin.Engine {
 
 	context := r.Group("/context")
 	{
+		context.GET("/media/query/:query/:action", ContextPlaySelector(s))
 		context.GET("/media/:media/:kodiID/:action", ContextPlaySelector(s))
 		context.GET("/library/:media/:kodiID/:action", ContextActionFromKodiLibrarySelector(s))
 		torrents := context.Group("/torrents")

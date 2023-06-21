@@ -72,10 +72,7 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 		var err error
 
 		if torrents, err = GetCachedTorrents(fakeTmdbID); err != nil || len(torrents) == 0 {
-			searchLog.Infof("Searching providers for: %s", query)
-
-			searchers := providers.GetSearchers()
-			torrents = providers.Search(searchers, query)
+			torrents = searchLinks(query)
 
 			SetCachedTorrents(fakeTmdbID, torrents)
 		}
@@ -146,6 +143,17 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 			return
 		}
 	}
+}
+
+func searchLinks(query string) []*bittorrent.TorrentFile {
+	searchLog.Infof("Searching providers for query: %s", query)
+
+	searchers := providers.GetSearchers()
+	if len(searchers) == 0 {
+		xbmc.Notify("Elementum", "LOCALIZE[30204]", config.AddonIcon())
+	}
+
+	return providers.Search(searchers, query)
 }
 
 func searchHistoryProcess(ctx *gin.Context, historyType string, keyboard string) {

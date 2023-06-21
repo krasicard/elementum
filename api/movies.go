@@ -507,6 +507,7 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 		tmdbID := ctx.Params.ByName("tmdbId")
 		external := ctx.Query("external")
 		doresume := ctx.DefaultQuery("doresume", "true")
+		isCustom := len(ctx.Query("custom")) != 0
 
 		runAction := "/play"
 		if action == "download" {
@@ -551,7 +552,13 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 		var err error
 
 		if torrents, err = GetCachedTorrents(tmdbID); err != nil || len(torrents) == 0 {
-			torrents = movieLinks(tmdbID)
+			if !isCustom {
+				torrents = movieLinks(tmdbID)
+			} else {
+				if query := xbmc.Keyboard(movie.Title, "LOCALIZE[30209]"); len(query) != 0 {
+					torrents = searchLinks(query)
+				}
+			}
 
 			SetCachedTorrents(tmdbID, torrents)
 		}

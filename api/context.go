@@ -22,6 +22,8 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 		id := ctx.Params.ByName("kodiID")
 		kodiID, _ := strconv.Atoi(id)
 		media := ctx.Params.ByName("media")
+		query := ctx.Params.ByName("query")
+		isCustom := len(ctx.Query("custom")) != 0
 
 		mediaAction := "forcelinks"
 		if media == "movie" && config.Get().ChooseStreamAutoMovie {
@@ -38,7 +40,15 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 
 		if kodiID == 0 {
 			if mediaAction != "watched" && mediaAction != "unwatched" {
-				ctx.Redirect(302, URLQuery(URLForXBMC("/search"), "q", id, "action", mediaAction))
+				if query == "" {
+					query = id
+				}
+				if isCustom {
+					if query = xbmc.Keyboard(query, "LOCALIZE[30209]"); len(query) == 0 {
+						return
+					}
+				}
+				ctx.Redirect(302, URLQuery(URLForXBMC("/search"), "q", query, "action", mediaAction))
 			} else {
 				log.Error("Can't set %q for non-library item of type %q: %q", mediaAction, media, id)
 			}

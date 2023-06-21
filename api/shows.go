@@ -597,6 +597,7 @@ func ShowSeasonLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 		external := ctx.Query("external")
 		doresume := ctx.DefaultQuery("doresume", "true")
 		silent := ctx.DefaultQuery("silent", "")
+		isCustom := len(ctx.Query("custom")) != 0
 
 		runAction := "/play"
 		if action == "download" {
@@ -658,7 +659,13 @@ func ShowSeasonLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 
 		fakeTmdbID := strconv.Itoa(showID) + "_" + strconv.Itoa(seasonNumber)
 		if torrents, err = GetCachedTorrents(fakeTmdbID); err != nil || len(torrents) == 0 {
-			torrents, err = showSeasonLinks(showID, seasonNumber)
+			if !isCustom {
+				torrents, err = showSeasonLinks(showID, seasonNumber)
+			} else {
+				if query := xbmc.Keyboard(longName, "LOCALIZE[30209]"); len(query) != 0 {
+					torrents = searchLinks(query)
+				}
+			}
 
 			SetCachedTorrents(fakeTmdbID, torrents)
 		}
@@ -785,6 +792,7 @@ func ShowEpisodeLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 		external := ctx.Query("external")
 		doresume := ctx.DefaultQuery("doresume", "true")
 		silent := ctx.DefaultQuery("silent", "")
+		isCustom := len(ctx.Query("custom")) != 0
 
 		runAction := "/play"
 		if action == "download" {
@@ -845,7 +853,13 @@ func ShowEpisodeLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 
 		fakeTmdbID := strconv.Itoa(showID) + "_" + strconv.Itoa(seasonNumber) + "_" + strconv.Itoa(episodeNumber)
 		if torrents, err = GetCachedTorrents(fakeTmdbID); err != nil || len(torrents) == 0 {
-			torrents, err = showEpisodeLinks(showID, seasonNumber, episodeNumber)
+			if !isCustom {
+				torrents, err = showEpisodeLinks(showID, seasonNumber, episodeNumber)
+			} else {
+				if query := xbmc.Keyboard(longName, "LOCALIZE[30209]"); len(query) != 0 {
+					torrents = searchLinks(query)
+				}
+			}
 
 			SetCachedTorrents(fakeTmdbID, torrents)
 		}
