@@ -382,7 +382,7 @@ func (s *Service) configure() {
 
 		// Proxy Tracker connections
 		settings.SetBool("proxy_tracker_connections", config.Get().ProxyUseTracker)
-		
+
 		// ensure no leakage
 		settings.SetBool("force_proxy", true)
 	}
@@ -1146,10 +1146,8 @@ func (s *Service) logAlerts() {
 		} else if alert.Category&int(lt.AlertPerformanceWarning) != 0 {
 			log.Warningf("%s: %s", alert.What, alert.Message)
 		} else {
-			if alert.What != "state_changed_alert" {
-				if alert.What != "torrent_finished_alert" {
-					log.Noticef("%s: %s", alert.What, alert.Message)
-				}
+			if alert.What != "state_changed_alert" && alert.What != "torrent_finished_alert" {
+				log.Noticef("%s: %s", alert.What, alert.Message)
 			}
 		}
 	}
