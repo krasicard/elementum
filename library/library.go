@@ -516,6 +516,11 @@ func writeMovieNFO(m *tmdb.Movie, p string) error {
 </movie>
 https://www.themoviedb.org/movie/%v
 `
+
+	if m.ExternalIDs == nil {
+		m.ExternalIDs = &tmdb.ExternalIDs{}
+	}
+
 	out = fmt.Sprintf(out,
 		m.ID,
 		m.ID,
@@ -641,6 +646,11 @@ func writeShowNFO(s *tmdb.Show, p string) error {
 </tvshow>
 https://www.themoviedb.org/tv/%v
 `
+
+	if s.ExternalIDs == nil {
+		s.ExternalIDs = &tmdb.ExternalIDs{}
+	}
+
 	out = fmt.Sprintf(out,
 		s.ID,
 		s.ID,
