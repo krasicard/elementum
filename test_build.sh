@@ -46,7 +46,7 @@ DEST_LIBRARY=elementum.so
 DEST_MAKE=linux-x64
 DEST_PLATFORM=linux_x64
 DEST_DIR=$HOME/.kodi
-if [ ! -z "${WSL_USER}" ]; then
+if [[ ! -z "${WSL_USER}" ]] && [[ "${DEST_ACTION}" != "local" ]]; then
   DEST_NAME=elementum.exe
   DEST_LIBRARY=elementum.dll
   DEST_DIR=/mnt/c/Users/${WSL_USER}/AppData/Roaming/Kodi
@@ -74,6 +74,8 @@ then
   manage
   test cp -rf /var/tmp/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
+  chmod +x $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/${DEST_NAME}
+  chmod +x $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/${DEST_NAME}
 elif [ "${DEST_ACTION}" == "library" ]
 then
   set -e
