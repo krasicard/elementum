@@ -36,10 +36,6 @@ func InitCacheDB(conf *config.Configuration) (*BoltDatabase, error) {
 	backupPath := filepath.Join(conf.Info.Profile, backupCacheFileName)
 	compressPath := filepath.Join(conf.Info.Profile, compressCacheFileName)
 
-	if err := CompressBoltDB(conf, databasePath, compressPath); err != nil {
-		return nil, err
-	}
-
 	db, err := CreateBoltDB(conf, databasePath, backupPath)
 	if err != nil || db == nil {
 		return nil, errors.New("database not created")
@@ -57,6 +53,8 @@ func InitCacheDB(conf *config.Configuration) (*BoltDatabase, error) {
 
 			backupFileName: backupCacheFileName,
 			backupFilePath: backupPath,
+
+			compressFilePath: compressPath,
 		},
 	}
 
@@ -99,19 +97,6 @@ func CreateBoltDB(conf *config.Configuration, databasePath, backupPath string) (
 
 // CompressBoltDB ...
 func CompressBoltDB(conf *config.Configuration, databasePath, compressPath string) error {
-	if config.Args.DisableCompress {
-		return nil
-	}
-
-	// Checking previous compress date and whether we should proceed
-	stampFile := databasePath + ".compress"
-	stampTime, err := util.GetTimeFromFile(stampFile)
-	if err == nil && !stampTime.IsZero() {
-		if !util.IsTimePassed(stampTime, compressPeriod) {
-			return nil
-		}
-	}
-
 	if util.FileExists(compressPath) {
 		if err := os.Remove(compressPath); err != nil {
 			log.Errorf("Could not remove file %s: %s", compressPath, err)
@@ -127,6 +112,11 @@ func CompressBoltDB(conf *config.Configuration, databasePath, compressPath strin
 		return err
 	}
 	initialSize := fi.Size()
+
+	started := time.Now()
+	defer func() {
+		log.Infof("Database compress finished in %s", time.Since(started))
+	}()
 
 	// Open source database.
 	src, err := bolt.Open(databasePath, 0444, &bolt.Options{ReadOnly: true})
@@ -176,10 +166,6 @@ func CompressBoltDB(conf *config.Configuration, databasePath, compressPath strin
 	if err := os.Rename(compressPath, databasePath); err != nil {
 		log.Errorf("Could not rename old database file '%s' into '%s': %s", compressPath, databasePath, err)
 		return err
-	}
-
-	if _, err := util.SetTimeIntoFile(stampFile); err != nil {
-		log.Errorf("Could not write stamp file %s: %s", stampFile, err)
 	}
 
 	return nil
@@ -656,6 +642,21 @@ func (d *BoltDatabase) AsWriter(bucket []byte, key string) *DBWriter {
 		bucket:   bucket,
 		key:      []byte(key),
 	}
+}
+
+// Compress ...
+func (d *BoltDatabase) Compress() (err error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	d.db.Close()
+
+	if err = CompressBoltDB(config.Get(), d.filePath, d.compressFilePath); err != nil {
+		return err
+	}
+
+	d.db, err = CreateBoltDB(config.Get(), d.filePath, d.backupFilePath)
+	return err
 }
 
 // Write ...

@@ -202,3 +202,41 @@ func ClearDatabase(ctx *gin.Context) {
 	ctx.String(200, "")
 	return
 }
+
+// CompactDatabase ...
+func CompactDatabase(ctx *gin.Context) {
+	if !xbmc.DialogConfirm("Elementum", "LOCALIZE[30471]") {
+		ctx.String(200, "")
+		return
+	}
+
+	log.Debug("Compacting database")
+	if err := database.GetStorm().Compress(); err != nil {
+		log.Errorf("Error compacting cache: %s", err)
+		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+	} else {
+		xbmc.Notify("Elementum", "LOCALIZE[30674]", config.AddonIcon())
+	}
+
+	ctx.String(200, "")
+	return
+}
+
+// CompactCache ...
+func CompactCache(ctx *gin.Context) {
+	if !xbmc.DialogConfirm("Elementum", "LOCALIZE[30471]") {
+		ctx.String(200, "")
+		return
+	}
+
+	log.Debug("Compacting cache")
+	if err := database.GetCache().Compress(); err != nil {
+		log.Errorf("Error compacting cache: %s", err)
+		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+	} else {
+		xbmc.Notify("Elementum", "LOCALIZE[30674]", config.AddonIcon())
+	}
+
+	ctx.String(200, "")
+	return
+}

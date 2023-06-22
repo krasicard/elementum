@@ -33,11 +33,7 @@ func InitStormDB(conf *config.Configuration) (*StormDatabase, error) {
 	backupPath := filepath.Join(conf.Info.Profile, backupStormFileName)
 	compressPath := filepath.Join(conf.Info.Profile, compressStormFileName)
 
-	if err := CompressBoltDB(conf, databasePath, compressPath); err != nil {
-		return nil, err
-	}
-
-	db, err := CreateStormDB(conf, databasePath, backupPath, compressPath)
+	db, err := CreateStormDB(conf, databasePath, backupPath)
 	if err != nil || db == nil {
 		return nil, errors.New("database not created")
 	}
@@ -54,6 +50,8 @@ func InitStormDB(conf *config.Configuration) (*StormDatabase, error) {
 
 			backupFileName: backupStormFileName,
 			backupFilePath: backupPath,
+
+			compressFilePath: compressPath,
 		},
 	}
 
@@ -64,7 +62,7 @@ func InitStormDB(conf *config.Configuration) (*StormDatabase, error) {
 }
 
 // CreateStormDB ...
-func CreateStormDB(conf *config.Configuration, databasePath, backupPath, compressPath string) (*storm.DB, error) {
+func CreateStormDB(conf *config.Configuration, databasePath, backupPath string) (*storm.DB, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf("Got critical error while creating Storm: %v", r)
@@ -400,4 +398,19 @@ func (d *StormDatabase) AddTorrentHistory(infoHash, name string, b []byte) {
 		d.db.DeleteStruct(&th)
 	}
 	d.db.ReIndex(&TorrentHistory{})
+}
+
+// Compress ...
+func (d *StormDatabase) Compress() (err error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	d.db.Close()
+
+	if err = CompressBoltDB(config.Get(), d.filePath, d.compressFilePath); err != nil {
+		return err
+	}
+
+	d.db, err = CreateStormDB(config.Get(), d.filePath, d.backupFilePath)
+	return err
 }

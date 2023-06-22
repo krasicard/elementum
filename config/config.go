@@ -290,8 +290,7 @@ var (
 var (
 	// Args for cli arguments parsing
 	Args = struct {
-		DisableBackup   bool `help:"Disable database backup"`
-		DisableCompress bool `help:"Disable database compress"`
+		DisableBackup bool `help:"Disable database backup"`
 
 		RemoteHost string `help:"remote host"`
 		RemotePort int    `help:"remote port"`
@@ -305,8 +304,7 @@ var (
 		LibraryPath  string `help:"Custom path to addon library folder"`
 		TorrentsPath string `help:"Custom path to addon downloads folder"`
 	}{
-		DisableBackup:   false,
-		DisableCompress: false,
+		DisableBackup: false,
 
 		RemoteHost: "127.0.0.1",
 		RemotePort: 65221,

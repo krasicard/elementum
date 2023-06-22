@@ -24,6 +24,8 @@ type Database struct {
 
 	backupFilePath string
 	backupFileName string
+
+	compressFilePath string
 }
 
 // StormDatabase ...

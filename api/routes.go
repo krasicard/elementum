@@ -397,6 +397,7 @@ func Routes(s *bittorrent.Service) *gin.Engine {
 			database.GET("/clear_torrent_history", ClearDatabaseTorrentHistory)
 			database.GET("/clear_search_history", ClearDatabaseSearchHistory)
 			database.GET("/clear_database", ClearDatabase)
+			database.GET("/compact_database", CompactDatabase)
 		}
 
 		cache := cmd.Group("/cache")
@@ -404,6 +405,7 @@ func Routes(s *bittorrent.Service) *gin.Engine {
 			cache.GET("/clear_tmdb", ClearCacheTMDB)
 			cache.GET("/clear_trakt", ClearCacheTrakt)
 			cache.GET("/clear_cache", ClearCache)
+			cache.GET("/compact_cache", CompactCache)
 		}
 	}
 
