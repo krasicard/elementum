@@ -103,3 +103,9 @@ valgrind --leak-check=full ./elementum -disableBackup
 ```
 This will run the binary with Valgrind. When you cose the process, Valgrind will show statistics.
 It is better to use usual binary, without sanitizer, and add backup disable options, as well as disable Kodi library integration. Or it will take a lot of time/CPU at the startup (unless you do need it).
+
+# How to release
+
+Release of a binary part of Elementum means compiling binaries for all platforms and putting them into <https://github.com/elgatito/elementum-binaries> repository (if we run on the git tag).
+
+Release is done with `release.sh` script.
