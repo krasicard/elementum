@@ -64,7 +64,7 @@ fi
 export LOCAL_ENV=$LOCAL_ENV
 export PATH=$PATH:$LOCAL_ENV/bin/
 export PKG_CONFIG_PATH=$LOCAL_ENV/lib/pkgconfig
-export SWIG_LIB=$LOCAL_ENV/share/swig/4.1.0/
+export SWIG_LIB=$LOCAL_ENV/share/swig/4.1.1/
 
 if [ "${DEST_ACTION}" == "local" ]
 then

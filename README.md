@@ -25,7 +25,7 @@ Or you can apply environment variables and compile in any other way:
   export LOCAL_ENV=$GOPATH/src/github.com/ElementumOrg/libtorrent-go/local-env/
   export PATH=$PATH:$LOCAL_ENV/bin/
   export PKG_CONFIG_PATH=$LOCAL_ENV/lib/pkgconfig
-  export SWIG_LIB=$LOCAL_ENV/share/swig/4.1.0/
+  export SWIG_LIB=$LOCAL_ENV/share/swig/4.1.1/
 ```
 
 
