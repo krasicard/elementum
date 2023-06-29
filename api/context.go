@@ -18,6 +18,8 @@ import (
 // ContextPlaySelector plays/downloads/toggles_watched media from Kodi in elementum
 func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		action := ctx.Params.ByName("action")
 		id := ctx.Params.ByName("kodiID")
 		kodiID, _ := strconv.Atoi(id)
@@ -44,7 +46,7 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 					query = id
 				}
 				if isCustom {
-					if query = xbmc.Keyboard(query, "LOCALIZE[30209]"); len(query) == 0 {
+					if query = xbmcHost.Keyboard(query, "LOCALIZE[30209]"); len(query) == 0 {
 						return
 					}
 				}
@@ -81,7 +83,7 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 
 		err := fmt.Errorf("Could not find TMDB entry for requested Kodi item %d of type %s", kodiID, media)
 		log.Error(err.Error())
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}
@@ -90,6 +92,8 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 // ContextAssignKodiSelector assigns torrent to movie/episode by Kodi library ID
 func ContextAssignKodiSelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		torrentID := ctx.Params.ByName("torrentId")
 		id := ctx.Params.ByName("kodiID")
 		kodiID, _ := strconv.Atoi(id)
@@ -121,7 +125,7 @@ func ContextAssignKodiSelector(s *bittorrent.Service) gin.HandlerFunc {
 
 		err := fmt.Errorf("Could not find TMDB entry for requested Kodi item %d of type %s", kodiID, media)
 		log.Error(err.Error())
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}
@@ -130,6 +134,8 @@ func ContextAssignKodiSelector(s *bittorrent.Service) gin.HandlerFunc {
 // ContextAssignTMDBSelector assigns torrent to media by TMDB ID
 func ContextAssignTMDBSelector(s *bittorrent.Service, media string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		torrentID := ctx.Params.ByName("torrentId")
 		id := ctx.Params.ByName("tmdbId")
 
@@ -183,7 +189,7 @@ func ContextAssignTMDBSelector(s *bittorrent.Service, media string) gin.HandlerF
 			return
 		} else {
 			log.Error(err.Error())
-			xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+			xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 			ctx.Error(errors.New("Cannot find TMDB for selected Kodi item"))
 		}
 	}
@@ -192,6 +198,8 @@ func ContextAssignTMDBSelector(s *bittorrent.Service, media string) gin.HandlerF
 // ContextActionFromKodiLibrarySelector does action for media in Kodi library (by Kodi library ID)
 func ContextActionFromKodiLibrarySelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		action := ctx.Params.ByName("action")
 		id := ctx.Params.ByName("kodiID")
 		kodiID, _ := strconv.Atoi(id)
@@ -211,7 +219,7 @@ func ContextActionFromKodiLibrarySelector(s *bittorrent.Service) gin.HandlerFunc
 				media = "show"
 			} else {
 				err := fmt.Errorf("Unsupported media type: %s", media)
-				xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+				xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 				ctx.Error(err)
 				return
 			}
@@ -223,7 +231,7 @@ func ContextActionFromKodiLibrarySelector(s *bittorrent.Service) gin.HandlerFunc
 
 		err := fmt.Errorf("Could not find TMDB entry for requested Kodi item %d of type %s", kodiID, media)
 		log.Error(err.Error())
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 		ctx.Error(errors.New("Cannot find TMDB entry for selected Kodi item"))
 		return
 	}

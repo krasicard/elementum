@@ -15,6 +15,8 @@ var cmdLog = logging.MustGetLogger("cmd")
 
 // ClearCache ...
 func ClearCache(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	key := ctx.Params.ByName("key")
 	if key != "" {
 		if ctx != nil {
@@ -26,7 +28,7 @@ func ClearCache(ctx *gin.Context) {
 	} else {
 		log.Debug("Removing all the cache")
 
-		if !xbmc.DialogConfirm("Elementum", "LOCALIZE[30471]") {
+		if !xbmcHost.DialogConfirm("Elementum", "LOCALIZE[30471]") {
 			ctx.String(200, "")
 			return
 		}
@@ -34,69 +36,85 @@ func ClearCache(ctx *gin.Context) {
 		database.GetCache().RecreateBucket(database.CommonBucket)
 	}
 
-	xbmc.Notify("Elementum", "LOCALIZE[30200]", config.AddonIcon())
+	xbmcHost.Notify("Elementum", "LOCALIZE[30200]", config.AddonIcon())
 }
 
 // ClearCacheTMDB ...
 func ClearCacheTMDB(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	log.Debug("Removing TMDB cache")
 
-	library.ClearTmdbCache()
+	library.ClearTmdbCache(xbmcHost)
 
-	xbmc.Notify("Elementum", "LOCALIZE[30200]", config.AddonIcon())
+	xbmcHost.Notify("Elementum", "LOCALIZE[30200]", config.AddonIcon())
 }
 
 // ClearCacheTrakt ...
 func ClearCacheTrakt(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	log.Debug("Removing Trakt cache")
 
-	library.ClearTraktCache()
+	library.ClearTraktCache(xbmcHost)
 
-	xbmc.Notify("Elementum", "LOCALIZE[30200]", config.AddonIcon())
+	xbmcHost.Notify("Elementum", "LOCALIZE[30200]", config.AddonIcon())
 }
 
 // ClearPageCache ...
 func ClearPageCache(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	if ctx != nil {
 		ctx.Abort()
 	}
-	library.ClearPageCache()
+	library.ClearPageCache(xbmcHost)
 }
 
 // ClearTraktCache ...
 func ClearTraktCache(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	if ctx != nil {
 		ctx.Abort()
 	}
-	library.ClearTraktCache()
+	library.ClearTraktCache(xbmcHost)
 }
 
 // ClearTmdbCache ...
 func ClearTmdbCache(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	if ctx != nil {
 		ctx.Abort()
 	}
-	library.ClearTmdbCache()
+	library.ClearTmdbCache(xbmcHost)
 }
 
 // ResetPath ...
 func ResetPath(ctx *gin.Context) {
-	xbmc.SetSetting("download_path", "")
-	xbmc.SetSetting("library_path", "special://temp/elementum_library/")
-	xbmc.SetSetting("torrents_path", "special://temp/elementum_torrents/")
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	xbmcHost.SetSetting("download_path", "")
+	xbmcHost.SetSetting("library_path", "special://temp/elementum_library/")
+	xbmcHost.SetSetting("torrents_path", "special://temp/elementum_torrents/")
 }
 
 // ResetCustomPath ...
 func ResetCustomPath(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	path := ctx.Params.ByName("path")
 
 	if path != "" {
-		xbmc.SetSetting(path+"_path", "/")
+		xbmcHost.SetSetting(path+"_path", "/")
 	}
 }
 
 // OpenCustomPath ...
 func OpenCustomPath(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	path := ctx.Params.ByName("path")
 	loc := ""
 
@@ -110,30 +128,34 @@ func OpenCustomPath(ctx *gin.Context) {
 
 	if loc != "" {
 		log.Debugf("Opening %s in Kodi browser", loc)
-		xbmc.OpenDirectory(loc)
+		xbmcHost.OpenDirectory(loc)
 	}
 }
 
 // SetViewMode ...
 func SetViewMode(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	contentType := ctx.Params.ByName("content_type")
-	viewName := xbmc.InfoLabel("Container.Viewmode")
-	viewMode := xbmc.GetCurrentView()
+	viewName := xbmcHost.InfoLabel("Container.Viewmode")
+	viewMode := xbmcHost.GetCurrentView()
 	cmdLog.Noticef("ViewMode: %s (%s)", viewName, viewMode)
 	if viewMode != "0" {
-		xbmc.SetSetting("viewmode_"+contentType, viewMode)
+		xbmcHost.SetSetting("viewmode_"+contentType, viewMode)
 	}
 	ctx.String(200, "")
 }
 
 // ClearDatabaseMovies ...
 func ClearDatabaseMovies(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	log.Debug("Removing deleted movies from database")
 
 	query := database.GetStormDB().Select(q.Eq("MediaType", library.MovieType), q.Eq("State", library.StateDeleted))
 	_ = query.Delete(&database.LibraryItem{})
 
-	xbmc.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
+	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
 	return
@@ -142,12 +164,14 @@ func ClearDatabaseMovies(ctx *gin.Context) {
 
 // ClearDatabaseShows ...
 func ClearDatabaseShows(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	log.Debug("Removing deleted shows from database")
 
 	query := database.GetStormDB().Select(q.Eq("MediaType", library.ShowType), q.Eq("State", library.StateDeleted))
 	_ = query.Delete(&database.LibraryItem{})
 
-	xbmc.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
+	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
 	return
@@ -156,13 +180,15 @@ func ClearDatabaseShows(ctx *gin.Context) {
 
 // ClearDatabaseTorrentHistory ...
 func ClearDatabaseTorrentHistory(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	log.Debug("Removing torrent history from database")
 
 	database.GetStormDB().Drop(&database.TorrentAssignMetadata{})
 	database.GetStormDB().Drop(&database.TorrentAssignItem{})
 	database.GetStormDB().Drop(&database.TorrentHistory{})
 
-	xbmc.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
+	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
 	return
@@ -171,11 +197,13 @@ func ClearDatabaseTorrentHistory(ctx *gin.Context) {
 
 // ClearDatabaseSearchHistory ...
 func ClearDatabaseSearchHistory(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	log.Debug("Removing search history from database")
 
 	database.GetStormDB().Drop(&database.QueryHistory{})
 
-	xbmc.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
+	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
 	return
@@ -184,9 +212,11 @@ func ClearDatabaseSearchHistory(ctx *gin.Context) {
 
 // ClearDatabase ...
 func ClearDatabase(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	log.Debug("Removing all the database")
 
-	if !xbmc.DialogConfirm("Elementum", "LOCALIZE[30471]") {
+	if !xbmcHost.DialogConfirm("Elementum", "LOCALIZE[30471]") {
 		ctx.String(200, "")
 		return
 	}
@@ -197,7 +227,7 @@ func ClearDatabase(ctx *gin.Context) {
 	database.GetStormDB().Drop(&database.TorrentAssignItem{})
 	database.GetStormDB().Drop(&database.QueryHistory{})
 
-	xbmc.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
+	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
 	return
@@ -205,7 +235,9 @@ func ClearDatabase(ctx *gin.Context) {
 
 // CompactDatabase ...
 func CompactDatabase(ctx *gin.Context) {
-	if !xbmc.DialogConfirm("Elementum", "LOCALIZE[30471]") {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	if !xbmcHost.DialogConfirm("Elementum", "LOCALIZE[30471]") {
 		ctx.String(200, "")
 		return
 	}
@@ -213,9 +245,9 @@ func CompactDatabase(ctx *gin.Context) {
 	log.Debug("Compacting database")
 	if err := database.GetStorm().Compress(); err != nil {
 		log.Errorf("Error compacting cache: %s", err)
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "LOCALIZE[30674]", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "LOCALIZE[30674]", config.AddonIcon())
 	}
 
 	ctx.String(200, "")
@@ -224,7 +256,9 @@ func CompactDatabase(ctx *gin.Context) {
 
 // CompactCache ...
 func CompactCache(ctx *gin.Context) {
-	if !xbmc.DialogConfirm("Elementum", "LOCALIZE[30471]") {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	if !xbmcHost.DialogConfirm("Elementum", "LOCALIZE[30471]") {
 		ctx.String(200, "")
 		return
 	}
@@ -232,9 +266,9 @@ func CompactCache(ctx *gin.Context) {
 	log.Debug("Compacting cache")
 	if err := database.GetCache().Compress(); err != nil {
 		log.Errorf("Error compacting cache: %s", err)
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "LOCALIZE[30674]", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "LOCALIZE[30674]", config.AddonIcon())
 	}
 
 	ctx.String(200, "")

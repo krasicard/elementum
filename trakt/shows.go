@@ -129,7 +129,9 @@ func GetShow(ID string) (show *Show) {
 		resp, err := Get(endPoint, params)
 		if err != nil {
 			log.Error(err)
-			xbmc.Notify("Elementum", fmt.Sprintf("Failed getting Trakt show (%s), check your logs.", ID), config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", fmt.Sprintf("Failed getting Trakt show (%s), check your logs.", ID), config.AddonIcon())
+			}
 			return
 		}
 		if err := resp.Unmarshal(&show); err != nil {
@@ -154,7 +156,9 @@ func GetShowByTMDB(tmdbID string) (show *Show) {
 		resp, err := Get(endPoint, params)
 		if err != nil {
 			log.Error(err)
-			xbmc.Notify("Elementum", "Failed getting Trakt show using TMDB ID, check your logs.", config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", "Failed getting Trakt show using TMDB ID, check your logs.", config.AddonIcon())
+			}
 			return
 		}
 
@@ -182,7 +186,9 @@ func GetShowByTVDB(tvdbID string) (show *Show) {
 		resp, err := Get(endPoint, params)
 		if err != nil {
 			log.Error(err)
-			xbmc.Notify("Elementum", "Failed getting Trakt show using TVDB ID, check your logs.", config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", "Failed getting Trakt show using TVDB ID, check your logs.", config.AddonIcon())
+			}
 			return
 		}
 		if err := resp.Unmarshal(&show); err != nil {
@@ -275,7 +281,9 @@ func GetEpisodeByID(id string) (episode *Episode) {
 		resp, err := Get(endPoint, params)
 		if err != nil {
 			log.Error(err)
-			xbmc.Notify("Elementum", "Failed getting Trakt episode, check your logs.", config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", "Failed getting Trakt episode, check your logs.", config.AddonIcon())
+			}
 			return
 		}
 		if err := resp.Unmarshal(&episode); err != nil {
@@ -298,7 +306,9 @@ func GetEpisodeByTMDB(tmdbID string) (episode *Episode) {
 		resp, err := Get(endPoint, params)
 		if err != nil {
 			log.Error(err)
-			xbmc.Notify("Elementum", "Failed getting Trakt episode using TMDB ID, check your logs.", config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", "Failed getting Trakt episode using TMDB ID, check your logs.", config.AddonIcon())
+			}
 			return
 		}
 
@@ -326,7 +336,9 @@ func GetEpisodeByTVDB(tvdbID string) (episode *Episode) {
 		resp, err := Get(endPoint, params)
 		if err != nil {
 			log.Error(err)
-			xbmc.Notify("Elementum", "Failed getting Trakt episode using TVDB ID, check your logs.", config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", "Failed getting Trakt episode using TVDB ID, check your logs.", config.AddonIcon())
+			}
 			return
 		}
 		if err := resp.Unmarshal(&episode); err != nil {

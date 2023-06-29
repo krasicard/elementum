@@ -73,6 +73,7 @@ func Play(s *bittorrent.Service) gin.HandlerFunc {
 		episodeNumber := strToInt(episode, 0)
 
 		params := bittorrent.PlayerParams{
+			ClientIP:          ctx.ClientIP(),
 			URI:               uri,
 			OriginalIndex:     originalIndex,
 			FileIndex:         fileIndex,
@@ -130,12 +131,14 @@ func Play(s *bittorrent.Service) gin.HandlerFunc {
 func PlayTorrent(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	retval := xbmc.DialogInsert()
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	retval := xbmcHost.DialogInsert()
 	if retval["path"] == "" {
 		log.Errorf("No path from insert dialog: %#v", retval)
 		return
 	}
-	xbmc.PlayURLWithTimeout(URLQuery(URLForXBMC("/play"), "uri", retval["path"]))
+	xbmcHost.PlayURLWithTimeout(URLQuery(URLForXBMC("/play"), "uri", retval["path"]))
 
 	ctx.String(200, "")
 	return
@@ -144,6 +147,8 @@ func PlayTorrent(ctx *gin.Context) {
 // PlayURI ...
 func PlayURI(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		uri := ctx.Request.FormValue("uri")
 		file, header, fileError := ctx.Request.FormFile("file")
 
@@ -162,7 +167,7 @@ func PlayURI(s *bittorrent.Service) gin.HandlerFunc {
 		}
 
 		if uri != "" {
-			xbmc.PlayURL(URLQuery(URLForXBMC("/play"), "uri", uri, "index", index))
+			xbmcHost.PlayURL(URLQuery(URLForXBMC("/play"), "uri", uri, "index", index))
 		} else {
 			var (
 				tmdb        string
@@ -189,7 +194,7 @@ func PlayURI(s *bittorrent.Service) gin.HandlerFunc {
 					query = dbItem.Query
 				}
 			}
-			xbmc.PlayURL(URLQuery(URLForXBMC("/play"),
+			xbmcHost.PlayURL(URLQuery(URLForXBMC("/play"),
 				"resume", resume,
 				"index", index,
 				"tmdb", tmdb,

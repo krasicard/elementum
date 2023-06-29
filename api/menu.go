@@ -97,6 +97,8 @@ func (m *Menu) Has(action int, i *MenuItem) int {
 
 // MenuAdd ...
 func MenuAdd(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	mediaType := ctx.Params.ByName("type")
 	name := ctx.Query("name")
 	link := ctx.Query("link")
@@ -111,11 +113,13 @@ func MenuAdd(ctx *gin.Context) {
 	}
 
 	ctx.String(200, "")
-	xbmc.Refresh()
+	xbmcHost.Refresh()
 }
 
 // MenuRemove ...
 func MenuRemove(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	mediaType := ctx.Params.ByName("type")
 	name := ctx.Query("name")
 	link := ctx.Query("link")
@@ -130,5 +134,5 @@ func MenuRemove(ctx *gin.Context) {
 	}
 
 	ctx.String(200, "")
-	xbmc.Refresh()
+	xbmcHost.Refresh()
 }

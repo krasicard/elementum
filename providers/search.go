@@ -54,7 +54,7 @@ var (
 )
 
 // Search ...
-func Search(searchers []Searcher, query string) []*bittorrent.TorrentFile {
+func Search(xbmcHost *xbmc.XBMCHost, searchers []Searcher, query string) []*bittorrent.TorrentFile {
 	torrentsChan := make(chan *bittorrent.TorrentFile)
 	go func() {
 		wg := sync.WaitGroup{}
@@ -71,11 +71,11 @@ func Search(searchers []Searcher, query string) []*bittorrent.TorrentFile {
 		close(torrentsChan)
 	}()
 
-	return processLinks(torrentsChan, SortMovies, false)
+	return processLinks(xbmcHost, torrentsChan, SortMovies, false)
 }
 
 // SearchMovie ...
-func SearchMovie(searchers []MovieSearcher, movie *tmdb.Movie) []*bittorrent.TorrentFile {
+func SearchMovie(xbmcHost *xbmc.XBMCHost, searchers []MovieSearcher, movie *tmdb.Movie) []*bittorrent.TorrentFile {
 	torrentsChan := make(chan *bittorrent.TorrentFile)
 	go func() {
 		wg := sync.WaitGroup{}
@@ -92,11 +92,11 @@ func SearchMovie(searchers []MovieSearcher, movie *tmdb.Movie) []*bittorrent.Tor
 		close(torrentsChan)
 	}()
 
-	return processLinks(torrentsChan, SortMovies, false)
+	return processLinks(xbmcHost, torrentsChan, SortMovies, false)
 }
 
 // SearchMovieSilent ...
-func SearchMovieSilent(searchers []MovieSearcher, movie *tmdb.Movie, withAuth bool) []*bittorrent.TorrentFile {
+func SearchMovieSilent(xbmcHost *xbmc.XBMCHost, searchers []MovieSearcher, movie *tmdb.Movie, withAuth bool) []*bittorrent.TorrentFile {
 	torrentsChan := make(chan *bittorrent.TorrentFile)
 	go func() {
 		wg := sync.WaitGroup{}
@@ -113,11 +113,11 @@ func SearchMovieSilent(searchers []MovieSearcher, movie *tmdb.Movie, withAuth bo
 		close(torrentsChan)
 	}()
 
-	return processLinks(torrentsChan, SortMovies, true)
+	return processLinks(xbmcHost, torrentsChan, SortMovies, true)
 }
 
 // SearchSeason ...
-func SearchSeason(searchers []SeasonSearcher, show *tmdb.Show, season *tmdb.Season) []*bittorrent.TorrentFile {
+func SearchSeason(xbmcHost *xbmc.XBMCHost, searchers []SeasonSearcher, show *tmdb.Show, season *tmdb.Season) []*bittorrent.TorrentFile {
 	torrentsChan := make(chan *bittorrent.TorrentFile)
 	go func() {
 		wg := sync.WaitGroup{}
@@ -134,11 +134,11 @@ func SearchSeason(searchers []SeasonSearcher, show *tmdb.Show, season *tmdb.Seas
 		close(torrentsChan)
 	}()
 
-	return processLinks(torrentsChan, SortShows, false)
+	return processLinks(xbmcHost, torrentsChan, SortShows, false)
 }
 
 // SearchEpisode ...
-func SearchEpisode(searchers []EpisodeSearcher, show *tmdb.Show, episode *tmdb.Episode) []*bittorrent.TorrentFile {
+func SearchEpisode(xbmcHost *xbmc.XBMCHost, searchers []EpisodeSearcher, show *tmdb.Show, episode *tmdb.Episode) []*bittorrent.TorrentFile {
 	torrentsChan := make(chan *bittorrent.TorrentFile)
 	go func() {
 		wg := sync.WaitGroup{}
@@ -155,10 +155,10 @@ func SearchEpisode(searchers []EpisodeSearcher, show *tmdb.Show, episode *tmdb.E
 		close(torrentsChan)
 	}()
 
-	return processLinks(torrentsChan, SortShows, false)
+	return processLinks(xbmcHost, torrentsChan, SortShows, false)
 }
 
-func processLinks(torrentsChan chan *bittorrent.TorrentFile, sortType int, isSilent bool) []*bittorrent.TorrentFile {
+func processLinks(xbmcHost *xbmc.XBMCHost, torrentsChan chan *bittorrent.TorrentFile, sortType int, isSilent bool) []*bittorrent.TorrentFile {
 	torrentsMap := map[string]*bittorrent.TorrentFile{}
 
 	torrents := make([]*bittorrent.TorrentFile, 0)
@@ -222,7 +222,7 @@ func processLinks(torrentsChan chan *bittorrent.TorrentFile, sortType int, isSil
 
 	var dialogProgressBG *xbmc.DialogProgressBG
 	if !isSilent {
-		dialogProgressBG = xbmc.NewDialogProgressBG("Elementum", "LOCALIZE[30117]", "LOCALIZE[30117]", "LOCALIZE[30118]")
+		dialogProgressBG = xbmcHost.NewDialogProgressBG("Elementum", "LOCALIZE[30117]", "LOCALIZE[30117]", "LOCALIZE[30118]")
 		go func() {
 			for {
 				select {
@@ -246,7 +246,7 @@ func processLinks(torrentsChan chan *bittorrent.TorrentFile, sortType int, isSil
 
 	wg.Wait()
 
-	if !isSilent {
+	if !isSilent && dialogProgressBG != nil {
 		dialogProgressBG.Update(100, "Elementum", "LOCALIZE[30117]")
 	}
 
@@ -311,7 +311,7 @@ func processLinks(torrentsChan chan *bittorrent.TorrentFile, sortType int, isSil
 	log.Infof("Received %d unique links.", len(torrents))
 
 	if len(torrents) == 0 {
-		if !isSilent {
+		if !isSilent && dialogProgressBG != nil {
 			dialogProgressBG.Close()
 		}
 		return torrents

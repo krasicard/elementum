@@ -79,11 +79,13 @@ func AddToTorrentsMap(tmdbID string, torrent *bittorrent.TorrentFile) {
 // AssignTorrent assigns torrent by its id to elementum's item by its TMDB id
 func AssignTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
 		if err != nil {
 			log.Error(err.Error())
-			xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+			xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 			ctx.Error(err)
 			return
 		}
@@ -119,7 +121,7 @@ func AssignTorrent(s *bittorrent.Service) gin.HandlerFunc {
 }
 
 // InTorrentsMap ...
-func InTorrentsMap(tmdbID string) *bittorrent.TorrentFile {
+func InTorrentsMap(xbmcHost *xbmc.XBMCHost, tmdbID string) *bittorrent.TorrentFile {
 	if !config.Get().UseCacheSelection || tmdbID == "" {
 		return nil
 	}
@@ -143,7 +145,7 @@ func InTorrentsMap(tmdbID string) *bittorrent.TorrentFile {
 		torrent.LoadFromBytes(tm.Metadata)
 	}
 
-	if len(torrent.URI) > 0 && (config.Get().SilentStreamStart || xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30260];;[COLOR gold]%s[/COLOR]", torrent.Title))) {
+	if len(torrent.URI) > 0 && (config.Get().SilentStreamStart || xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30260];;[COLOR gold]%s[/COLOR]", torrent.Title))) {
 		return torrent
 	}
 
@@ -219,6 +221,8 @@ func ListTorrents(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		items := make(xbmc.ListItems, 0, len(s.GetTorrents()))
 		if len(s.GetTorrents()) == 0 {
 			ctx.JSON(200, xbmc.NewView("", items))
@@ -233,7 +237,7 @@ func ListTorrents(s *bittorrent.Service) gin.HandlerFunc {
 			torrentName := t.Name()
 			progress := t.GetProgress()
 			statusCode := t.GetSmartState()
-			status := xbmc.Translate(bittorrent.StatusStrings[statusCode])
+			status := xbmcHost.Translate(bittorrent.StatusStrings[statusCode])
 
 			torrentAction := []string{"LOCALIZE[30231]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/torrents/pause/%s", t.InfoHash()))}
 			sessionAction := []string{"LOCALIZE[30233]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/torrents/pause"))}
@@ -313,6 +317,8 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		items := make([]*TorrentsWeb, 0, len(s.GetTorrents()))
 		if len(s.GetTorrents()) == 0 {
 			ctx.JSON(200, items)
@@ -336,7 +342,7 @@ func ListTorrentsWeb(s *bittorrent.Service) gin.HandlerFunc {
 			infoHash := t.InfoHash()
 
 			statusCode := t.GetSmartState()
-			status := xbmc.Translate(bittorrent.StatusStrings[statusCode])
+			status := xbmcHost.Translate(bittorrent.StatusStrings[statusCode])
 
 			ratio := float64(0)
 			allTimeDownload := float64(torrentStatus.GetAllTimeDownload())
@@ -399,9 +405,11 @@ func PauseSession(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		s.Session.Pause()
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -411,9 +419,11 @@ func ResumeSession(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		s.Session.Resume()
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -422,6 +432,8 @@ func ResumeSession(s *bittorrent.Service) gin.HandlerFunc {
 func AddTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
+
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 		uri := ctx.Request.FormValue("uri")
 		file, header, fileError := ctx.Request.FormFile("file")
@@ -457,7 +469,7 @@ func AddTorrent(s *bittorrent.Service) gin.HandlerFunc {
 
 		if t == nil {
 			var err error
-			t, err = s.AddTorrent(uri, false, config.Get().DownloadStorage, true, time.Now())
+			t, err = s.AddTorrent(xbmcHost, uri, false, config.Get().DownloadStorage, true, time.Now())
 			if err != nil {
 				ctx.String(404, err.Error())
 				return
@@ -483,7 +495,7 @@ func AddTorrent(s *bittorrent.Service) gin.HandlerFunc {
 			}
 		}
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -492,6 +504,8 @@ func AddTorrent(s *bittorrent.Service) gin.HandlerFunc {
 func ResumeTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
+
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
@@ -502,7 +516,7 @@ func ResumeTorrent(s *bittorrent.Service) gin.HandlerFunc {
 
 		torrent.Resume()
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -511,6 +525,8 @@ func ResumeTorrent(s *bittorrent.Service) gin.HandlerFunc {
 func MoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
+
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
@@ -522,7 +538,7 @@ func MoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		torrentsLog.Infof("Marking %s to be moved...", torrent.Name())
 		s.MarkedToMove = torrent.InfoHash()
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -531,6 +547,8 @@ func MoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 func PauseTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
+
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
@@ -541,7 +559,7 @@ func PauseTorrent(s *bittorrent.Service) gin.HandlerFunc {
 
 		torrent.Pause()
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -549,6 +567,8 @@ func PauseTorrent(s *bittorrent.Service) gin.HandlerFunc {
 // RemoveTorrent ...
 func RemoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		deleteFiles := ctx.DefaultQuery("files", "false")
 
 		torrentID := ctx.Params.ByName("torrentId")
@@ -558,9 +578,9 @@ func RemoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 			return
 		}
 
-		s.RemoveTorrent(torrent, true, deleteFiles == "true", false)
+		s.RemoveTorrent(xbmcHost, torrent, true, deleteFiles == "true", false)
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -569,6 +589,8 @@ func RemoveTorrent(s *bittorrent.Service) gin.HandlerFunc {
 func DownloadAllTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
+
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
@@ -580,7 +602,7 @@ func DownloadAllTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		torrent.DownloadAllFiles()
 		torrent.SaveDBFiles()
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -589,6 +611,8 @@ func DownloadAllTorrent(s *bittorrent.Service) gin.HandlerFunc {
 func UnDownloadAllTorrent(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
+
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
@@ -600,7 +624,7 @@ func UnDownloadAllTorrent(s *bittorrent.Service) gin.HandlerFunc {
 		torrent.UnDownloadAllFiles()
 		torrent.SaveDBFiles()
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }
@@ -609,6 +633,8 @@ func UnDownloadAllTorrent(s *bittorrent.Service) gin.HandlerFunc {
 func SelectFileTorrent(s *bittorrent.Service, isPlay bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
+
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 		torrentID := ctx.Params.ByName("torrentId")
 		torrent, err := GetTorrentFromParam(s, torrentID)
@@ -622,17 +648,17 @@ func SelectFileTorrent(s *bittorrent.Service, isPlay bool) gin.HandlerFunc {
 			if isPlay {
 				url := torrent.GetPlayURL(strconv.Itoa(choice))
 				log.Infof("Triggering play for: %s", url)
-				xbmc.PlayURL(url)
+				xbmcHost.PlayURL(url)
 			} else {
 				log.Infof("Triggering download for: %s", file.Path)
 				torrent.DownloadFile(file)
 				torrent.SaveDBFiles()
-				xbmc.Refresh()
+				xbmcHost.Refresh()
 			}
 			return
 		}
 
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 		ctx.String(200, "")
 	}
 }

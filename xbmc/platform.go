@@ -10,8 +10,8 @@ type Platform struct {
 }
 
 // GetPlatform ...
-func GetPlatform() *Platform {
+func (h *XBMCHost) GetPlatform() *Platform {
 	retVal := Platform{}
-	executeJSONRPCEx("GetPlatform", &retVal, nil)
+	h.executeJSONRPCEx("GetPlatform", &retVal, nil)
 	return &retVal
 }

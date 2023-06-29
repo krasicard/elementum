@@ -4,6 +4,10 @@ import "time"
 
 //go:generate msgp -o msgp.go -io=false -tests=false
 
+type XBMCHost struct {
+	Host string
+}
+
 // View ...
 type View struct {
 	ContentType string    `json:"content_type"`

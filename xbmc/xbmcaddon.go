@@ -32,80 +32,87 @@ type Setting struct {
 }
 
 // GetAddonInfo ...
-func GetAddonInfo() *AddonInfo {
+func (h *XBMCHost) GetAddonInfo() *AddonInfo {
 	retVal := AddonInfo{}
-	executeJSONRPCEx("GetAddonInfo", &retVal, nil)
+	h.executeJSONRPCEx("GetAddonInfo", &retVal, nil)
 	return &retVal
 }
 
 // AddonSettings ...
-func AddonSettings(addonID string) (retVal string) {
-	executeJSONRPCEx("AddonSettings", &retVal, Args{addonID})
+func (h *XBMCHost) AddonSettings(addonID string) (retVal string) {
+	h.executeJSONRPCEx("AddonSettings", &retVal, Args{addonID})
 	return
 }
 
 // AddonSettingsOpened ...
-func AddonSettingsOpened() bool {
+func (h *XBMCHost) AddonSettingsOpened() bool {
 	retVal := 0
-	executeJSONRPCEx("AddonSettingsOpened", &retVal, nil)
+	h.executeJSONRPCEx("AddonSettingsOpened", &retVal, nil)
 	return retVal != 0
 }
 
 // AddonFailure ...
-func AddonFailure(addonID string) (failures int) {
-	executeJSONRPCEx("AddonFailure", &failures, Args{addonID})
+func (h *XBMCHost) AddonFailure(addonID string) (failures int) {
+	h.executeJSONRPCEx("AddonFailure", &failures, Args{addonID})
 	return
 }
 
 // AddonCheck ...
-func AddonCheck(addonID string) (failures int) {
-	executeJSONRPCEx("AddonCheck", &failures, Args{addonID})
+func (h *XBMCHost) AddonCheck(addonID string) (failures int) {
+	h.executeJSONRPCEx("AddonCheck", &failures, Args{addonID})
 	return
 }
 
 // GetLocalizedString ...
-func GetLocalizedString(id int) (retVal string) {
-	executeJSONRPCEx("GetLocalizedString", &retVal, Args{id})
+func (h *XBMCHost) GetLocalizedString(id int) (retVal string) {
+	h.executeJSONRPCEx("GetLocalizedString", &retVal, Args{id})
 	return
 }
 
 // GetAllSettings ...
-func GetAllSettings() (retVal []*Setting) {
-	executeJSONRPCEx("GetAllSettings", &retVal, nil)
+func (h *XBMCHost) GetAllSettings() (retVal []*Setting) {
+	h.executeJSONRPCEx("GetAllSettings", &retVal, nil)
 	return
 }
 
 // GetSettingString ...
-func GetSettingString(id string) (retVal string) {
-	executeJSONRPCEx("GetSetting", &retVal, Args{id})
+func (h *XBMCHost) GetSettingString(id string) (retVal string) {
+	h.executeJSONRPCEx("GetSetting", &retVal, Args{id})
 	return
 }
 
 // GetSettingInt ...
-func GetSettingInt(id string) int {
-	val, _ := strconv.Atoi(GetSettingString(id))
+func (h *XBMCHost) GetSettingInt(id string) int {
+	val, _ := strconv.Atoi(h.GetSettingString(id))
 	return val
 }
 
 // GetSettingBool ...
-func GetSettingBool(id string) bool {
-	return GetSettingString(id) == "true"
+func (h *XBMCHost) GetSettingBool(id string) bool {
+	return h.GetSettingString(id) == "true"
 }
 
 // SetSetting ...
-func SetSetting(id string, value interface{}) {
+func (h *XBMCHost) SetSetting(id string, value interface{}) {
 	retVal := 0
-	executeJSONRPCEx("SetSetting", &retVal, Args{id, value})
+	h.executeJSONRPCEx("SetSetting", &retVal, Args{id, value})
 }
 
 // GetCurrentView ...
-func GetCurrentView() (viewMode string) {
-	executeJSONRPCEx("GetCurrentView", &viewMode, nil)
+func (h *XBMCHost) GetCurrentView() (viewMode string) {
+	h.executeJSONRPCEx("GetCurrentView", &viewMode, nil)
 	return
 }
 
 // OpenDirectory ...
-func OpenDirectory(path string) {
+func (h *XBMCHost) OpenDirectory(path string) {
 	retVal := 0
-	executeJSONRPCEx("OpenDirectory", &retVal, Args{path})
+	h.executeJSONRPCEx("OpenDirectory", &retVal, Args{path})
+}
+
+// Ping ...
+func (h *XBMCHost) Ping() bool {
+	retVal := false
+	h.executeJSONRPCEx("Ping", &retVal, nil)
+	return retVal
 }

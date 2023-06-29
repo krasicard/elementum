@@ -15,7 +15,6 @@ import (
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/library"
-	"github.com/elgatito/elementum/xbmc"
 )
 
 const (
@@ -197,7 +196,7 @@ func Notification(r *http.Request, s *bittorrent.Service) {
 					}
 
 					log.Infof("OnPlay. Triggering Seek to %v", resume)
-					xbmc.PlayerSeek(resume)
+					p.GetXBMCHost().PlayerSeek(resume)
 				}
 			}(resumePosition)
 		}

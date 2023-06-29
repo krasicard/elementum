@@ -25,6 +25,8 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		query := ctx.Query("q")
 		keyboard := ctx.Query("keyboard")
 		action := ctx.Query("action")
@@ -47,8 +49,8 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 
 		fakeTmdbID := strconv.Itoa(int(xxhash.Sum64String(query)))
 		existingTorrent := s.HasTorrentByQuery(query)
-		if existingTorrent != nil && (silent != "" || config.Get().SilentStreamStart || existingTorrent.IsPlaying || (existingTorrent.IsNextFile && config.Get().SmartEpisodeChoose) || xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30608];;[COLOR gold]%s[/COLOR]", existingTorrent.Title()))) {
-			xbmc.PlayURLWithTimeout(URLQuery(
+		if existingTorrent != nil && (silent != "" || config.Get().SilentStreamStart || existingTorrent.IsPlaying || (existingTorrent.IsNextFile && config.Get().SmartEpisodeChoose) || xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30608];;[COLOR gold]%s[/COLOR]", existingTorrent.Title()))) {
+			xbmcHost.PlayURLWithTimeout(URLQuery(
 				URLForXBMC(runAction),
 				"resume", existingTorrent.InfoHash(),
 				"query", query,
@@ -58,8 +60,8 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 			return
 		}
 
-		if torrent := InTorrentsMap(fakeTmdbID); torrent != nil {
-			xbmc.PlayURLWithTimeout(URLQuery(
+		if torrent := InTorrentsMap(xbmcHost, fakeTmdbID); torrent != nil {
+			xbmcHost.PlayURLWithTimeout(URLQuery(
 				URLForXBMC(runAction), "uri", torrent.URI,
 				"query", query,
 				"tmdb", fakeTmdbID,
@@ -72,13 +74,13 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 		var err error
 
 		if torrents, err = GetCachedTorrents(fakeTmdbID); err != nil || len(torrents) == 0 {
-			torrents = searchLinks(query)
+			torrents = searchLinks(xbmcHost, query)
 
 			SetCachedTorrents(fakeTmdbID, torrents)
 		}
 
 		if len(torrents) == 0 {
-			xbmc.Notify("Elementum", "LOCALIZE[30205]", config.AddonIcon())
+			xbmcHost.Notify("Elementum", "LOCALIZE[30205]", config.AddonIcon())
 			return
 		}
 
@@ -127,13 +129,13 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 		if detectPlayAction("", searchType) == "play" {
 			choice = 0
 		} else {
-			choice = xbmc.ListDialogLarge("LOCALIZE[30228]", query, choices...)
+			choice = xbmcHost.ListDialogLarge("LOCALIZE[30228]", query, choices...)
 		}
 
 		if choice >= 0 {
 			AddToTorrentsMap(fakeTmdbID, torrents[choice])
 
-			xbmc.PlayURLWithTimeout(URLQuery(
+			xbmcHost.PlayURLWithTimeout(URLQuery(
 				URLForXBMC(runAction),
 				"uri", torrents[choice].URI,
 				"query", query,
@@ -145,21 +147,23 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 	}
 }
 
-func searchLinks(query string) []*bittorrent.TorrentFile {
+func searchLinks(xbmcHost *xbmc.XBMCHost, query string) []*bittorrent.TorrentFile {
 	searchLog.Infof("Searching providers for query: %s", query)
 
-	searchers := providers.GetSearchers()
+	searchers := providers.GetSearchers(xbmcHost)
 	if len(searchers) == 0 {
-		xbmc.Notify("Elementum", "LOCALIZE[30204]", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "LOCALIZE[30204]", config.AddonIcon())
 	}
 
-	return providers.Search(searchers, query)
+	return providers.Search(xbmcHost, searchers, query)
 }
 
 func searchHistoryProcess(ctx *gin.Context, historyType string, keyboard string) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	if len(keyboard) > 0 {
 		query := ""
-		if query = xbmc.Keyboard("", "LOCALIZE[30206]"); len(query) == 0 {
+		if query = xbmcHost.Keyboard("", "LOCALIZE[30206]"); len(query) == 0 {
 			return
 		}
 		searchHistoryAppend(ctx, historyType, query)
@@ -169,9 +173,11 @@ func searchHistoryProcess(ctx *gin.Context, historyType string, keyboard string)
 }
 
 func searchHistoryAppend(ctx *gin.Context, historyType string, query string) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	database.GetStorm().AddSearchHistory(historyType, query)
 
-	go xbmc.UpdatePath(searchHistoryGetXbmcURL(historyType, query))
+	go xbmcHost.UpdatePath(searchHistoryGetXbmcURL(historyType, query))
 	ctx.String(200, "")
 	return
 }
@@ -230,6 +236,8 @@ func searchHistoryList(ctx *gin.Context, historyType string) {
 func SearchRemove(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	query := ctx.DefaultQuery("query", "")
 	historyType := ctx.DefaultQuery("type", "")
 
@@ -239,7 +247,7 @@ func SearchRemove(ctx *gin.Context) {
 
 	log.Debugf("Removing query '%s' with history type '%s'", query, historyType)
 	database.GetStorm().RemoveSearchHistory(historyType, query)
-	xbmc.Refresh()
+	xbmcHost.Refresh()
 
 	ctx.String(200, "")
 	return
@@ -249,11 +257,13 @@ func SearchRemove(ctx *gin.Context) {
 func SearchClear(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	historyType := ctx.DefaultQuery("type", "")
 
 	log.Debugf("Cleaning queries with history type %s", historyType)
 	database.GetStorm().CleanSearchHistory(historyType)
-	xbmc.Refresh()
+	xbmcHost.Refresh()
 
 	ctx.String(200, "")
 	return

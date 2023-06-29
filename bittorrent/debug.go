@@ -11,6 +11,7 @@ import (
 	"github.com/anacrolix/missinggo/perf"
 
 	"github.com/elgatito/elementum/config"
+	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -40,7 +41,13 @@ func DebugBundle(s *Service) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer perf.ScopeTimer()()
 
-		logPath := xbmc.TranslatePath("special://logpath/kodi.log")
+		xbmcHost, err := xbmc.GetXBMCHost(util.RequestUserIP(r))
+		if err != nil {
+			log.Infof("Could not find attached Kodi: %s", err)
+			return
+		}
+
+		logPath := xbmcHost.TranslatePath("special://logpath/kodi.log")
 		logFile, err := os.Open(logPath)
 		if err != nil {
 			log.Debugf("Could not open kodi.log: %#v", err)

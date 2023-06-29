@@ -650,7 +650,9 @@ func GetWithAuth(endPoint string, params url.Values) (resp *napping.Response, er
 		} else if resp.Status() == 401 {
 			err = fmt.Errorf("Trakt access token is not valid, please, re-authorize Trakt")
 			log.Warningf("Request: %s, Error: %s", endPoint, err)
-			xbmc.Notify("Elementum", "LOCALIZE[30576]", config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", "LOCALIZE[30576]", config.AddonIcon())
+			}
 			return err
 		} else if resp.Status() == 429 {
 			log.Warningf("Rate limit exceeded getting %s, cooling down...", endPoint)
@@ -890,25 +892,33 @@ func TokenRefreshHandler() {
 			if time.Now().Unix() > int64(config.Get().TraktTokenExpiry)-int64(259200) {
 				resp, err := RefreshToken()
 				if err != nil {
-					xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+					if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+						xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
+					}
 					log.Error(err)
 					return
 				}
 
 				if resp.Status() == 200 {
 					if errUnm := resp.Unmarshal(&token); errUnm != nil {
-						xbmc.Notify("Elementum", errUnm.Error(), config.AddonIcon())
+						if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+							xbmcHost.Notify("Elementum", errUnm.Error(), config.AddonIcon())
+						}
 						log.Error(errUnm)
 					} else {
 						expiry := time.Now().Unix() + int64(token.ExpiresIn)
-						xbmc.SetSetting("trakt_token_expiry", strconv.Itoa(int(expiry)))
-						xbmc.SetSetting("trakt_token", token.AccessToken)
-						xbmc.SetSetting("trakt_refresh_token", token.RefreshToken)
+						if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+							xbmcHost.SetSetting("trakt_token_expiry", strconv.Itoa(int(expiry)))
+							xbmcHost.SetSetting("trakt_token", token.AccessToken)
+							xbmcHost.SetSetting("trakt_refresh_token", token.RefreshToken)
+						}
 						log.Noticef("Token refreshed for Trakt authorization, next refresh in %s", time.Duration(token.ExpiresIn-259200)*time.Second)
 					}
 				} else {
 					err = fmt.Errorf("Bad status while refreshing Trakt token: %d", resp.Status())
-					xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+					if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+						xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
+					}
 					log.Error(err)
 				}
 			}
@@ -921,7 +931,9 @@ func Authorize(fromSettings bool) error {
 	code, err := GetCode()
 	if err != nil {
 		log.Error("Could not get authorization code from Trakt.tv: %s", err)
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
+		}
 		return err
 	}
 	log.Noticef("Got code for %s: %s", code.VerificationURL, code.UserCode)
@@ -943,7 +955,9 @@ func Authorize(fromSettings bool) error {
 				attempts++
 
 				if attempts > 30 {
-					xbmc.Notify("Elementum", "LOCALIZE[30651]", config.AddonIcon())
+					if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+						xbmcHost.Notify("Elementum", "LOCALIZE[30651]", config.AddonIcon())
+					}
 					return
 				}
 
@@ -959,9 +973,11 @@ func Authorize(fromSettings bool) error {
 				_ = cacheStore.Set(cache.TraktActivitiesKey, "", 1)
 
 				expiry := time.Now().Unix() + int64(token.ExpiresIn)
-				xbmc.SetSetting("trakt_token_expiry", strconv.Itoa(int(expiry)))
-				xbmc.SetSetting("trakt_token", token.AccessToken)
-				xbmc.SetSetting("trakt_refresh_token", token.RefreshToken)
+				if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+					xbmcHost.SetSetting("trakt_token_expiry", strconv.Itoa(int(expiry)))
+					xbmcHost.SetSetting("trakt_token", token.AccessToken)
+					xbmcHost.SetSetting("trakt_refresh_token", token.RefreshToken)
+				}
 
 				config.Get().TraktToken = token.AccessToken
 
@@ -977,20 +993,26 @@ func Authorize(fromSettings bool) error {
 
 					if user != nil && user.User.Ids.Slug != "" {
 						log.Debugf("Setting Trakt Username as %s", user.User.Ids.Slug)
-						xbmc.SetSetting("trakt_username", user.User.Ids.Slug)
+						if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+							xbmcHost.SetSetting("trakt_username", user.User.Ids.Slug)
+						}
 					}
 				}
 
 				config.Reload()
 
-				xbmc.Notify("Elementum", "LOCALIZE[30650]", config.AddonIcon())
+				if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+					xbmcHost.Notify("Elementum", "LOCALIZE[30650]", config.AddonIcon())
+				}
 				return
 			}
 		}
 	}(code)
 
-	if xbmc.Dialog(xbmc.GetLocalizedString(30646), fmt.Sprintf(xbmc.GetLocalizedString(30649), code.VerificationURL, code.UserCode)) == false {
-		return errors.New("Authentication canceled")
+	if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+		if !xbmcHost.Dialog(xbmcHost.GetLocalizedString(30646), fmt.Sprintf(xbmcHost.GetLocalizedString(30649), code.VerificationURL, code.UserCode)) {
+			return errors.New("Authentication canceled")
+		}
 	}
 
 	return nil
@@ -1002,12 +1024,14 @@ func Deauthorize(fromSettings bool) error {
 	cacheStore := cache.NewDBStore()
 	_ = cacheStore.Set(cache.TraktActivitiesKey, "", 1)
 
-	xbmc.SetSetting("trakt_token_expiry", "")
-	xbmc.SetSetting("trakt_token", "")
-	xbmc.SetSetting("trakt_refresh_token", "")
-	xbmc.SetSetting("trakt_username", "")
+	if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+		xbmcHost.SetSetting("trakt_token_expiry", "")
+		xbmcHost.SetSetting("trakt_token", "")
+		xbmcHost.SetSetting("trakt_refresh_token", "")
+		xbmcHost.SetSetting("trakt_username", "")
 
-	xbmc.Notify("Elementum", "LOCALIZE[30652]", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "LOCALIZE[30652]", config.AddonIcon())
+	}
 
 	return nil
 }
@@ -1313,7 +1337,9 @@ func Scrobble(action string, contentType string, tmdbID int, watched float64, ru
 	resp, err := Post(endPoint, bytes.NewBufferString(payload))
 	if err != nil {
 		log.Error(err.Error())
-		xbmc.Notify("Elementum", "Scrobble failed, check your logs.", config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", "Scrobble failed, check your logs.", config.AddonIcon())
+		}
 	} else if resp.Status() != 201 {
 		log.Errorf("Failed to scrobble %s #%d to %s at %f: %d", contentType, tmdbID, action, progress, resp.Status())
 	}
@@ -1478,5 +1504,7 @@ func NotifyLocked() {
 
 	cacheStore.Set(cache.TraktLockedAccountKey, checked, cache.TraktLockedAccountExpire)
 
-	xbmc.Dialog("LOCALIZE[30616]", "LOCALIZE[30617]")
+	if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+		xbmcHost.Dialog("LOCALIZE[30616]", "LOCALIZE[30617]")
+	}
 }

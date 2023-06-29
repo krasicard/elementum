@@ -26,16 +26,18 @@ const (
 )
 
 // LogBackend ...
-type LogBackend struct{}
+type LogBackend struct {
+	Host *XBMCHost
+}
 
 // Log ...
-func Log(args ...interface{}) {
-	executeJSONRPCEx("Log", nil, args)
+func (h *XBMCHost) Log(args ...interface{}) {
+	h.executeJSONRPCEx("Log", nil, args)
 }
 
 // NewLogBackend ...
-func NewLogBackend() *LogBackend {
-	return &LogBackend{}
+func (h *XBMCHost) NewLogBackend() *LogBackend {
+	return &LogBackend{h}
 }
 
 // Log ...
@@ -43,17 +45,17 @@ func (b *LogBackend) Log(level logging.Level, calldepth int, rec *logging.Record
 	line := rec.Formatted(calldepth + 1)
 	switch level {
 	case logging.CRITICAL:
-		Log(line, LogSevere)
+		b.Host.Log(line, LogSevere)
 	case logging.ERROR:
-		Log(line, LogError)
+		b.Host.Log(line, LogError)
 	case logging.WARNING:
-		Log(line, LogWarning)
+		b.Host.Log(line, LogWarning)
 	case logging.NOTICE:
-		Log(line, LogNotice)
+		b.Host.Log(line, LogNotice)
 	case logging.INFO:
-		Log(line, LogInfo)
+		b.Host.Log(line, LogInfo)
 	case logging.DEBUG:
-		Log(line, LogDebug)
+		b.Host.Log(line, LogDebug)
 	default:
 	}
 	return nil

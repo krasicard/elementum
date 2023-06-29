@@ -41,6 +41,8 @@ var (
 func AddMovie(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("tmdbId")
 	force := ctx.DefaultQuery("force", falseType) == trueType
 
@@ -48,7 +50,7 @@ func AddMovie(ctx *gin.Context) {
 	if err != nil {
 		isErrored := true
 		if err == library.ErrVideoRemoved {
-			if xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30279];;%s", movie.Title)) {
+			if xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30279];;%s", movie.Title)) {
 				movie, err = library.AddMovie(tmdbID, true)
 				if err == nil {
 					isErrored = false
@@ -72,13 +74,13 @@ func AddMovie(ctx *gin.Context) {
 	}
 
 	log.Noticef(logMsg, movie.Title, tmdbID)
-	if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("%s;;%s", label, movie.Title))) {
-		xbmc.VideoLibraryScanDirectory(library.MoviesLibraryPath(), true)
+	if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("%s;;%s", label, movie.Title))) {
+		xbmcHost.VideoLibraryScanDirectory(library.MoviesLibraryPath(), true)
 	} else {
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -101,6 +103,8 @@ func AddMoviesList(ctx *gin.Context) {
 func RemoveMovie(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID, _ := strconv.Atoi(ctx.Params.ByName("tmdbId"))
 	tmdbStr := ctx.Params.ByName("tmdbId")
 	movie, paths, err := library.RemoveMovie(tmdbID)
@@ -112,16 +116,16 @@ func RemoveMovie(ctx *gin.Context) {
 	}
 
 	if ctx != nil {
-		if movie != nil && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", movie.Title)) {
+		if movie != nil && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", movie.Title)) {
 			for _, path := range paths {
-				xbmc.VideoLibraryCleanDirectory(path, "movies", false)
+				xbmcHost.VideoLibraryCleanDirectory(path, "movies", false)
 			}
 			if m, err := uid.GetMovieByTMDB(movie.ID); err == nil && m != nil {
-				xbmc.VideoLibraryRemoveMovie(m.XbmcUIDs.Kodi)
+				xbmcHost.VideoLibraryRemoveMovie(m.XbmcUIDs.Kodi)
 			}
 		} else {
 			ctx.Abort()
-			library.ClearPageCache()
+			library.ClearPageCache(xbmcHost)
 		}
 	}
 
@@ -135,6 +139,8 @@ func RemoveMovie(ctx *gin.Context) {
 func AddShow(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("tmdbId")
 	force := ctx.DefaultQuery("force", falseType) == trueType
 
@@ -142,7 +148,7 @@ func AddShow(ctx *gin.Context) {
 	if err != nil {
 		isErrored := true
 		if err == library.ErrVideoRemoved {
-			if xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30279];;%s", show.Name)) {
+			if xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30279];;%s", show.Name)) {
 				show, err = library.AddShow(tmdbID, true)
 				if err == nil {
 					isErrored = false
@@ -166,10 +172,10 @@ func AddShow(ctx *gin.Context) {
 	}
 
 	log.Noticef(logMsg, show.Name, tmdbID)
-	if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("%s;;%s", label, show.Name))) {
-		xbmc.VideoLibraryScanDirectory(library.ShowsLibraryPath(), true)
+	if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("%s;;%s", label, show.Name))) {
+		xbmcHost.VideoLibraryScanDirectory(library.ShowsLibraryPath(), true)
 	} else {
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -192,6 +198,8 @@ func AddShowsList(ctx *gin.Context) {
 func RemoveShow(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("tmdbId")
 	show, paths, err := library.RemoveShow(tmdbID)
 	if err != nil {
@@ -202,16 +210,16 @@ func RemoveShow(ctx *gin.Context) {
 	}
 
 	if ctx != nil {
-		if show != nil && paths != nil && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", show.Name)) {
+		if show != nil && paths != nil && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", show.Name)) {
 			for _, path := range paths {
-				xbmc.VideoLibraryCleanDirectory(path, "tvshows", false)
+				xbmcHost.VideoLibraryCleanDirectory(path, "tvshows", false)
 			}
 			if s, err := uid.GetShowByTMDB(show.ID); err == nil && s != nil {
-				xbmc.VideoLibraryRemoveTVShow(s.XbmcUIDs.Kodi)
+				xbmcHost.VideoLibraryRemoveTVShow(s.XbmcUIDs.Kodi)
 			}
 		} else {
 			ctx.Abort()
-			library.ClearPageCache()
+			library.ClearPageCache(xbmcHost)
 		}
 	}
 
@@ -219,23 +227,27 @@ func RemoveShow(ctx *gin.Context) {
 
 // UpdateLibrary ...
 func UpdateLibrary(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	if err := library.Refresh(); err != nil {
 		ctx.String(200, err.Error())
 	}
-	if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmc.DialogConfirmFocused("Elementum", "LOCALIZE[30288]")) {
-		xbmc.VideoLibraryScan()
+	if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmcHost.DialogConfirmFocused("Elementum", "LOCALIZE[30288]")) {
+		xbmcHost.VideoLibraryScan()
 	}
 }
 
 // UpdateTrakt ...
 func UpdateTrakt(ctx *gin.Context) {
-	xbmc.Notify("Elementum", "LOCALIZE[30358]", config.AddonIcon())
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	xbmcHost.Notify("Elementum", "LOCALIZE[30358]", config.AddonIcon())
 	ctx.String(200, "")
 	go func() {
 		library.IsTraktInitialized = false
 		library.RefreshTrakt()
-		if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmc.DialogConfirmFocused("Elementum", "LOCALIZE[30288]")) {
-			xbmc.VideoLibraryScan()
+		if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmcHost.DialogConfirmFocused("Elementum", "LOCALIZE[30288]")) {
+			xbmcHost.VideoLibraryScan()
 		}
 	}()
 }

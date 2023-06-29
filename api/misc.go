@@ -25,6 +25,8 @@ import (
 func Changelog(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	changelogPath := filepath.Join(config.Get().Info.Path, "whatsnew.txt")
 	if _, err := os.Stat(changelogPath); err != nil {
 		ctx.String(404, err.Error())
@@ -38,30 +40,36 @@ func Changelog(ctx *gin.Context) {
 		return
 	}
 
-	xbmc.DialogText(title, string(text))
+	xbmcHost.DialogText(title, string(text))
 	ctx.String(200, "")
 }
 
 // Donate display
 func Donate(ctx *gin.Context) {
-	xbmc.Dialog("Elementum", "LOCALIZE[30141]")
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	xbmcHost.Dialog("Elementum", "LOCALIZE[30141]")
 	ctx.String(200, "")
 }
 
 // Settings display
 func Settings(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	addon := ctx.Params.ByName("addon")
 	if addon == "" {
 		addon = "plugin.video.elementum"
 	}
 
-	xbmc.AddonSettings(addon)
+	xbmcHost.AddonSettings(addon)
 	ctx.String(200, "")
 }
 
 // Status display
 func Status(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
+
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 	title := "LOCALIZE[30393]"
 	text := ""
@@ -127,7 +135,7 @@ func Status(ctx *gin.Context) {
 		deletedShowsCount,
 	)
 
-	xbmc.DialogText(title, string(text))
+	xbmcHost.DialogText(title, string(text))
 	ctx.String(200, "")
 }
 
@@ -142,6 +150,8 @@ func fileSize(path string) string {
 
 // SelectNetworkInterface ...
 func SelectNetworkInterface(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	typeName := ctx.Params.ByName("type")
 
 	ifaces, err := net.Interfaces()
@@ -183,13 +193,13 @@ func SelectNetworkInterface(ctx *gin.Context) {
 		items = append(items, name)
 	}
 
-	choice := xbmc.ListDialog("LOCALIZE[30474]", items...)
+	choice := xbmcHost.ListDialog("LOCALIZE[30474]", items...)
 	if choice >= 0 {
-		xbmc.SetSetting("listen_autodetect_ip", "false")
+		xbmcHost.SetSetting("listen_autodetect_ip", "false")
 		if typeName == "listen" {
-			xbmc.SetSetting("listen_interfaces", ifaces[choice].Name)
+			xbmcHost.SetSetting("listen_interfaces", ifaces[choice].Name)
 		} else {
-			xbmc.SetSetting("outgoing_interfaces", ifaces[choice].Name)
+			xbmcHost.SetSetting("outgoing_interfaces", ifaces[choice].Name)
 		}
 	}
 
@@ -198,19 +208,21 @@ func SelectNetworkInterface(ctx *gin.Context) {
 
 // SelectStrmLanguage ...
 func SelectStrmLanguage(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	items := make([]string, 0)
-	items = append(items, xbmc.GetLocalizedString(30477))
+	items = append(items, xbmcHost.GetLocalizedString(30477))
 
 	languages := tmdb.GetLanguages(config.Get().Language)
 	for _, l := range languages {
 		items = append(items, l.Name)
 	}
 
-	choice := xbmc.ListDialog("LOCALIZE[30373]", items...)
+	choice := xbmcHost.ListDialog("LOCALIZE[30373]", items...)
 	if choice >= 1 {
-		xbmc.SetSetting("strm_language", languages[choice-1].Name+" | "+languages[choice-1].Iso639_1)
+		xbmcHost.SetSetting("strm_language", languages[choice-1].Name+" | "+languages[choice-1].Iso639_1)
 	} else if choice == 0 {
-		xbmc.SetSetting("strm_language", "Original")
+		xbmcHost.SetSetting("strm_language", "Original")
 	}
 
 	ctx.String(200, "")

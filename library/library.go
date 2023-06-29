@@ -125,12 +125,18 @@ func Init() {
 
 	InitDB()
 
+	xbmcHost, _ := xbmc.GetLocalXBMCHost()
+
 	if err := checkMoviesPath(); err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		if xbmcHost != nil {
+			xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
+		}
 		return
 	}
 	if err := checkShowsPath(); err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		if xbmcHost != nil {
+			xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
+		}
 		return
 	}
 
@@ -207,8 +213,8 @@ func Init() {
 					}
 					if len(labels) > 0 {
 						label = strings.Join(labels, ", ")
-						if xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", label)) {
-							xbmc.VideoLibraryClean()
+						if xbmcHost != nil && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", label)) {
+							xbmcHost.VideoLibraryClean()
 						}
 					}
 				} else {
@@ -218,8 +224,8 @@ func Init() {
 							log.Error(err)
 						}
 					}
-					if xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", label)) {
-						xbmc.VideoLibraryClean()
+					if xbmcHost != nil && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30278];;%s", label)) {
+						xbmcHost.VideoLibraryClean()
 					}
 				}
 
@@ -249,7 +255,7 @@ func Init() {
 				return
 			default:
 				PlanTraktUpdate()
-				updateLibraryShows()
+				updateLibraryShows(xbmcHost)
 			}
 		}()
 	}
@@ -257,8 +263,8 @@ func Init() {
 	log.Notice("Warming up caches...")
 	go func() {
 		time.Sleep(30 * time.Second)
-		if !tmdb.WarmingUp.IsSet() {
-			xbmc.Notify("Elementum", "LOCALIZE[30147]", config.AddonIcon())
+		if !tmdb.WarmingUp.IsSet() && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", "LOCALIZE[30147]", config.AddonIcon())
 		}
 	}()
 
@@ -275,8 +281,8 @@ func Init() {
 
 	tmdb.WarmingUp.Set()
 	took := time.Since(started)
-	if took.Seconds() > 30 {
-		xbmc.Notify("Elementum", "LOCALIZE[30148]", config.AddonIcon())
+	if took.Seconds() > 30 && xbmcHost != nil {
+		xbmcHost.Notify("Elementum", "LOCALIZE[30148]", config.AddonIcon())
 	}
 	log.Noticef("Caches warmed up in %s", took)
 
@@ -315,9 +321,9 @@ func Init() {
 				go Refresh()
 			}
 		case <-updateTicker.C:
-			if config.Get().UpdateFrequency > 0 && config.Get().LibraryEnabled && config.Get().LibrarySyncEnabled && (config.Get().LibrarySyncPlaybackEnabled || !xbmc.PlayerIsPlaying()) {
+			if config.Get().UpdateFrequency > 0 && config.Get().LibraryEnabled && config.Get().LibrarySyncEnabled && (config.Get().LibrarySyncPlaybackEnabled || xbmcHost == nil || !xbmcHost.PlayerIsPlaying()) {
 				go func() {
-					if err := updateLibraryShows(); err != nil {
+					if err := updateLibraryShows(xbmcHost); err != nil {
 						log.Warning(err)
 						return
 					}
@@ -367,8 +373,8 @@ func ShowsLibraryPath() string {
 }
 
 // Library updates
-func updateLibraryShows() error {
-	if !config.Get().LibraryEnabled || !config.Get().LibrarySyncEnabled || (!config.Get().LibrarySyncPlaybackEnabled && xbmc.PlayerIsPlaying()) {
+func updateLibraryShows(xbmcHost *xbmc.XBMCHost) error {
+	if !config.Get().LibraryEnabled || !config.Get().LibrarySyncEnabled || (!config.Get().LibrarySyncPlaybackEnabled && xbmcHost != nil && xbmcHost.PlayerIsPlaying()) {
 		return nil
 	}
 
@@ -914,12 +920,12 @@ func CloseLibrary() {
 }
 
 // ClearPageCache deletes cached page listings
-func ClearPageCache() {
+func ClearPageCache(xbmcHost *xbmc.XBMCHost) {
 	cacheDB := database.GetCache()
 	if cacheDB != nil {
 		cacheDB.DeleteWithPrefix(database.CommonBucket, []byte("page."))
 	}
-	xbmc.Refresh()
+	xbmcHost.Refresh()
 }
 
 // ClearResolveCache deletes cached IDs resolve
@@ -942,21 +948,21 @@ func ClearCacheKey(key string) {
 }
 
 // ClearTraktCache deletes cached trakt data
-func ClearTraktCache() {
+func ClearTraktCache(xbmcHost *xbmc.XBMCHost) {
 	cacheDB := database.GetCache()
 	if cacheDB != nil {
 		cacheDB.DeleteWithPrefix(database.CommonBucket, []byte(cache.TraktKey))
 	}
-	xbmc.Refresh()
+	xbmcHost.Refresh()
 }
 
 // ClearTmdbCache deletes cached tmdb data
-func ClearTmdbCache() {
+func ClearTmdbCache(xbmcHost *xbmc.XBMCHost) {
 	cacheDB := database.GetCache()
 	if cacheDB != nil {
 		cacheDB.DeleteWithPrefix(database.CommonBucket, []byte(cache.TMDBKey))
 	}
-	xbmc.Refresh()
+	xbmcHost.Refresh()
 }
 
 //
@@ -1061,8 +1067,11 @@ func SyncMoviesList(listID string, updating bool, isUpdateNeeded bool) (err erro
 
 	if !updating && len(movieIDs) > 0 {
 		log.Noticef("Movies list (%s) added", listID)
-		if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30277];;%s", label))) {
-			xbmc.VideoLibraryScan()
+		xbmcHost, _ := xbmc.GetLocalXBMCHost()
+		if xbmcHost != nil {
+			if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30277];;%s", label))) {
+				xbmcHost.VideoLibraryScan()
+			}
 		}
 	}
 	return nil
@@ -1190,8 +1199,11 @@ func SyncShowsList(listID string, updating bool, isUpdateNeeded bool) (err error
 
 	if !updating && len(showIDs) > 0 {
 		log.Noticef("Shows list (%s) added", listID)
-		if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30277];;%s", label))) {
-			xbmc.VideoLibraryScan()
+		xbmcHost, _ := xbmc.GetLocalXBMCHost()
+		if xbmcHost != nil {
+			if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30277];;%s", label))) {
+				xbmcHost.VideoLibraryScan()
+			}
 		}
 	}
 	return nil
@@ -1235,7 +1247,9 @@ func AddMovie(tmdbID string, force bool) (*tmdb.Movie, error) {
 	}
 
 	if !force && uid.IsDuplicateMovie(tmdbID) {
-		xbmc.Notify("Elementum", fmt.Sprintf("LOCALIZE[30287];;%s", movie.Title), config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); xbmcHost != nil && err == nil {
+			xbmcHost.Notify("Elementum", fmt.Sprintf("LOCALIZE[30287];;%s", movie.Title), config.AddonIcon())
+		}
 		return nil, fmt.Errorf("Movie already added")
 	}
 
@@ -1262,7 +1276,9 @@ func AddShow(tmdbID string, force bool) (*tmdb.Show, error) {
 	show := tmdb.GetShowByID(tmdbID, config.Get().Language)
 
 	if !force && uid.IsDuplicateShow(tmdbID) {
-		xbmc.Notify("Elementum", fmt.Sprintf("LOCALIZE[30287];;%s", show.Name), config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); xbmcHost != nil && err == nil {
+			xbmcHost.Notify("Elementum", fmt.Sprintf("LOCALIZE[30287];;%s", show.Name), config.AddonIcon())
+		}
 		return show, fmt.Errorf("Show already added")
 	}
 

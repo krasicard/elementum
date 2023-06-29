@@ -18,6 +18,8 @@ func init() {
 // Index ...
 func Index(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		action := ctx.Query("action")
 		if action == "search" || action == "manualsearch" {
 			SubtitlesIndex(s)(ctx)
@@ -41,7 +43,7 @@ func Index(s *bittorrent.Service) gin.HandlerFunc {
 		}
 
 		// Adding Settings urls for each search provider found locally.
-		for _, addon := range getProviders() {
+		for _, addon := range getProviders(xbmcHost) {
 			name := strings.Title(strings.ReplaceAll(addon.Name, "script.elementum.", ""))
 
 			li = append(li, &xbmc.ListItem{Label: "LOCALIZE[30582];;" + name, Path: URLForXBMC("/settings/" + addon.ID), Thumbnail: config.AddonResource("img", "settings.png")})

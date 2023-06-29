@@ -62,8 +62,8 @@ var (
 	}
 )
 
-func saveEncoded(encoded string) {
-	xbmc.SetWindowProperty("ListItem.Encoded", encoded)
+func saveEncoded(xbmcHost *xbmc.XBMCHost, encoded string) {
+	xbmcHost.SetWindowProperty("ListItem.Encoded", encoded)
 }
 
 func encodeItem(item *xbmc.ListItem) string {
@@ -77,10 +77,12 @@ func InfoLabelsStored(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		labelsString := "{}"
 
-		if listLabel := xbmc.InfoLabel("ListItem.Label"); len(listLabel) > 0 {
-			labels := xbmc.InfoLabels(infoLabels...)
+		if listLabel := xbmcHost.InfoLabel("ListItem.Label"); len(listLabel) > 0 {
+			labels := xbmcHost.InfoLabels(infoLabels...)
 
 			listItemLabels := make(map[string]string, len(labels))
 			for k, v := range labels {
@@ -90,8 +92,8 @@ func InfoLabelsStored(s *bittorrent.Service) gin.HandlerFunc {
 
 			b, _ := json.Marshal(listItemLabels)
 			labelsString = string(b)
-			saveEncoded(labelsString)
-		} else if encoded := xbmc.GetWindowProperty("ListItem.Encoded"); len(encoded) > 0 {
+			saveEncoded(xbmcHost, labelsString)
+		} else if encoded := xbmcHost.GetWindowProperty("ListItem.Encoded"); len(encoded) > 0 {
 			labelsString = encoded
 		}
 
@@ -104,13 +106,15 @@ func InfoLabelsEpisode(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		tmdbID := ctx.Params.ByName("showId")
 		showID, _ := strconv.Atoi(tmdbID)
 		seasonNumber, _ := strconv.Atoi(ctx.Params.ByName("season"))
 		episodeNumber, _ := strconv.Atoi(ctx.Params.ByName("episode"))
 
 		if item, err := GetEpisodeLabels(showID, seasonNumber, episodeNumber); err == nil {
-			saveEncoded(encodeItem(item))
+			saveEncoded(xbmcHost, encodeItem(item))
 			ctx.JSON(200, item)
 		} else {
 			ctx.Error(err)
@@ -123,10 +127,12 @@ func InfoLabelsMovie(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		tmdbID := ctx.Params.ByName("tmdbId")
 
 		if item, err := GetMovieLabels(tmdbID); err == nil {
-			saveEncoded(encodeItem(item))
+			saveEncoded(xbmcHost, encodeItem(item))
 			ctx.JSON(200, item)
 		} else {
 			ctx.Error(err)
@@ -139,11 +145,13 @@ func InfoLabelsSearch(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		tmdbID := ctx.Params.ByName("tmdbId")
 		idx := ctx.DefaultQuery("index", "-1")
 
 		if item, err := GetSearchLabels(s, tmdbID, idx); err == nil {
-			saveEncoded(encodeItem(item))
+			saveEncoded(xbmcHost, encodeItem(item))
 			ctx.JSON(200, item)
 		} else {
 			ctx.Error(err)

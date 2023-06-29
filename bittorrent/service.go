@@ -562,11 +562,16 @@ func (s *Service) stopServices() {
 	// Try to clean dialogs in background to avoid getting deadlock because of already closed Kodi
 	if !s.isShutdown {
 		go func() {
+			xbmcHost, err := xbmc.GetLocalXBMCHost()
+			if err != nil || xbmcHost == nil {
+				return
+			}
+
 			log.Infof("Cleaning up all DialogBG")
-			xbmc.DialogProgressBGCleanup()
+			xbmcHost.DialogProgressBGCleanup()
 
 			log.Infof("Resetting RPC")
-			xbmc.ResetRPC()
+			xbmcHost.ResetRPC()
 		}()
 	}
 
@@ -599,7 +604,7 @@ func (s *Service) stopServices() {
 }
 
 // CheckAvailableSpace ...
-func (s *Service) checkAvailableSpace(t *Torrent) bool {
+func (s *Service) checkAvailableSpace(xbmcHost *xbmc.XBMCHost, t *Torrent) bool {
 	// For memory storage we don't need to check available space
 	if t.IsMemoryStorage() {
 		return true
@@ -635,7 +640,9 @@ func (s *Service) checkAvailableSpace(t *Torrent) bool {
 
 	if availableSpace < sizeLeft {
 		log.Errorf("Unsufficient free space on %s. Has %d, needs %d.", path, diskStatus.Free, sizeLeft)
-		xbmc.Notify("Elementum", "LOCALIZE[30207]", config.AddonIcon())
+		if xbmcHost != nil {
+			xbmcHost.Notify("Elementum", "LOCALIZE[30207]", config.AddonIcon())
+		}
 
 		log.Infof("Pausing torrent %s", status.GetName())
 		t.Pause()
@@ -646,7 +653,7 @@ func (s *Service) checkAvailableSpace(t *Torrent) bool {
 }
 
 // AddTorrent ...
-func (s *Service) AddTorrent(uri string, paused bool, downloadStorage int, firstTime bool, addedTime time.Time) (*Torrent, error) {
+func (s *Service) AddTorrent(xbmcHost *xbmc.XBMCHost, uri string, paused bool, downloadStorage int, firstTime bool, addedTime time.Time) (*Torrent, error) {
 	defer perf.ScopeTimer()()
 
 	// To make sure no spaces coming from Web UI
@@ -656,7 +663,9 @@ func (s *Service) AddTorrent(uri string, paused bool, downloadStorage int, first
 
 	if downloadStorage != StorageMemory && s.config.DownloadPath == "." {
 		log.Warningf("Cannot add torrent since download path is not set")
-		xbmc.Notify("Elementum", "LOCALIZE[30113]", config.AddonIcon())
+		if xbmcHost != nil {
+			xbmcHost.Notify("Elementum", "LOCALIZE[30113]", config.AddonIcon())
+		}
 		return nil, fmt.Errorf("Download path empty")
 	}
 
@@ -841,7 +850,7 @@ func (s *Service) AddTorrent(uri string, paused bool, downloadStorage int, first
 	s.q.Add(t)
 
 	if !t.HasMetadata() {
-		if err := t.WaitForMetadata(infoHash); err != nil {
+		if err := t.WaitForMetadata(xbmcHost, infoHash); err != nil {
 			return nil, err
 		}
 	}
@@ -856,7 +865,7 @@ func (s *Service) AddTorrent(uri string, paused bool, downloadStorage int, first
 }
 
 // RemoveTorrent ...
-func (s *Service) RemoveTorrent(t *Torrent, forceDrop, forceDelete, isWatched bool) bool {
+func (s *Service) RemoveTorrent(xbmcHost *xbmc.XBMCHost, t *Torrent, forceDrop, forceDelete, isWatched bool) bool {
 	log.Infof("Removing torrent: %s", t.Name())
 	if t == nil {
 		return false
@@ -880,7 +889,7 @@ func (s *Service) RemoveTorrent(t *Torrent, forceDrop, forceDelete, isWatched bo
 	keepDownloading := false
 	if forceDrop || configKeepDownloading == 2 || len(t.ChosenFiles) == 0 {
 		keepDownloading = false
-	} else if configKeepDownloading == 0 || xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30146];;%s", t.Name())) {
+	} else if configKeepDownloading == 0 || (xbmcHost != nil && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30146];;%s", t.Name()))) {
 		keepDownloading = true
 	}
 
@@ -897,7 +906,7 @@ func (s *Service) RemoveTorrent(t *Torrent, forceDrop, forceDelete, isWatched bo
 			deleteTorrentData = true
 		} else if keepSetting == 0 {
 			deleteTorrentData = false
-		} else if keepSetting == 2 || xbmc.DialogConfirm("Elementum", fmt.Sprintf("LOCALIZE[30269];;%s", t.Name())) {
+		} else if keepSetting == 2 || (xbmcHost != nil && xbmcHost.DialogConfirm("Elementum", fmt.Sprintf("LOCALIZE[30269];;%s", t.Name()))) {
 			deleteTorrentData = true
 		}
 	}
@@ -931,7 +940,8 @@ func (s *Service) onStateChanged(stateAlert lt.StateChangedAlert) {
 		if spaceChecked, exists := s.SpaceChecked[infoHash]; exists {
 			if spaceChecked == false {
 				if t := s.GetTorrentByHash(infoHash); t != nil {
-					s.checkAvailableSpace(t)
+					xbmcHost, _ := xbmc.GetLocalXBMCHost()
+					s.checkAvailableSpace(xbmcHost, t)
 					delete(s.SpaceChecked, infoHash)
 				}
 			}
@@ -1163,6 +1173,8 @@ func (s *Service) loadTorrentFiles() {
 
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetLocalXBMCHost()
+
 	log.Infof("Loading torrents from: %s", s.config.TorrentsPath)
 	files, err := ioutil.ReadDir(s.config.TorrentsPath)
 	if err != nil {
@@ -1189,7 +1201,7 @@ func (s *Service) loadTorrentFiles() {
 		filePath := filepath.Join(s.config.TorrentsPath, torrentFile.Name())
 		log.Infof("Loading torrent file %s", torrentFile.Name())
 
-		t, err := s.AddTorrent(filePath, s.config.AutoloadTorrentsPaused, StorageFile, false, torrentFile.ModTime())
+		t, err := s.AddTorrent(xbmcHost, filePath, s.config.AutoloadTorrentsPaused, StorageFile, false, torrentFile.ModTime())
 		if err != nil {
 			log.Warningf("Cannot add torrent from existing file %s: %s", filePath, err)
 			continue
@@ -1251,6 +1263,8 @@ func (s *Service) downloadProgress() {
 
 	pathChecked := make(map[string]bool)
 	warnedMissing := make(map[string]bool)
+
+	xbmcHost, _ := xbmc.GetLocalXBMCHost()
 
 	showNext := 0
 	for {
@@ -1386,7 +1400,7 @@ func (s *Service) downloadProgress() {
 				if t.IsMemoryStorage() || !s.config.CompletedMove || status != StatusStrings[StatusSeeding] || s.anyPlayerIsPlaying() {
 					continue
 				}
-				if xbmc.PlayerIsPlaying() {
+				if xbmcHost != nil && xbmcHost.PlayerIsPlaying() {
 					continue
 				}
 
@@ -1431,7 +1445,7 @@ func (s *Service) downloadProgress() {
 
 					log.Info("Removing the torrent without deleting files after Completed move ...")
 					t := s.GetTorrentByHash(infoHash)
-					s.RemoveTorrent(t, false, false, false)
+					s.RemoveTorrent(xbmcHost, t, false, false, false)
 
 					// Delete leftover .parts file if any
 					partsFile := filepath.Join(config.Get().DownloadPath, fmt.Sprintf(".%s.parts", infoHash))
@@ -1558,7 +1572,7 @@ func (s *Service) downloadProgress() {
 				}
 				if !s.config.DisableBgProgress && (!s.config.DisableBgProgressPlayback || !s.anyPlayerIsPlaying()) {
 					if s.dialogProgressBG == nil {
-						s.dialogProgressBG = xbmc.NewDialogProgressBG("Elementum", "")
+						s.dialogProgressBG = xbmcHost.NewDialogProgressBG("Elementum", "")
 					}
 					if s.dialogProgressBG != nil {
 						s.dialogProgressBG.Update(showProgress, "Elementum", showTorrent)
@@ -1664,12 +1678,14 @@ func (s *Service) ClientInfo(ctx *gin.Context) {
 	w := bufio.NewWriter(ctx.Writer)
 	defer w.Flush()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	for _, t := range s.q.All() {
 		if t == nil || t.th == nil || (torrentID != "" && t.infoHash != torrentID) {
 			continue
 		}
 
-		t.TorrentInfo(w, showTrackers, showPieces)
+		t.TorrentInfo(xbmcHost, w, showTrackers, showPieces)
 
 		fmt.Fprint(w, "\n\n")
 	}
@@ -2005,12 +2021,14 @@ func (s *Service) readCustomSettings() map[string]string {
 
 // StopNextFiles stops all torrents that wait for "next" playback
 func (s *Service) StopNextFiles() {
+	xbmcHost, _ := xbmc.GetLocalXBMCHost()
+
 	for _, t := range s.q.All() {
 		if t.IsNextFile && t.PlayerAttached <= 0 {
 			log.Infof("Stopping torrent '%s' as a not-needed next episode", t.Name())
 
 			t.stopNextTimer()
-			s.RemoveTorrent(t, false, false, false)
+			s.RemoveTorrent(xbmcHost, t, false, false, false)
 		}
 	}
 

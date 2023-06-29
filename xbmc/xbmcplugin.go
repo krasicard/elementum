@@ -1,7 +1,7 @@
 package xbmc
 
 // SetResolvedURL ...
-func SetResolvedURL(url string) {
+func (h *XBMCHost) SetResolvedURL(url string) {
 	retVal := -1
-	executeJSONRPCEx("SetResolvedUrl", &retVal, Args{url})
+	h.executeJSONRPCEx("SetResolvedUrl", &retVal, Args{url})
 }

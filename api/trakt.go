@@ -118,22 +118,26 @@ func inShowsCollection(tmdbID int) bool {
 
 // AuthorizeTrakt ...
 func AuthorizeTrakt(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	err := trakt.Authorize(true)
 	if err == nil {
 		ctx.String(200, "")
 	} else {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 		ctx.String(200, "")
 	}
 }
 
 // DeauthorizeTrakt ...
 func DeauthorizeTrakt(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	err := trakt.Deauthorize(true)
 	if err == nil {
 		ctx.String(200, "")
 	} else {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 		ctx.String(200, "")
 	}
 }
@@ -146,9 +150,11 @@ func DeauthorizeTrakt(ctx *gin.Context) {
 func WatchlistMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	movies, err := trakt.WatchlistMovies(false)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, -1, 0)
 }
@@ -157,9 +163,11 @@ func WatchlistMovies(ctx *gin.Context) {
 func WatchlistShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	shows, err := trakt.WatchlistShows(false)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, -1, 0)
 }
@@ -168,9 +176,11 @@ func WatchlistShows(ctx *gin.Context) {
 func CollectionMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	movies, err := trakt.CollectionMovies(false)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, -1, 0)
 }
@@ -179,9 +189,11 @@ func CollectionMovies(ctx *gin.Context) {
 func CollectionShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	shows, err := trakt.CollectionShows(false)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, -1, 0)
 }
@@ -190,13 +202,15 @@ func CollectionShows(ctx *gin.Context) {
 func UserlistMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	user := ctx.Params.ByName("user")
 	listID := ctx.Params.ByName("listId")
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, err := trakt.ListItemsMovies(user, listID, false)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, -1, page)
 }
@@ -205,13 +219,15 @@ func UserlistMovies(ctx *gin.Context) {
 func UserlistShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	user := ctx.Params.ByName("user")
 	listID := ctx.Params.ByName("listId")
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, err := trakt.ListItemsShows(user, listID, false)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, -1, page)
 }
@@ -232,20 +248,22 @@ func UserlistShows(ctx *gin.Context) {
 func AddMovieToWatchlist(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("tmdbId")
 	resp, err := trakt.AddToWatchlist("movies", tmdbID)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else if resp.Status() != 201 {
-		xbmc.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
+		xbmcHost.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "Movie added to watchlist", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "Movie added to watchlist", config.AddonIcon())
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.watchlist.movies"))
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.movies.watchlist"))
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -253,20 +271,22 @@ func AddMovieToWatchlist(ctx *gin.Context) {
 func RemoveMovieFromWatchlist(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("tmdbId")
 	resp, err := trakt.RemoveFromWatchlist("movies", tmdbID)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else if resp.Status() != 200 {
-		xbmc.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
+		xbmcHost.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "Movie removed from watchlist", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "Movie removed from watchlist", config.AddonIcon())
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.watchlist.movies"))
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.movies.watchlist"))
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -274,20 +294,22 @@ func RemoveMovieFromWatchlist(ctx *gin.Context) {
 func AddShowToWatchlist(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("showId")
 	resp, err := trakt.AddToWatchlist("shows", tmdbID)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else if resp.Status() != 201 {
-		xbmc.Notify("Elementum", fmt.Sprintf("Failed %d", resp.Status()), config.AddonIcon())
+		xbmcHost.Notify("Elementum", fmt.Sprintf("Failed %d", resp.Status()), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "Show added to watchlist", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "Show added to watchlist", config.AddonIcon())
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.watchlist.shows"))
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.shows.watchlist"))
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -295,20 +317,22 @@ func AddShowToWatchlist(ctx *gin.Context) {
 func RemoveShowFromWatchlist(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("showId")
 	resp, err := trakt.RemoveFromWatchlist("shows", tmdbID)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else if resp.Status() != 200 {
-		xbmc.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
+		xbmcHost.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "Show removed from watchlist", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "Show removed from watchlist", config.AddonIcon())
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.watchlist.shows"))
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.shows.watchlist"))
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -316,20 +340,22 @@ func RemoveShowFromWatchlist(ctx *gin.Context) {
 func AddMovieToCollection(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("tmdbId")
 	resp, err := trakt.AddToCollection("movies", tmdbID)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else if resp.Status() != 201 {
-		xbmc.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
+		xbmcHost.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "Movie added to collection", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "Movie added to collection", config.AddonIcon())
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.collection.movies"))
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.movies.collection"))
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -337,20 +363,22 @@ func AddMovieToCollection(ctx *gin.Context) {
 func RemoveMovieFromCollection(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("tmdbId")
 	resp, err := trakt.RemoveFromCollection("movies", tmdbID)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else if resp.Status() != 200 {
-		xbmc.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
+		xbmcHost.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "Movie removed from collection", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "Movie removed from collection", config.AddonIcon())
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.collection.movies"))
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.movies.collection"))
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -358,20 +386,22 @@ func RemoveMovieFromCollection(ctx *gin.Context) {
 func AddShowToCollection(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("showId")
 	resp, err := trakt.AddToCollection("shows", tmdbID)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else if resp.Status() != 201 {
-		xbmc.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
+		xbmcHost.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "Show added to collection", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "Show added to collection", config.AddonIcon())
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.collection.shows"))
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.shows.collection"))
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -379,20 +409,22 @@ func AddShowToCollection(ctx *gin.Context) {
 func RemoveShowFromCollection(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("showId")
 	resp, err := trakt.RemoveFromCollection("shows", tmdbID)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	} else if resp.Status() != 200 {
-		xbmc.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
+		xbmcHost.Notify("Elementum", fmt.Sprintf("Failed with %d status code", resp.Status()), config.AddonIcon())
 	} else {
-		xbmc.Notify("Elementum", "Show removed from collection", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "Show removed from collection", config.AddonIcon())
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.collection.shows"))
 		database.GetCache().DeleteWithPrefix(database.CommonBucket, []byte("com.trakt.shows.collection"))
 		if ctx != nil {
 			ctx.Abort()
 		}
-		library.ClearPageCache()
+		library.ClearPageCache(xbmcHost)
 	}
 }
 
@@ -527,11 +559,13 @@ func renderTraktMovies(ctx *gin.Context, movies []*trakt.Movies, total int, page
 func TraktPopularMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.TopMovies("popular", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, total, page)
 }
@@ -540,11 +574,13 @@ func TraktPopularMovies(ctx *gin.Context) {
 func TraktRecommendationsMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.TopMovies("recommendations", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, total, page)
 }
@@ -553,11 +589,13 @@ func TraktRecommendationsMovies(ctx *gin.Context) {
 func TraktTrendingMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.TopMovies("trending", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, total, page)
 }
@@ -566,11 +604,13 @@ func TraktTrendingMovies(ctx *gin.Context) {
 func TraktMostPlayedMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.TopMovies("played", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, total, page)
 }
@@ -579,11 +619,13 @@ func TraktMostPlayedMovies(ctx *gin.Context) {
 func TraktMostWatchedMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.TopMovies("watched", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, total, page)
 }
@@ -592,11 +634,13 @@ func TraktMostWatchedMovies(ctx *gin.Context) {
 func TraktMostCollectedMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.TopMovies("collected", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, total, page)
 }
@@ -605,11 +649,13 @@ func TraktMostCollectedMovies(ctx *gin.Context) {
 func TraktMostAnticipatedMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.TopMovies("anticipated", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, total, page)
 }
@@ -618,9 +664,11 @@ func TraktMostAnticipatedMovies(ctx *gin.Context) {
 func TraktBoxOffice(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	movies, _, err := trakt.TopMovies("boxoffice", "1")
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktMovies(ctx, movies, -1, 0)
 }
@@ -629,12 +677,14 @@ func TraktBoxOffice(ctx *gin.Context) {
 func TraktHistoryMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 
 	watchedMovies, err := trakt.WatchedMovies(false)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	movies := make([]*trakt.Movies, 0)
 	for _, movie := range watchedMovies {
@@ -651,12 +701,14 @@ func TraktHistoryMovies(ctx *gin.Context) {
 func TraktHistoryShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 
 	watchedShows, err := trakt.WatchedShows(false)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	shows := make([]*trakt.Shows, 0)
 	for _, show := range watchedShows {
@@ -673,9 +725,11 @@ func TraktHistoryShows(ctx *gin.Context) {
 func TraktProgressShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	shows, err := trakt.WatchedShowsProgress()
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 
 	renderProgressShows(ctx, shows, -1, 0)
@@ -775,11 +829,13 @@ func renderTraktShows(ctx *gin.Context, shows []*trakt.Shows, total int, page in
 func TraktPopularShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.TopShows("popular", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, total, page)
 }
@@ -788,11 +844,13 @@ func TraktPopularShows(ctx *gin.Context) {
 func TraktRecommendationsShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.TopShows("recommendations", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, total, page)
 }
@@ -801,11 +859,13 @@ func TraktRecommendationsShows(ctx *gin.Context) {
 func TraktTrendingShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.TopShows("trending", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, total, page)
 }
@@ -814,11 +874,13 @@ func TraktTrendingShows(ctx *gin.Context) {
 func TraktMostPlayedShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.TopShows("played", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, total, page)
 }
@@ -827,11 +889,13 @@ func TraktMostPlayedShows(ctx *gin.Context) {
 func TraktMostWatchedShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.TopShows("watched", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, total, page)
 }
@@ -840,11 +904,13 @@ func TraktMostWatchedShows(ctx *gin.Context) {
 func TraktMostCollectedShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.TopShows("collected", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, total, page)
 }
@@ -853,11 +919,13 @@ func TraktMostCollectedShows(ctx *gin.Context) {
 func TraktMostAnticipatedShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.TopShows("anticipated", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderTraktShows(ctx, shows, total, page)
 }
@@ -870,11 +938,13 @@ func TraktMostAnticipatedShows(ctx *gin.Context) {
 func TraktMyShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.CalendarShows("my/shows", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarShows(ctx, shows, total, page)
 }
@@ -883,11 +953,13 @@ func TraktMyShows(ctx *gin.Context) {
 func TraktMyNewShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.CalendarShows("my/shows/new", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarShows(ctx, shows, total, page)
 }
@@ -896,11 +968,13 @@ func TraktMyNewShows(ctx *gin.Context) {
 func TraktMyPremieres(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.CalendarShows("my/shows/premieres", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarShows(ctx, shows, total, page)
 }
@@ -909,11 +983,13 @@ func TraktMyPremieres(ctx *gin.Context) {
 func TraktMyMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.CalendarMovies("my/movies", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarMovies(ctx, movies, total, page)
 }
@@ -922,11 +998,13 @@ func TraktMyMovies(ctx *gin.Context) {
 func TraktMyReleases(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.CalendarMovies("my/dvd", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarMovies(ctx, movies, total, page)
 }
@@ -935,11 +1013,13 @@ func TraktMyReleases(ctx *gin.Context) {
 func TraktAllShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.CalendarShows("all/shows", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarShows(ctx, shows, total, page)
 }
@@ -948,11 +1028,13 @@ func TraktAllShows(ctx *gin.Context) {
 func TraktAllNewShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.CalendarShows("all/shows/new", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarShows(ctx, shows, total, page)
 }
@@ -961,11 +1043,13 @@ func TraktAllNewShows(ctx *gin.Context) {
 func TraktAllPremieres(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	shows, total, err := trakt.CalendarShows("all/shows/premieres", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarShows(ctx, shows, total, page)
 }
@@ -974,11 +1058,13 @@ func TraktAllPremieres(ctx *gin.Context) {
 func TraktAllMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.CalendarMovies("all/movies", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarMovies(ctx, movies, total, page)
 }
@@ -987,11 +1073,13 @@ func TraktAllMovies(ctx *gin.Context) {
 func TraktAllReleases(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
 	movies, total, err := trakt.CalendarMovies("all/dvd", pageParam)
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
 	}
 	renderCalendarMovies(ctx, movies, total, page)
 }
@@ -1488,6 +1576,8 @@ func renderProgressShows(ctx *gin.Context, shows []*trakt.ProgressShow, total in
 func SelectTraktUserList(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	action := ctx.Params.ByName("action")
 	media := ctx.Params.ByName("media")
 
@@ -1497,11 +1587,11 @@ func SelectTraktUserList(ctx *gin.Context) {
 	for _, l := range lists {
 		items = append(items, l.Name)
 	}
-	choice := xbmc.ListDialog("LOCALIZE[30438]", items...)
+	choice := xbmcHost.ListDialog("LOCALIZE[30438]", items...)
 	if choice >= 0 {
-		xbmc.SetSetting(fmt.Sprintf("trakt_sync_%s_%s_location", action, media), "2")
-		xbmc.SetSetting(fmt.Sprintf("trakt_sync_%s_%s_list_name", action, media), lists[choice].Name)
-		xbmc.SetSetting(fmt.Sprintf("trakt_sync_%s_%s_list", action, media), strconv.Itoa(lists[choice].IDs.Trakt))
+		xbmcHost.SetSetting(fmt.Sprintf("trakt_sync_%s_%s_location", action, media), "2")
+		xbmcHost.SetSetting(fmt.Sprintf("trakt_sync_%s_%s_list_name", action, media), lists[choice].Name)
+		xbmcHost.SetSetting(fmt.Sprintf("trakt_sync_%s_%s_list", action, media), strconv.Itoa(lists[choice].IDs.Trakt))
 	}
 
 	ctx.String(200, "")
@@ -1511,6 +1601,8 @@ func SelectTraktUserList(ctx *gin.Context) {
 func ToggleWatched(media string, setWatched bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
+
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 
 		var watched *trakt.WatchedItem
 		var foundInLibrary bool
@@ -1535,7 +1627,7 @@ func ToggleWatched(media string, setWatched bool) gin.HandlerFunc {
 				}
 
 				log.Debugf("Toggle Kodi library watched for: %#v", movie)
-				xbmc.SetMovieWatched(movie.ID, playcount, 0, 0)
+				xbmcHost.SetMovieWatched(movie.ID, playcount, 0, 0)
 			}
 		} else if media == episodeType {
 			showID, _ := strconv.Atoi(ctx.Params.ByName("showId"))
@@ -1561,7 +1653,7 @@ func ToggleWatched(media string, setWatched bool) gin.HandlerFunc {
 
 				episode := show.GetEpisode(seasonNumber, episodeNumber)
 				log.Debugf("Toggle Kodi library watched for: %#v", episode)
-				xbmc.SetEpisodeWatched(episode.ID, playcount, 0, 0)
+				xbmcHost.SetEpisodeWatched(episode.ID, playcount, 0, 0)
 			}
 		} else if media == seasonType {
 			showID, _ := strconv.Atoi(ctx.Params.ByName("showId"))
@@ -1586,7 +1678,7 @@ func ToggleWatched(media string, setWatched bool) gin.HandlerFunc {
 
 				season := show.GetSeason(seasonNumber)
 				log.Debugf("Set Kodi library watched to %t for: %#v", setWatched, season)
-				xbmc.SetSeasonWatched(season.ID, playcount)
+				xbmcHost.SetSeasonWatched(season.ID, playcount)
 			}
 		} else if media == showType {
 			showID, _ := strconv.Atoi(ctx.Params.ByName("showId"))
@@ -1609,7 +1701,7 @@ func ToggleWatched(media string, setWatched bool) gin.HandlerFunc {
 				}
 
 				log.Debugf("Toggle Kodi library watched for: %#v", show)
-				xbmc.SetShowWatched(show.ID, playcount)
+				xbmcHost.SetShowWatched(show.ID, playcount)
 			}
 		}
 
@@ -1619,7 +1711,7 @@ func ToggleWatched(media string, setWatched bool) gin.HandlerFunc {
 		}
 
 		if !foundInLibrary {
-			xbmc.ToggleWatched()
+			xbmcHost.ToggleWatched()
 		}
 	}
 }

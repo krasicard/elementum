@@ -102,7 +102,9 @@ func runUpdater() {
 
 		// Update Kodi library if needed
 		if libraryUpdated {
-			xbmc.VideoLibraryScanDirectory(library.MoviesLibraryPath(), true)
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.VideoLibraryScanDirectory(library.MoviesLibraryPath(), true)
+			}
 		}
 	}()
 
@@ -249,12 +251,17 @@ func getTorrents(m *trakt.Movie, withAuth bool) []*bittorrent.TorrentFile {
 		return nil
 	}
 
-	searchers := providers.GetMovieSearchers()
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if err != nil || xbmcHost == nil {
+		return nil
+	}
+
+	searchers := providers.GetMovieSearchers(xbmcHost)
 	if len(searchers) == 0 {
 		return nil
 	}
 
-	return providers.SearchMovieSilent(searchers, movie, withAuth)
+	return providers.SearchMovieSilent(xbmcHost, searchers, movie, withAuth)
 }
 
 // GetMovieExistsKey ...

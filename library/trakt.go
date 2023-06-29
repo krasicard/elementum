@@ -24,8 +24,13 @@ var (
 // RefreshTrakt gets user activities from Trakt
 // to see if we need to add movies/set watched status and so on
 func RefreshTrakt() error {
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if xbmcHost == nil || err == nil {
+		return err
+	}
+
 	l := uid.Get()
-	if config.Get().TraktToken == "" || !config.Get().TraktSyncEnabled || (!config.Get().TraktSyncPlaybackEnabled && xbmc.PlayerIsPlaying()) {
+	if config.Get().TraktToken == "" || !config.Get().TraktSyncEnabled || (!config.Get().TraktSyncPlaybackEnabled && xbmcHost.PlayerIsPlaying()) {
 		// Even if sync is disabled, check if current Trakt auth is fine to use.
 		if config.Get().TraktToken != "" && !config.Get().TraktAuthorized {
 			trakt.GetLastActivities()
@@ -91,80 +96,80 @@ func RefreshTrakt() error {
 
 	// Movies
 	if isFirstRun || isKodiAdded || lastActivities.Movies.WatchedAt.After(previousActivities.Movies.WatchedAt) {
-		if err := RefreshTraktWatched(MovieType, lastActivities.Movies.WatchedAt.After(previousActivities.Movies.WatchedAt)); err != nil {
+		if err := RefreshTraktWatched(xbmcHost, MovieType, lastActivities.Movies.WatchedAt.After(previousActivities.Movies.WatchedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || lastActivities.Movies.CollectedAt.After(previousActivities.Movies.CollectedAt) {
-		if err := RefreshTraktCollected(MovieType, lastActivities.Movies.CollectedAt.After(previousActivities.Movies.CollectedAt)); err != nil {
+		if err := RefreshTraktCollected(xbmcHost, MovieType, lastActivities.Movies.CollectedAt.After(previousActivities.Movies.CollectedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || lastActivities.Movies.WatchlistedAt.After(previousActivities.Movies.WatchlistedAt) {
-		if err := RefreshTraktWatchlisted(MovieType, lastActivities.Movies.WatchlistedAt.After(previousActivities.Movies.WatchlistedAt)); err != nil {
+		if err := RefreshTraktWatchlisted(xbmcHost, MovieType, lastActivities.Movies.WatchlistedAt.After(previousActivities.Movies.WatchlistedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || isKodiAdded || lastActivities.Movies.PausedAt.After(previousActivities.Movies.PausedAt) {
-		if err := RefreshTraktPaused(MovieType, lastActivities.Movies.PausedAt.After(previousActivities.Movies.PausedAt)); err != nil {
+		if err := RefreshTraktPaused(xbmcHost, MovieType, lastActivities.Movies.PausedAt.After(previousActivities.Movies.PausedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || lastActivities.Movies.HiddenAt.After(previousActivities.Movies.HiddenAt) {
-		if err := RefreshTraktHidden(MovieType, lastActivities.Movies.HiddenAt.After(previousActivities.Movies.HiddenAt)); err != nil {
+		if err := RefreshTraktHidden(xbmcHost, MovieType, lastActivities.Movies.HiddenAt.After(previousActivities.Movies.HiddenAt)); err != nil {
 			isErrored = true
 		}
 	}
 
 	// Episodes
 	if isFirstRun || isKodiAdded || lastActivities.Episodes.WatchedAt.After(previousActivities.Episodes.WatchedAt) {
-		if err := RefreshTraktWatched(EpisodeType, lastActivities.Episodes.WatchedAt.After(previousActivities.Episodes.WatchedAt)); err != nil {
+		if err := RefreshTraktWatched(xbmcHost, EpisodeType, lastActivities.Episodes.WatchedAt.After(previousActivities.Episodes.WatchedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || lastActivities.Episodes.CollectedAt.After(previousActivities.Episodes.CollectedAt) {
-		if err := RefreshTraktCollected(EpisodeType, lastActivities.Episodes.CollectedAt.After(previousActivities.Episodes.CollectedAt)); err != nil {
+		if err := RefreshTraktCollected(xbmcHost, EpisodeType, lastActivities.Episodes.CollectedAt.After(previousActivities.Episodes.CollectedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || lastActivities.Episodes.WatchlistedAt.After(previousActivities.Episodes.WatchlistedAt) {
-		if err := RefreshTraktWatchlisted(EpisodeType, lastActivities.Episodes.WatchlistedAt.After(previousActivities.Episodes.WatchlistedAt)); err != nil {
+		if err := RefreshTraktWatchlisted(xbmcHost, EpisodeType, lastActivities.Episodes.WatchlistedAt.After(previousActivities.Episodes.WatchlistedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || isKodiAdded || lastActivities.Episodes.PausedAt.After(previousActivities.Episodes.PausedAt) {
-		if err := RefreshTraktPaused(EpisodeType, lastActivities.Episodes.PausedAt.After(previousActivities.Episodes.PausedAt)); err != nil {
+		if err := RefreshTraktPaused(xbmcHost, EpisodeType, lastActivities.Episodes.PausedAt.After(previousActivities.Episodes.PausedAt)); err != nil {
 			isErrored = true
 		}
 	}
 
 	// Shows
 	if isFirstRun || lastActivities.Shows.WatchlistedAt.After(previousActivities.Shows.WatchlistedAt) {
-		if err := RefreshTraktWatchlisted(ShowType, lastActivities.Shows.WatchlistedAt.After(previousActivities.Shows.WatchlistedAt)); err != nil {
+		if err := RefreshTraktWatchlisted(xbmcHost, ShowType, lastActivities.Shows.WatchlistedAt.After(previousActivities.Shows.WatchlistedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || lastActivities.Shows.HiddenAt.After(previousActivities.Shows.HiddenAt) {
-		if err := RefreshTraktHidden(ShowType, lastActivities.Shows.HiddenAt.After(previousActivities.Shows.HiddenAt)); err != nil {
+		if err := RefreshTraktHidden(xbmcHost, ShowType, lastActivities.Shows.HiddenAt.After(previousActivities.Shows.HiddenAt)); err != nil {
 			isErrored = true
 		}
 	}
 
 	// Seasons
 	if isFirstRun || lastActivities.Seasons.WatchlistedAt.After(previousActivities.Seasons.WatchlistedAt) {
-		if err := RefreshTraktWatchlisted(SeasonType, lastActivities.Seasons.WatchlistedAt.After(previousActivities.Seasons.WatchlistedAt)); err != nil {
+		if err := RefreshTraktWatchlisted(xbmcHost, SeasonType, lastActivities.Seasons.WatchlistedAt.After(previousActivities.Seasons.WatchlistedAt)); err != nil {
 			isErrored = true
 		}
 	}
 	if isFirstRun || lastActivities.Seasons.HiddenAt.After(previousActivities.Seasons.HiddenAt) {
-		if err := RefreshTraktHidden(SeasonType, lastActivities.Seasons.HiddenAt.After(previousActivities.Seasons.HiddenAt)); err != nil {
+		if err := RefreshTraktHidden(xbmcHost, SeasonType, lastActivities.Seasons.HiddenAt.After(previousActivities.Seasons.HiddenAt)); err != nil {
 			isErrored = true
 		}
 	}
 
 	// Lists
 	if isFirstRun || lastActivities.Lists.UpdatedAt.After(previousActivities.Lists.UpdatedAt) {
-		if err := RefreshTraktLists(lastActivities.Lists.UpdatedAt.After(previousActivities.Lists.UpdatedAt)); err != nil {
+		if err := RefreshTraktLists(xbmcHost, lastActivities.Lists.UpdatedAt.After(previousActivities.Lists.UpdatedAt)); err != nil {
 			isErrored = true
 		}
 	}
@@ -173,7 +178,7 @@ func RefreshTrakt() error {
 }
 
 // RefreshTraktWatched ...
-func RefreshTraktWatched(itemType int, isRefreshNeeded bool) error {
+func RefreshTraktWatched(xbmcHost *xbmc.XBMCHost, itemType int, isRefreshNeeded bool) error {
 	if config.Get().TraktToken == "" || !config.Get().TraktSyncWatched {
 		return nil
 	}
@@ -189,15 +194,15 @@ func RefreshTraktWatched(itemType int, isRefreshNeeded bool) error {
 	}()
 
 	if itemType == MovieType {
-		return refreshTraktMoviesWatched(isRefreshNeeded)
+		return refreshTraktMoviesWatched(xbmcHost, isRefreshNeeded)
 	} else if itemType == EpisodeType || itemType == SeasonType || itemType == ShowType {
-		return refreshTraktShowsWatched(isRefreshNeeded)
+		return refreshTraktShowsWatched(xbmcHost, isRefreshNeeded)
 	}
 
 	return nil
 }
 
-func refreshTraktMoviesWatched(isRefreshNeeded bool) error {
+func refreshTraktMoviesWatched(xbmcHost *xbmc.XBMCHost, isRefreshNeeded bool) error {
 	l := uid.Get()
 	l.Running.IsMovies = true
 	defer func() {
@@ -232,10 +237,10 @@ func refreshTraktMoviesWatched(isRefreshNeeded bool) error {
 
 	// Sync local items with exact list
 	for _, m := range watchedMovies {
-		updateMovieWatched(m, true)
+		updateMovieWatched(xbmcHost, m, true)
 	}
 	for _, m := range unwatchedMovies {
-		updateMovieWatched(m, false)
+		updateMovieWatched(xbmcHost, m, false)
 	}
 
 	cacheStore.Get(lastCacheKey, &lastPlaycount)
@@ -256,7 +261,7 @@ func refreshTraktMoviesWatched(isRefreshNeeded bool) error {
 			// Update local item Watched status if it is unwatched or was added after it is was watched
 			if !r.IsWatched() {
 				lastPlaycount[fileKey] = true
-				updateMovieWatched(m, true)
+				updateMovieWatched(xbmcHost, m, true)
 			}
 		} else {
 			missedItems = addXXItem(missedItems, MovieType, m.Movie.IDs)
@@ -319,7 +324,7 @@ func refreshTraktMoviesWatched(isRefreshNeeded bool) error {
 	return nil
 }
 
-func refreshTraktShowsWatched(isRefreshNeeded bool) error {
+func refreshTraktShowsWatched(xbmcHost *xbmc.XBMCHost, isRefreshNeeded bool) error {
 	l := uid.Get()
 	l.Running.IsShows = true
 	defer func() {
@@ -360,10 +365,10 @@ func refreshTraktShowsWatched(isRefreshNeeded bool) error {
 
 	// Sync local items with exact list
 	for _, s := range watchedShows {
-		updateShowWatched(s, true)
+		updateShowWatched(xbmcHost, s, true)
 	}
 	for _, s := range unwatchedShows {
-		updateShowWatched(s, false)
+		updateShowWatched(xbmcHost, s, false)
 	}
 
 	for _, s := range current {
@@ -412,7 +417,7 @@ func refreshTraktShowsWatched(isRefreshNeeded bool) error {
 			}
 
 			if toRun || r.DateAdded.After(s.LastWatchedAt) {
-				updateShowWatched(s, true)
+				updateShowWatched(xbmcHost, s, true)
 			}
 		} else {
 			missedItems = addXXItem(missedItems, ShowType, s.Show.IDs)
@@ -579,7 +584,7 @@ func getKodiShowByTraktIDs(ids *trakt.IDs) (r *uid.Show) {
 	return
 }
 
-func updateMovieWatched(m *trakt.WatchedMovie, watched bool) {
+func updateMovieWatched(xbmcHost *xbmc.XBMCHost, m *trakt.WatchedMovie, watched bool) {
 	var r = getKodiMovieByTraktIDs(m.Movie.IDs)
 	if r == nil {
 		return
@@ -593,17 +598,17 @@ func updateMovieWatched(m *trakt.WatchedMovie, watched bool) {
 		}
 
 		r.UIDs.Playcount++
-		xbmc.SetMovieWatchedWithDate(r.UIDs.Kodi, r.UIDs.Playcount, 0, 0, m.LastWatchedAt)
+		xbmcHost.SetMovieWatchedWithDate(r.UIDs.Kodi, r.UIDs.Playcount, 0, 0, m.LastWatchedAt)
 		// TODO: There should be a check for allowing resume state, otherwise we always reset it for already searched items
 		// } else if watched && r.IsWatched() && r.Resume != nil && r.Resume.Position > 0 {
 		// 	xbmc.SetMovieWatchedWithDate(r.UIDs.Kodi, 1, 0, 0, m.LastWatchedAt)
 	} else if !watched && r.IsWatched() {
 		r.UIDs.Playcount = 0
-		xbmc.SetMoviePlaycount(r.UIDs.Kodi, 0)
+		xbmcHost.SetMoviePlaycount(r.UIDs.Kodi, 0)
 	}
 }
 
-func updateShowWatched(s *trakt.WatchedShow, watched bool) {
+func updateShowWatched(xbmcHost *xbmc.XBMCHost, s *trakt.WatchedShow, watched bool) {
 	var r = getKodiShowByTraktIDs(s.Show.IDs)
 	if r == nil {
 		return
@@ -611,7 +616,7 @@ func updateShowWatched(s *trakt.WatchedShow, watched bool) {
 
 	if watched && s.Watched && !r.IsWatched() {
 		r.UIDs.Playcount = 1
-		xbmc.SetShowWatchedWithDate(r.UIDs.Kodi, 1, s.LastWatchedAt)
+		xbmcHost.SetShowWatchedWithDate(r.UIDs.Kodi, 1, s.LastWatchedAt)
 	}
 
 	for _, season := range s.Seasons {
@@ -626,13 +631,13 @@ func updateShowWatched(s *trakt.WatchedShow, watched bool) {
 				// when item is watched on another device
 				if watched && !e.IsWatched() {
 					e.UIDs.Playcount = 1
-					xbmc.SetEpisodeWatchedWithDate(e.UIDs.Kodi, 1, 0, 0, episode.LastWatchedAt)
+					xbmcHost.SetEpisodeWatchedWithDate(e.UIDs.Kodi, 1, 0, 0, episode.LastWatchedAt)
 					// TODO: There should be a check for allowing resume state, otherwise we always reset it for already searched items
 					// } else if watched && e.IsWatched() && e.Resume != nil && e.Resume.Position > 0 {
 					//   xbmc.SetEpisodeWatchedWithDate(e.UIDs.Kodi, 1, 0, 0, episode.LastWatchedAt)
 				} else if !watched && e.IsWatched() {
 					e.UIDs.Playcount = 0
-					xbmc.SetEpisodePlaycount(e.UIDs.Kodi, 0)
+					xbmcHost.SetEpisodePlaycount(e.UIDs.Kodi, 0)
 				}
 			}
 		}
@@ -640,7 +645,7 @@ func updateShowWatched(s *trakt.WatchedShow, watched bool) {
 }
 
 // RefreshTraktCollected ...
-func RefreshTraktCollected(itemType int, isRefreshNeeded bool) error {
+func RefreshTraktCollected(xbmcHost *xbmc.XBMCHost, itemType int, isRefreshNeeded bool) error {
 	if config.Get().TraktToken == "" || !config.Get().TraktSyncCollections {
 		return nil
 	}
@@ -661,7 +666,7 @@ func RefreshTraktCollected(itemType int, isRefreshNeeded bool) error {
 }
 
 // RefreshTraktWatchlisted ...
-func RefreshTraktWatchlisted(itemType int, isRefreshNeeded bool) error {
+func RefreshTraktWatchlisted(xbmcHost *xbmc.XBMCHost, itemType int, isRefreshNeeded bool) error {
 	if config.Get().TraktToken == "" || !config.Get().TraktSyncWatchlist {
 		return nil
 	}
@@ -682,7 +687,7 @@ func RefreshTraktWatchlisted(itemType int, isRefreshNeeded bool) error {
 }
 
 // RefreshTraktPaused ...
-func RefreshTraktPaused(itemType int, isRefreshNeeded bool) error {
+func RefreshTraktPaused(xbmcHost *xbmc.XBMCHost, itemType int, isRefreshNeeded bool) error {
 	if config.Get().TraktToken == "" || !config.Get().TraktSyncPlaybackProgress {
 		return nil
 	}
@@ -728,7 +733,7 @@ func RefreshTraktPaused(itemType int, isRefreshNeeded bool) error {
 				lastUpdates[m.Movie.IDs.Trakt] = m.PausedAt
 				runtime := m.Movie.Runtime * 60
 
-				xbmc.SetMovieProgressWithDate(lm.UIDs.Kodi, runtime/100*int(m.Progress), runtime, m.PausedAt)
+				xbmcHost.SetMovieProgressWithDate(lm.UIDs.Kodi, runtime/100*int(m.Progress), runtime, m.PausedAt)
 			}
 		}
 	} else if itemType == EpisodeType || itemType == SeasonType || itemType == ShowType {
@@ -759,7 +764,7 @@ func RefreshTraktPaused(itemType int, isRefreshNeeded bool) error {
 				lastUpdates[s.Episode.IDs.Trakt] = s.PausedAt
 				runtime := s.Episode.Runtime * 60
 
-				xbmc.SetEpisodeProgressWithDate(e.UIDs.Kodi, runtime/100*int(s.Progress), runtime, s.PausedAt)
+				xbmcHost.SetEpisodeProgressWithDate(e.UIDs.Kodi, runtime/100*int(s.Progress), runtime, s.PausedAt)
 			}
 		}
 	}
@@ -768,7 +773,7 @@ func RefreshTraktPaused(itemType int, isRefreshNeeded bool) error {
 }
 
 // RefreshTraktHidden ...
-func RefreshTraktHidden(itemType int, isRefreshNeeded bool) error {
+func RefreshTraktHidden(xbmcHost *xbmc.XBMCHost, itemType int, isRefreshNeeded bool) error {
 	if config.Get().TraktToken == "" || !config.Get().TraktSyncHidden {
 		return nil
 	}
@@ -790,7 +795,7 @@ func RefreshTraktHidden(itemType int, isRefreshNeeded bool) error {
 }
 
 // RefreshTraktLists ...
-func RefreshTraktLists(isRefreshNeeded bool) error {
+func RefreshTraktLists(xbmcHost *xbmc.XBMCHost, isRefreshNeeded bool) error {
 	if config.Get().TraktToken == "" || !config.Get().TraktSyncUserlists {
 		return nil
 	}

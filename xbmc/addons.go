@@ -26,38 +26,38 @@ type AddonInfoDetails struct {
 }
 
 // GetAddons ...
-func GetAddons(args ...interface{}) *AddonsList {
+func (h *XBMCHost) GetAddons(args ...interface{}) *AddonsList {
 	addons := AddonsList{}
-	executeJSONRPC("Addons.GetAddons", &addons, args)
+	h.executeJSONRPC("Addons.GetAddons", &addons, args)
 	return &addons
 }
 
 // UpdateLocalAddons ...
-func UpdateLocalAddons() (ret string) {
-	executeJSONRPCEx("UpdateLocalAddons", &ret, nil)
+func (h *XBMCHost) UpdateLocalAddons() (ret string) {
+	h.executeJSONRPCEx("UpdateLocalAddons", &ret, nil)
 	return
 }
 
 // InstallAddon ...
-func InstallAddon(addonID string) (ret string) {
-	executeJSONRPCEx("InstallAddon", &ret, Args{addonID})
+func (h *XBMCHost) InstallAddon(addonID string) (ret string) {
+	h.executeJSONRPCEx("InstallAddon", &ret, Args{addonID})
 	return
 }
 
 // SetAddonEnabled ...
-func SetAddonEnabled(addonID string, enabled bool) (retval string) {
-	executeJSONRPC("Addons.SetAddonEnabled", &retval, Args{addonID, enabled})
+func (h *XBMCHost) SetAddonEnabled(addonID string, enabled bool) (retval string) {
+	h.executeJSONRPC("Addons.SetAddonEnabled", &retval, Args{addonID, enabled})
 	return
 }
 
 // ExecuteAddon ...
-func ExecuteAddon(addonID string, args ...interface{}) {
+func (h *XBMCHost) ExecuteAddon(addonID string, args ...interface{}) {
 	var retVal string
-	executeJSONRPC("Addons.ExecuteAddon", &retVal, Args{addonID, args})
+	h.executeJSONRPC("Addons.ExecuteAddon", &retVal, Args{addonID, args})
 }
 
 // GetAddonDetails ...
-func GetAddonDetails(addonID string) AddonInfoDetails {
+func (h *XBMCHost) GetAddonDetails(addonID string) AddonInfoDetails {
 	params := map[string]interface{}{
 		"addonid": addonID,
 		"properties": []interface{}{
@@ -66,19 +66,19 @@ func GetAddonDetails(addonID string) AddonInfoDetails {
 		}}
 
 	addon := AddonInfoDetails{}
-	executeJSONRPCO("Addons.GetAddonDetails", &addon, params)
+	h.executeJSONRPCO("Addons.GetAddonDetails", &addon, params)
 	return addon
 }
 
 // IsAddonInstalled ...
-func IsAddonInstalled(addonID string) bool {
-	addon := GetAddonDetails(addonID)
+func (h *XBMCHost) IsAddonInstalled(addonID string) bool {
+	addon := h.GetAddonDetails(addonID)
 	return addon.Addon.ID != "" && addon.Addon.Installed
 }
 
 // IsAddonEnabled ...
-func IsAddonEnabled(addonID string) bool {
-	addon := GetAddonDetails(addonID)
+func (h *XBMCHost) IsAddonEnabled(addonID string) bool {
+	addon := h.GetAddonDetails(addonID)
 	return addon.Addon.ID != "" && addon.Addon.Enabled
 }
 

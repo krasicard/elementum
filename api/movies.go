@@ -171,7 +171,9 @@ func MovieCountries(ctx *gin.Context) {
 func MovieLibrary(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	movies, err := xbmc.VideoLibraryGetElementumMovies()
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	movies, err := xbmcHost.VideoLibraryGetElementumMovies()
 	if err != nil || movies == nil || movies.Limits == nil || movies.Limits.Total == 0 {
 		return
 	}
@@ -479,19 +481,19 @@ func SearchMovies(ctx *gin.Context) {
 	renderMovies(ctx, movies, page, total, query)
 }
 
-func movieLinks(tmdbID string) []*bittorrent.TorrentFile {
+func movieLinks(xbmcHost *xbmc.XBMCHost, tmdbID string) []*bittorrent.TorrentFile {
 	log.Info("Searching links for:", tmdbID)
 
 	movie := tmdb.GetMovieByID(tmdbID, config.Get().Language)
 
 	log.Infof("Resolved %s to %s", tmdbID, movie.Title)
 
-	searchers := providers.GetMovieSearchers()
+	searchers := providers.GetMovieSearchers(xbmcHost)
 	if len(searchers) == 0 {
-		xbmc.Notify("Elementum", "LOCALIZE[30204]", config.AddonIcon())
+		xbmcHost.Notify("Elementum", "LOCALIZE[30204]", config.AddonIcon())
 	}
 
-	return providers.SearchMovie(searchers, movie)
+	return providers.SearchMovie(xbmcHost, searchers, movie)
 }
 
 // MovieRun ...
@@ -519,29 +521,31 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 			return
 		}
 
+		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 		existingTorrent := s.HasTorrentByID(movie.ID)
-		if existingTorrent != nil && (config.Get().SilentStreamStart || existingTorrent.IsPlaying || xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30608];;[COLOR gold]%s[/COLOR]", existingTorrent.Title()))) {
+		if existingTorrent != nil && (config.Get().SilentStreamStart || existingTorrent.IsPlaying || xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30608];;[COLOR gold]%s[/COLOR]", existingTorrent.Title()))) {
 			rURL := URLQuery(URLForXBMC(runAction),
 				"doresume", doresume,
 				"resume", existingTorrent.InfoHash(),
 				"tmdb", tmdbID,
 				"type", "movie")
 			if external != "" {
-				xbmc.PlayURL(rURL)
+				xbmcHost.PlayURL(rURL)
 			} else {
 				ctx.Redirect(302, rURL)
 			}
 			return
 		}
 
-		if torrent := InTorrentsMap(tmdbID); torrent != nil {
+		if torrent := InTorrentsMap(xbmcHost, tmdbID); torrent != nil {
 			rURL := URLQuery(URLForXBMC(runAction),
 				"doresume", doresume,
 				"uri", torrent.URI,
 				"tmdb", tmdbID,
 				"type", "movie")
 			if external != "" {
-				xbmc.PlayURL(rURL)
+				xbmcHost.PlayURL(rURL)
 			} else {
 				ctx.Redirect(302, rURL)
 			}
@@ -553,10 +557,10 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 
 		if torrents, err = GetCachedTorrents(tmdbID); err != nil || len(torrents) == 0 {
 			if !isCustom {
-				torrents = movieLinks(tmdbID)
+				torrents = movieLinks(xbmcHost, tmdbID)
 			} else {
-				if query := xbmc.Keyboard(movie.Title, "LOCALIZE[30209]"); len(query) != 0 {
-					torrents = searchLinks(query)
+				if query := xbmcHost.Keyboard(movie.Title, "LOCALIZE[30209]"); len(query) != 0 {
+					torrents = searchLinks(xbmcHost, query)
 				}
 			}
 
@@ -564,7 +568,7 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 		}
 
 		if len(torrents) == 0 {
-			xbmc.Notify("Elementum", "LOCALIZE[30205]", config.AddonIcon())
+			xbmcHost.Notify("Elementum", "LOCALIZE[30205]", config.AddonIcon())
 			return
 		}
 
@@ -613,7 +617,7 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 		if action == "play" {
 			choice = 0
 		} else {
-			choice = xbmc.ListDialogLarge("LOCALIZE[30228]", movie.Title, choices...)
+			choice = xbmcHost.ListDialogLarge("LOCALIZE[30228]", movie.Title, choices...)
 		}
 
 		if choice >= 0 {
@@ -625,7 +629,7 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 				"tmdb", tmdbID,
 				"type", "movie")
 			if external != "" {
-				xbmc.PlayURL(rURL)
+				xbmcHost.PlayURL(rURL)
 			} else {
 				ctx.Redirect(302, rURL)
 			}

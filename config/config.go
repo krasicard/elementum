@@ -1,11 +1,11 @@
 package config
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,6 +16,7 @@ import (
 
 	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/xbmc"
+	"gopkg.in/yaml.v3"
 
 	"github.com/dustin/go-humanize"
 	"github.com/op/go-logging"
@@ -292,31 +293,28 @@ var (
 	Args = struct {
 		DisableBackup bool `help:"Disable database backup"`
 
-		RemoteHost string `help:"remote host"`
-		RemotePort int    `help:"remote port"`
+		RemoteHost string `help:"Remote host IP or Hostname (Host with plugin.video.elementum running)"`
+		RemotePort int    `help:"Remote host Port (Host with plugin.video.elementum running)"`
 
-		LocalHost string `help:"local host"`
-		LocalPort int    `help:"local port"`
+		LocalHost string `help:"Local host IP (IP that would be used for running Elementum HTTP server on a local host)"`
+		LocalPort int    `help:"Local host Port (Port that would be used for running Elementum HTTP server on a local host)"`
 
 		LogPath string `help:"Log location path"`
 
+		ConfigPath   string `help:"Custom path to Elementum config (Yaml or JSON format)"`
 		ProfilePath  string `help:"Custom path to addon files folder"`
 		LibraryPath  string `help:"Custom path to addon library folder"`
 		TorrentsPath string `help:"Custom path to addon downloads folder"`
+
+		ExportConfig string `help:"Export current configuration, taken from Kodi into a file. Should end with json or yml suffix"`
 	}{
 		DisableBackup: false,
 
-		RemoteHost: "127.0.0.1",
+		RemoteHost: "",
 		RemotePort: 65221,
 
-		LocalHost: "127.0.0.1",
+		LocalHost: "",
 		LocalPort: 65220,
-
-		LogPath: "",
-
-		ProfilePath:  "",
-		LibraryPath:  "",
-		TorrentsPath: "",
 	}
 )
 
@@ -332,44 +330,52 @@ func Reload() (ret *Configuration, err error) {
 	log.Info("Reloading configuration...")
 
 	// Reloading RPC Hosts
-	log.Infof("Setting remote address to %s:%d", Args.RemoteHost, Args.RemotePort)
-	xbmc.XBMCJSONRPCHosts = []string{net.JoinHostPort(Args.RemoteHost, "9090")}
-	xbmc.XBMCExJSONRPCHosts = []string{net.JoinHostPort(Args.RemoteHost, strconv.Itoa(Args.RemotePort))}
-	xbmc.XBMCExJSONRPCPort = strconv.Itoa(Args.RemotePort)
+	var xbmcHost *xbmc.XBMCHost
+	if Args.RemoteHost != "" {
+		log.Infof("Setting remote address to %s:%d", Args.RemoteHost, Args.RemotePort)
+		xbmcHost, err = xbmc.AddLocalXBMCHost(Args.RemoteHost)
+	} else {
+		xbmcHost, err = xbmc.GetLocalXBMCHost()
+	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Warningf("Addon settings not properly set, opening settings window: %#v", r)
+			if xbmcHost != nil && xbmcHost.Ping() {
+				log.Warningf("Addon settings not properly set, opening settings window: %#v", r)
 
-			message := "LOCALIZE[30314]"
-			if settingsWarning != "" {
-				message = settingsWarning
+				message := "LOCALIZE[30314]"
+				if settingsWarning != "" {
+					message = settingsWarning
+				}
+
+				xbmcHost.AddonSettings("plugin.video.elementum")
+				xbmcHost.Dialog("Elementum", message)
+
+				xbmcHost.WaitForSettingsClosed()
+			} else {
+				log.Warningf("Addon settings not properly set: %#v", r)
 			}
-
-			xbmc.AddonSettings("plugin.video.elementum")
-			xbmc.Dialog("Elementum", message)
-
-			waitForSettingsClosed()
 
 			err = fmt.Errorf("Could not reload configuration")
 			exit.PanicWithCode(err, exit.ExitCodeRestart)
 		}
 	}()
 
-	info := xbmc.GetAddonInfo()
-	if info == nil || info.ID == "" {
-		log.Warningf("Can't continue because addon info is empty")
-		settingsWarning = "LOCALIZE[30113]"
-		return nil, fmt.Errorf("Could not get addon information from Kodi")
+	configBundle, err := fetchConfiguration(xbmcHost)
+	if err != nil {
+		log.Warningf("Could not get configurations: %s", err)
+		return nil, err
 	}
 
-	info.Path = xbmc.TranslatePath(info.Path)
-	info.Profile = xbmc.TranslatePath(info.Profile)
-	info.Home = xbmc.TranslatePath(info.Home)
-	info.Xbmc = xbmc.TranslatePath(info.Xbmc)
-	info.TempPath = filepath.Join(xbmc.TranslatePath("special://temp"), "elementum")
+	if Args.ExportConfig != "" {
+		if err := exportConfig(Args.ExportConfig, configBundle); err != nil {
+			log.Errorf("Could not export current configuration: %s", err)
+		}
+	}
 
-	platform := xbmc.GetPlatform()
+	info := configBundle.Info
+	platform := configBundle.Platform
+	settings := configBundle.Settings
 
 	// If it's Windows and it's installed from Store - we should try to find real path
 	// and change addon settings accordingly
@@ -427,10 +433,10 @@ func Reload() (ret *Configuration, err error) {
 		}
 	}
 
-	downloadPath := TranslatePath(xbmc.GetSettingString("download_path"))
-	libraryPath := TranslatePath(xbmc.GetSettingString("library_path"))
-	torrentsPath := TranslatePath(xbmc.GetSettingString("torrents_path"))
-	downloadStorage := xbmc.GetSettingInt("download_storage")
+	downloadPath := TranslatePath(xbmcHost, settings.ToString("download_path"))
+	libraryPath := TranslatePath(xbmcHost, settings.ToString("library_path"))
+	torrentsPath := TranslatePath(xbmcHost, settings.ToString("torrents_path"))
+	downloadStorage := settings.ToInt("download_storage")
 	if downloadStorage > 1 {
 		downloadStorage = 1
 	}
@@ -499,48 +505,14 @@ func Reload() (ret *Configuration, err error) {
 	}
 	log.Infof("Using torrents path: %s", torrentsPath)
 
-	xbmcSettings := xbmc.GetAllSettings()
-	settings := XbmcSettings{}
-	for _, setting := range xbmcSettings {
-		switch setting.Type {
-		case "enum":
-			fallthrough
-		case "number":
-			value, _ := strconv.Atoi(setting.Value)
-			settings[setting.Key] = value
-		case "slider":
-			var valueInt int
-			var valueFloat float32
-			switch setting.Option {
-			case "percent":
-				fallthrough
-			case "int":
-				floated, _ := strconv.ParseFloat(setting.Value, 32)
-				valueInt = int(floated)
-			case "float":
-				floated, _ := strconv.ParseFloat(setting.Value, 32)
-				valueFloat = float32(floated)
-			}
-			if valueFloat > 0 {
-				settings[setting.Key] = valueFloat
-			} else {
-				settings[setting.Key] = valueInt
-			}
-		case "bool":
-			settings[setting.Key] = (setting.Value == "true")
-		default:
-			settings[setting.Key] = setting.Value
-		}
-	}
-
 	newConfig := Configuration{
 		DownloadPath:                downloadPath,
 		LibraryPath:                 libraryPath,
 		TorrentsPath:                torrentsPath,
 		Info:                        info,
 		Platform:                    platform,
-		Language:                    xbmc.GetLanguageISO639_1(),
-		Region:                      xbmc.GetRegion(),
+		Language:                    configBundle.Language,
+		Region:                      configBundle.Region,
 		TemporaryPath:               info.TempPath,
 		ProfilePath:                 info.Profile,
 		HomePath:                    info.Home,
@@ -810,7 +782,7 @@ func Reload() (ret *Configuration, err error) {
 
 	// Reading Kodi's advancedsettings file for MemorySize variable to avoid waiting for playback
 	// after Elementum's buffer is finished.
-	newConfig.KodiBufferSize = getKodiBufferSize()
+	newConfig.KodiBufferSize = getKodiBufferSize(xbmcHost)
 	if newConfig.AutoKodiBufferSize && newConfig.KodiBufferSize > newConfig.BufferSize {
 		newConfig.BufferSize = newConfig.KodiBufferSize
 		log.Debugf("Adjusting buffer size according to Kodi advancedsettings.xml configuration to %s", humanize.Bytes(uint64(newConfig.BufferSize)))
@@ -848,7 +820,8 @@ func Reload() (ret *Configuration, err error) {
 	lock.Lock()
 	config = &newConfig
 	lock.Unlock()
-	go CheckBurst()
+
+	go CheckBurst(xbmcHost)
 
 	// Replacing passwords with asterisks
 	configOutput := litter.Sdump(config)
@@ -870,11 +843,15 @@ func AddonResource(args ...string) string {
 }
 
 // TranslatePath ...
-func TranslatePath(path string) string {
+func TranslatePath(xbmcHost *xbmc.XBMCHost, path string) string {
+	if xbmcHost == nil {
+		return path
+	}
+
 	// Special case for temporary path in Kodi
 	if strings.HasPrefix(path, "special://temp/") {
 		dir := strings.Replace(path, "special://temp/", "", 1)
-		kodiDir := xbmc.TranslatePath("special://temp")
+		kodiDir := xbmcHost.TranslatePath("special://temp")
 		pathDir := filepath.Join(kodiDir, dir)
 
 		if PathExists(pathDir) {
@@ -895,7 +872,7 @@ func TranslatePath(path string) string {
 	// 	}
 	// 	return path
 	// }
-	return filepath.Dir(xbmc.TranslatePath(path))
+	return filepath.Dir(xbmcHost.TranslatePath(path))
 }
 
 // PathExists returns whether path exists in OS
@@ -932,24 +909,14 @@ func IsWritablePath(path string) error {
 	return nil
 }
 
-func waitForSettingsClosed() {
-	ticker := time.NewTicker(3 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			if !xbmc.AddonSettingsOpened() {
-				return
-			}
-		}
-	}
-}
-
 // CheckBurst ...
-func CheckBurst() {
+func CheckBurst(h *xbmc.XBMCHost) {
+	if h == nil || !h.Ping() {
+		return
+	}
+
 	// Check for enabled providers and Elementum Burst
-	for _, addon := range xbmc.GetAddons("xbmc.python.script", "executable", "all", []string{"name", "version", "enabled"}).Addons {
+	for _, addon := range h.GetAddons("xbmc.python.script", "executable", "all", []string{"name", "version", "enabled"}).Addons {
 		if strings.HasPrefix(addon.ID, "script.elementum.") {
 			if addon.Enabled {
 				return
@@ -958,7 +925,7 @@ func CheckBurst() {
 	}
 
 	for timeout := 0; timeout < 10; timeout++ {
-		if xbmc.IsAddonInstalled("repository.elementum") {
+		if h.IsAddonInstalled("repository.elementum") {
 			break
 		}
 		log.Info("Sleeping 1 second while waiting for Elementum repository add-on to be installed")
@@ -966,15 +933,15 @@ func CheckBurst() {
 	}
 
 	log.Info("Updating Kodi add-on repositories for Burst...")
-	xbmc.UpdateLocalAddons()
-	xbmc.UpdateAddonRepos()
+	h.UpdateLocalAddons()
+	h.UpdateAddonRepos()
 
-	if !Get().SkipBurstSearch && xbmc.DialogConfirmFocused("Elementum", "LOCALIZE[30271]") {
+	if !Get().SkipBurstSearch && h.DialogConfirmFocused("Elementum", "LOCALIZE[30271]") {
 		log.Infof("Triggering Kodi to check for script.elementum.burst plugin")
-		xbmc.InstallAddon("script.elementum.burst")
+		h.InstallAddon("script.elementum.burst")
 
 		for timeout := 0; timeout < 30; timeout++ {
-			if xbmc.IsAddonInstalled("script.elementum.burst") {
+			if h.IsAddonInstalled("script.elementum.burst") {
 				break
 			}
 			log.Info("Sleeping 1 second while waiting for script.elementum.burst add-on to be installed")
@@ -982,11 +949,11 @@ func CheckBurst() {
 		}
 
 		log.Infof("Checking for existence of script.elementum.burst plugin now")
-		if xbmc.IsAddonInstalled("script.elementum.burst") {
-			xbmc.SetAddonEnabled("script.elementum.burst", true)
-			xbmc.Notify("Elementum", "LOCALIZE[30272]", AddonIcon())
+		if h.IsAddonInstalled("script.elementum.burst") {
+			h.SetAddonEnabled("script.elementum.burst", true)
+			h.Notify("Elementum", "LOCALIZE[30272]", AddonIcon())
 		} else {
-			xbmc.Dialog("Elementum", "LOCALIZE[30273]")
+			h.Dialog("Elementum", "LOCALIZE[30273]")
 		}
 	}
 }
@@ -1005,8 +972,12 @@ func findExistingPath(paths []string, addon string) string {
 	return ""
 }
 
-func getKodiBufferSize() int {
-	xmlFile, err := os.Open(filepath.Join(xbmc.TranslatePath("special://userdata"), "advancedsettings.xml"))
+func getKodiBufferSize(xbmcHost *xbmc.XBMCHost) int {
+	if xbmcHost == nil {
+		return 0
+	}
+
+	xmlFile, err := os.Open(filepath.Join(xbmcHost.TranslatePath("special://userdata"), "advancedsettings.xml"))
 	if err != nil {
 		return 0
 	}
@@ -1092,4 +1063,129 @@ func (s *XbmcSettings) ToBool(key string) (ret bool) {
 		log.Errorf("Error casting property '%s' with value '%s' to 'bool': %s", key, (*s)[key], err)
 	}
 	return
+}
+
+func exportConfig(path string, bundle *ConfigBundle) (err error) {
+	log.Infof("Exporting active configuration to a file at: %s", path)
+	format := detectConfigFormat(path)
+	if format == "" {
+		return fmt.Errorf("Configuration file %s is not of Yaml or Json format", path)
+	}
+
+	var content []byte
+	if format == JsonConfigFormat {
+		content, err = json.MarshalIndent(*bundle, "", "    ")
+	} else if format == YamlConfigFormat {
+		content, err = yaml.Marshal(*bundle)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path, content, 0644)
+	return err
+}
+
+func importConfig(path string) (*ConfigBundle, error) {
+	log.Infof("Importing configuration from a file at: %s", path)
+	format := detectConfigFormat(path)
+	if format == "" {
+		return nil, fmt.Errorf("Configuration file %s is not of Yaml or Json format", path)
+	}
+
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	bundle := ConfigBundle{}
+	if format == JsonConfigFormat {
+		err = json.Unmarshal(content, &bundle)
+	} else if format == YamlConfigFormat {
+		err = yaml.Unmarshal(content, &bundle)
+	}
+
+	return &bundle, err
+}
+
+func detectConfigFormat(path string) ConfigFormat {
+	path = strings.ToLower(path)
+
+	if strings.HasSuffix(path, ".json") {
+		return JsonConfigFormat
+	} else if strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".yml") {
+		return YamlConfigFormat
+	}
+
+	return ""
+}
+
+func fetchConfiguration(xbmcHost *xbmc.XBMCHost) (*ConfigBundle, error) {
+	// Read configuration from config file
+	if Args.ConfigPath != "" {
+		return importConfig(Args.ConfigPath)
+	}
+
+	if xbmcHost == nil {
+		return nil, fmt.Errorf("Could not get addon information from Kodi due to missing connection to Kodi")
+	}
+
+	info := xbmcHost.GetAddonInfo()
+	if info == nil || info.ID == "" {
+		log.Warningf("Can't continue because addon info is empty")
+		settingsWarning = "LOCALIZE[30113]"
+		return nil, fmt.Errorf("Could not get addon information from Kodi")
+	}
+
+	info.Path = xbmcHost.TranslatePath(info.Path)
+	info.Profile = xbmcHost.TranslatePath(info.Profile)
+	info.Home = xbmcHost.TranslatePath(info.Home)
+	info.Xbmc = xbmcHost.TranslatePath(info.Xbmc)
+	info.TempPath = filepath.Join(xbmcHost.TranslatePath("special://temp"), "elementum")
+
+	platform := xbmcHost.GetPlatform()
+
+	// Read configuration from Kodi
+	xbmcSettings := xbmcHost.GetAllSettings()
+	settings := XbmcSettings{}
+	for _, setting := range xbmcSettings {
+		switch setting.Type {
+		case "enum":
+			fallthrough
+		case "number":
+			value, _ := strconv.Atoi(setting.Value)
+			settings[setting.Key] = value
+		case "slider":
+			var valueInt int
+			var valueFloat float32
+			switch setting.Option {
+			case "percent":
+				fallthrough
+			case "int":
+				floated, _ := strconv.ParseFloat(setting.Value, 32)
+				valueInt = int(floated)
+			case "float":
+				floated, _ := strconv.ParseFloat(setting.Value, 32)
+				valueFloat = float32(floated)
+			}
+			if valueFloat > 0 {
+				settings[setting.Key] = valueFloat
+			} else {
+				settings[setting.Key] = valueInt
+			}
+		case "bool":
+			settings[setting.Key] = (setting.Value == "true")
+		default:
+			settings[setting.Key] = setting.Value
+		}
+	}
+
+	return &ConfigBundle{
+		Info:     info,
+		Platform: platform,
+		Settings: settings,
+		Language: xbmcHost.GetLanguageISO639_1(),
+		Region:   xbmcHost.GetRegion(),
+	}, nil
 }

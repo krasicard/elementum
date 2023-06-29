@@ -2,7 +2,9 @@ package xbmc
 
 import (
 	"errors"
+	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/elgatito/elementum/jsonrpc"
@@ -18,47 +20,131 @@ type Object map[string]interface{}
 var Results map[string]chan interface{}
 
 var (
-	// XBMCJSONRPCHosts ...
-	XBMCJSONRPCHosts = []string{
-		net.JoinHostPort("127.0.0.1", "9090"),
-	}
-	// XBMCExJSONRPCHosts ...
-	XBMCExJSONRPCHosts = []string{
-		net.JoinHostPort("127.0.0.1", "65221"),
-	}
+	XBMCLocalHost *XBMCHost = nil
+	XBMCHosts               = []*XBMCHost{}
 
-	// LastCallerIP represents the IP of last request, made by client to backend.
-	LastCallerIP = ""
+	// XBMCJSONRPCPort is a port for XBMCJSONRPC (RCP of Kodi)
+	XBMCJSONRPCPort = "9090"
 
 	// XBMCExJSONRPCPort is a port for XBMCExJSONRPC (RCP of python part of the plugin)
 	XBMCExJSONRPCPort = "65221"
+
+	mu sync.RWMutex
 )
 
-func getXBMCExJSONRPCHosts() []string {
-	if LastCallerIP != "" {
-		return []string{net.JoinHostPort(LastCallerIP, XBMCExJSONRPCPort)}
-	}
+func Init() {
+	mu.Lock()
+	defer mu.Unlock()
 
-	return XBMCExJSONRPCHosts
+	for _, host := range []string{
+		"::1",
+		"127.0.0.1",
+	} {
+		if _, err := net.DialTimeout("tcp", net.JoinHostPort(host, XBMCJSONRPCPort), time.Second*5); err == nil {
+			XBMCLocalHost = &XBMCHost{host}
+			XBMCHosts = append(XBMCHosts, XBMCLocalHost)
+		}
+	}
 }
 
-func getConnection(hosts ...string) (net.Conn, error) {
-	var err error
+func ContainsXBMCHost(host string) bool {
+	mu.RLock()
+	defer mu.RUnlock()
 
-	for _, host := range hosts {
-		if c, errCon := net.DialTimeout("tcp", host, time.Second*5); errCon == nil {
-			return c, nil
+	for _, h := range XBMCHosts {
+		if h.Host == host {
+			return true
+		}
+	}
+	return false
+}
+
+func AddLocalXBMCHost(host string) (*XBMCHost, error) {
+	h, err := AddXBMCHost(host)
+	XBMCLocalHost = h
+
+	return h, err
+}
+
+func AddXBMCHost(host string) (*XBMCHost, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	for _, h := range XBMCHosts {
+		if h.Host == host {
+			return h, nil
 		}
 	}
 
-	return nil, err
+	h := &XBMCHost{host}
+	XBMCHosts = append(XBMCHosts, h)
+
+	return h, nil
 }
 
-func executeJSONRPC(method string, retVal interface{}, args Args) error {
+func RemoveXBMCHost(host string) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	index := -1
+	for i, h := range XBMCHosts {
+		if h.Host == host {
+			index = i
+			break
+		}
+	}
+
+	if index > -1 {
+		XBMCHosts = append(XBMCHosts[:index], XBMCHosts[index+1:]...)
+		return nil
+	} else {
+		return fmt.Errorf("Could not find host '%s'", host)
+	}
+}
+
+func GetLocalXBMCHost() (*XBMCHost, error) {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	if XBMCLocalHost != nil {
+		return XBMCLocalHost, nil
+	}
+
+	return nil, errors.New("No local XBMCHost found")
+}
+
+func GetXBMCHost(host string) (*XBMCHost, error) {
+	mu.RLock()
+
+	if host == "" {
+		mu.RUnlock()
+		return GetLocalXBMCHost()
+	}
+
+	for _, h := range XBMCHosts {
+		if h.Host == host {
+			mu.RUnlock()
+			return h, nil
+		}
+	}
+
+	mu.RUnlock()
+	return AddXBMCHost(host)
+}
+
+func (h XBMCHost) getJSONConnection() (net.Conn, error) {
+	return net.DialTimeout("tcp", net.JoinHostPort(h.Host, XBMCJSONRPCPort), time.Second*5)
+}
+
+func (h XBMCHost) getExJSONConnection() (net.Conn, error) {
+	return net.DialTimeout("tcp", net.JoinHostPort(h.Host, XBMCExJSONRPCPort), time.Second*5)
+}
+
+func (h XBMCHost) executeJSONRPC(method string, retVal interface{}, args Args) error {
 	if args == nil {
 		args = Args{}
 	}
-	conn, err := getConnection(XBMCJSONRPCHosts...)
+	conn, err := h.getJSONConnection()
 	if err != nil {
 		log.Error(err)
 		log.Critical("No available JSON-RPC connection to Kodi")
@@ -72,11 +158,11 @@ func executeJSONRPC(method string, retVal interface{}, args Args) error {
 	return errors.New("No available JSON-RPC connection to Kodi")
 }
 
-func executeJSONRPCO(method string, retVal interface{}, args Object) error {
+func (h XBMCHost) executeJSONRPCO(method string, retVal interface{}, args Object) error {
 	if args == nil {
 		args = Object{}
 	}
-	conn, err := getConnection(XBMCJSONRPCHosts...)
+	conn, err := h.getJSONConnection()
 	if err != nil {
 		log.Error(err)
 		log.Critical("No available JSON-RPC connection to Kodi")
@@ -90,11 +176,11 @@ func executeJSONRPCO(method string, retVal interface{}, args Object) error {
 	return errors.New("No available JSON-RPC connection to Kodi")
 }
 
-func executeJSONRPCEx(method string, retVal interface{}, args Args) error {
+func (h XBMCHost) executeJSONRPCEx(method string, retVal interface{}, args Args) error {
 	if args == nil {
 		args = Args{}
 	}
-	conn, err := getConnection(getXBMCExJSONRPCHosts()...)
+	conn, err := h.getExJSONConnection()
 	if err != nil {
 		log.Error(err)
 		log.Critical("No available JSON-RPC connection to the add-on")

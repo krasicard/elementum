@@ -19,13 +19,15 @@ type providerDebugResponse struct {
 
 // ProviderGetMovie ...
 func ProviderGetMovie(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	tmdbID := ctx.Params.ByName("tmdbId")
 	provider := ctx.Params.ByName("provider")
 	log.Infof("Searching links for:", tmdbID)
 	movie := tmdb.GetMovieByID(tmdbID, config.Get().Language)
 	log.Infof("Resolved %s to %s", tmdbID, movie.Title)
 
-	searcher := providers.NewAddonSearcher(provider)
+	searcher := providers.NewAddonSearcher(xbmcHost, provider)
 	torrents := searcher.SearchMovieLinks(movie)
 	if ctx.Query("resolve") == "true" {
 		for _, torrent := range torrents {
@@ -37,7 +39,7 @@ func ProviderGetMovie(ctx *gin.Context) {
 		Results: torrents,
 	}, "", "    ")
 	if err != nil {
-		xbmc.AddonFailure(provider)
+		xbmcHost.AddonFailure(provider)
 		ctx.Error(err)
 	}
 	ctx.Data(200, "application/json", data)
@@ -45,6 +47,8 @@ func ProviderGetMovie(ctx *gin.Context) {
 
 // ProviderGetEpisode ...
 func ProviderGetEpisode(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	provider := ctx.Params.ByName("provider")
 	showID, _ := strconv.Atoi(ctx.Params.ByName("showId"))
 	seasonNumber, _ := strconv.Atoi(ctx.Params.ByName("season"))
@@ -66,7 +70,7 @@ func ProviderGetEpisode(ctx *gin.Context) {
 
 	log.Infof("Resolved %d to %s", showID, show.Name)
 
-	searcher := providers.NewAddonSearcher(provider)
+	searcher := providers.NewAddonSearcher(xbmcHost, provider)
 	torrents := searcher.SearchEpisodeLinks(show, episode)
 	if ctx.Query("resolve") == "true" {
 		for _, torrent := range torrents {
@@ -78,7 +82,7 @@ func ProviderGetEpisode(ctx *gin.Context) {
 		Results: torrents,
 	}, "", "    ")
 	if err != nil {
-		xbmc.AddonFailure(provider)
+		xbmcHost.AddonFailure(provider)
 		ctx.Error(err)
 	}
 	ctx.Data(200, "application/json", data)

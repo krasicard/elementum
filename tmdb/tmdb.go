@@ -458,7 +458,9 @@ func tmdbCheck(key string) bool {
 
 	if err != nil {
 		log.Error(err.Error())
-		xbmc.Notify("Elementum", "TMDB check failed, check your logs.", config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", "TMDB check failed, check your logs.", config.AddonIcon())
+		}
 		return false
 	} else if resp.Status() != 200 {
 		return false

@@ -48,7 +48,9 @@ func RefreshKodi() error {
 
 	l.Running.IsKodi = true
 	l.Pending.IsKodi = false
-	xbmc.VideoLibraryScan()
+	if xbmcHost, err := xbmc.GetLocalXBMCHost(); xbmcHost != nil && err == nil {
+		xbmcHost.VideoLibraryScan()
+	}
 	l.Running.IsKodi = false
 
 	return nil
@@ -83,8 +85,13 @@ func Refresh() error {
 
 // RefreshMovies updates movies in the library
 func RefreshMovies() error {
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if xbmcHost == nil || err != nil {
+		return err
+	}
+
 	l := uid.Get()
-	if l.Running.IsMovies || l.Running.IsKodi || !config.Get().LibraryEnabled || !config.Get().LibrarySyncEnabled || (!config.Get().LibrarySyncPlaybackEnabled && xbmc.PlayerIsPlaying()) {
+	if l.Running.IsMovies || l.Running.IsKodi || !config.Get().LibraryEnabled || !config.Get().LibrarySyncEnabled || (!config.Get().LibrarySyncPlaybackEnabled && xbmcHost.PlayerIsPlaying()) {
 		return nil
 	}
 
@@ -97,7 +104,7 @@ func RefreshMovies() error {
 	}()
 
 	started := time.Now()
-	movies, err := xbmc.VideoLibraryGetMovies()
+	movies, err := xbmcHost.VideoLibraryGetMovies()
 	if err != nil {
 		return err
 	} else if movies != nil && movies.Limits != nil && movies.Limits.Total == 0 {
@@ -148,8 +155,13 @@ func RefreshMovies() error {
 
 // RefreshShows updates shows in the library
 func RefreshShows() error {
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if xbmcHost == nil || err == nil {
+		return err
+	}
+
 	l := uid.Get()
-	if l.Running.IsShows || l.Running.IsKodi || !config.Get().LibraryEnabled || !config.Get().LibrarySyncEnabled || (!config.Get().LibrarySyncPlaybackEnabled && xbmc.PlayerIsPlaying()) {
+	if l.Running.IsShows || l.Running.IsKodi || !config.Get().LibraryEnabled || !config.Get().LibrarySyncEnabled || (!config.Get().LibrarySyncPlaybackEnabled && xbmcHost.PlayerIsPlaying()) {
 		return nil
 	}
 
@@ -162,7 +174,7 @@ func RefreshShows() error {
 	}()
 
 	started := time.Now()
-	shows, err := xbmc.VideoLibraryGetShows()
+	shows, err := xbmcHost.VideoLibraryGetShows()
 	if err != nil {
 		return err
 	} else if shows != nil && shows.Limits != nil && shows.Limits.Total == 0 {
@@ -254,6 +266,11 @@ func RefreshShows() error {
 
 // RefreshSeasons updates seasons list for selected show in the library
 func RefreshSeasons() error {
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if xbmcHost == nil || err == nil {
+		return err
+	}
+
 	started := time.Now()
 	l := uid.Get()
 
@@ -265,7 +282,7 @@ func RefreshSeasons() error {
 	}
 	l.Mu.Shows.Unlock()
 
-	seasons, err := xbmc.VideoLibraryGetAllSeasons(shows)
+	seasons, err := xbmcHost.VideoLibraryGetAllSeasons(shows)
 	if err != nil {
 		return err
 	} else if seasons == nil || seasons.Seasons == nil {
@@ -319,6 +336,11 @@ func RefreshEpisodes() error {
 		l.Running.IsEpisodes = false
 	}()
 
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if xbmcHost == nil || err == nil {
+		return err
+	}
+
 	started := time.Now()
 
 	var shows []int
@@ -341,7 +363,7 @@ func RefreshEpisodes() error {
 		l.Mu.Shows.Unlock()
 	}
 
-	episodes, err := xbmc.VideoLibraryGetAllEpisodes(shows)
+	episodes, err := xbmcHost.VideoLibraryGetAllEpisodes(shows)
 	if err != nil {
 		return err
 	} else if episodes == nil || episodes.Episodes == nil {

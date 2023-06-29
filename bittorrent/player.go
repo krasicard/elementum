@@ -63,6 +63,7 @@ type Player struct {
 	s                        *Service
 	t                        *Torrent
 	p                        *PlayerParams
+	xbmcHost                 *xbmc.XBMCHost
 	dialogProgress           *xbmc.DialogProgress
 	overlayStatus            *xbmc.OverlayStatus
 	next                     NextEpisode
@@ -89,6 +90,7 @@ type Player struct {
 
 // PlayerParams ...
 type PlayerParams struct {
+	ClientIP          string
 	Playing           bool
 	Paused            bool
 	Seeked            bool
@@ -146,9 +148,12 @@ type CandidateFile struct {
 func NewPlayer(bts *Service, params PlayerParams) *Player {
 	params.Playing = true
 
+	xbmcHost, _ := xbmc.GetXBMCHost(params.ClientIP)
+
 	btp := &Player{
-		s: bts,
-		p: &params,
+		s:        bts,
+		p:        &params,
+		xbmcHost: xbmcHost,
 
 		overlayStatusEnabled: config.Get().EnableOverlayStatus == true,
 		scrobble:             config.Get().Scrobble == true && params.TMDBId > 0 && config.Get().TraktToken != "",
@@ -192,7 +197,7 @@ func (btp *Player) addTorrent() error {
 			storage = StorageFile
 		}
 
-		torrent, err := btp.s.AddTorrent(btp.p.URI, false, storage, true, time.Now())
+		torrent, err := btp.s.AddTorrent(btp.xbmcHost, btp.p.URI, false, storage, true, time.Now())
 		if err != nil {
 			log.Errorf("Error adding torrent to player: %s", err)
 			return err
@@ -268,12 +273,14 @@ func (btp *Player) Buffer() error {
 	buffered, done := btp.bufferEvents.Listen()
 	defer close(done)
 
-	if !btp.t.IsBufferingFinished {
-		btp.dialogProgress = xbmc.NewDialogProgress("Elementum", "", "", "")
+	if !btp.t.IsBufferingFinished && btp.xbmcHost != nil {
+		btp.dialogProgress = btp.xbmcHost.NewDialogProgress("Elementum", "", "", "")
 		defer btp.dialogProgress.Close()
 	}
 
-	btp.overlayStatus = xbmc.NewOverlayStatus()
+	if btp.xbmcHost != nil {
+		btp.overlayStatus = btp.xbmcHost.NewOverlayStatus()
+	}
 
 	btp.GetIdent()
 	go btp.waitCheckAvailableSpace()
@@ -302,7 +309,7 @@ func (btp *Player) waitCheckAvailableSpace() {
 		select {
 		case <-ticker.C:
 			if btp.hasChosenFile {
-				if !btp.s.checkAvailableSpace(btp.t) {
+				if !btp.s.checkAvailableSpace(btp.xbmcHost, btp.t) {
 					btp.bufferEvents.Broadcast(errors.New("Not enough space on download destination"))
 					btp.notEnoughSpace = true
 				}
@@ -348,7 +355,7 @@ func (btp *Player) processMetadata() {
 		if !(config.Get().SilentStreamStart ||
 			btp.p.ResumePlayback == ResumeYes ||
 			config.Get().PlayResumeAction == 2 ||
-			xbmc.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30535];;%s", btp.p.StoredResume.ToString()))) {
+			btp.xbmcHost == nil || btp.xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30535];;%s", btp.p.StoredResume.ToString()))) {
 			log.Infof("Resetting stored resume")
 			resume.Reset()
 			btp.SaveStoredResume()
@@ -537,7 +544,7 @@ func (btp *Player) Close() {
 	// Remove torrent only if this torrent is not needed for background download or other players are using it.
 	if !btp.p.Background && btp.t.PlayerAttached <= 1 {
 		// If there is no chosen file - we stop the torrent and remove everything
-		btp.s.RemoveTorrent(btp.t, false, btp.notEnoughSpace, btp.IsWatched())
+		btp.s.RemoveTorrent(btp.xbmcHost, btp.t, false, btp.notEnoughSpace, btp.IsWatched())
 	}
 }
 
@@ -613,7 +620,7 @@ func (btp *Player) updateBufferDialog() (bool, error) {
 
 			cmdName := "unrar"
 			cmdArgs := []string{"e", archivePath, destPath}
-			if platform := xbmc.GetPlatform(); platform.OS == "windows" {
+			if platform := btp.xbmcHost.GetPlatform(); platform.OS == "windows" {
 				cmdName = "unrar.exe"
 			}
 			cmd := exec.Command(cmdName, cmdArgs...)
@@ -622,7 +629,7 @@ func (btp *Player) updateBufferDialog() (bool, error) {
 			if err != nil {
 				log.Error(err)
 				btp.bufferEvents.Broadcast(err)
-				xbmc.Notify("Elementum", "LOCALIZE[30304]", config.AddonIcon())
+				btp.xbmcHost.Notify("Elementum", "LOCALIZE[30304]", config.AddonIcon())
 				return false, err
 			}
 
@@ -637,7 +644,7 @@ func (btp *Player) updateBufferDialog() (bool, error) {
 			if err != nil {
 				log.Error(err)
 				btp.bufferEvents.Broadcast(err)
-				xbmc.Notify("Elementum", "LOCALIZE[30305]", config.AddonIcon())
+				btp.xbmcHost.Notify("Elementum", "LOCALIZE[30305]", config.AddonIcon())
 				return false, err
 			}
 
@@ -645,7 +652,7 @@ func (btp *Player) updateBufferDialog() (bool, error) {
 			if err != nil {
 				log.Error(err)
 				btp.bufferEvents.Broadcast(err)
-				xbmc.Notify("Elementum", "LOCALIZE[30306]", config.AddonIcon())
+				btp.xbmcHost.Notify("Elementum", "LOCALIZE[30306]", config.AddonIcon())
 				return false, err
 			}
 
@@ -674,7 +681,7 @@ func (btp *Player) findExtracted(destPath string) {
 	if err != nil {
 		log.Error(err)
 		btp.bufferEvents.Broadcast(err)
-		xbmc.Notify("Elementum", "LOCALIZE[30307]", config.AddonIcon())
+		btp.xbmcHost.Notify("Elementum", "LOCALIZE[30307]", config.AddonIcon())
 		return
 	}
 	if len(files) == 1 {
@@ -694,7 +701,7 @@ func (btp *Player) findExtracted(destPath string) {
 }
 
 func (btp *Player) updateWatchTimes() {
-	ret := xbmc.GetWatchTimes()
+	ret := btp.xbmcHost.GetWatchTimes()
 	if ret["error"] != "" {
 		return
 	}
@@ -727,7 +734,7 @@ func (btp *Player) playerLoop() {
 
 playbackWaitLoop:
 	for {
-		if btp.p.Background || xbmc.PlayerIsPlaying() {
+		if btp.p.Background || btp.xbmcHost == nil || btp.xbmcHost.PlayerIsPlaying() {
 			break playbackWaitLoop
 		}
 		select {
@@ -756,7 +763,7 @@ playbackWaitLoop:
 
 playbackLoop:
 	for {
-		if btp.p.Background || xbmc.PlayerIsPlaying() == false {
+		if btp.p.Background || btp.xbmcHost == nil || btp.xbmcHost.PlayerIsPlaying() == false {
 			btp.t.IsPlaying = false
 			break playbackLoop
 		}
@@ -774,7 +781,7 @@ playbackLoop:
 				if btp.scrobble {
 					go trakt.Scrobble("start", btp.p.ContentType, btp.p.TMDBId, btp.p.WatchedTime, btp.p.VideoDuration)
 				}
-			} else if xbmc.PlayerIsPaused() {
+			} else if btp.xbmcHost == nil || btp.xbmcHost.PlayerIsPaused() {
 				if btp.overlayStatusEnabled && btp.p.Playing {
 					progress := btp.t.GetProgress()
 					line1, line2, line3 := btp.statusStrings(progress, btp.t.GetLastStatus(false))
@@ -880,8 +887,8 @@ func (btp *Player) UpdateWatched() {
 				Movie:     btp.p.TMDBId,
 				Watched:   true,
 			}
-			if btp.p.KodiID != 0 {
-				xbmc.SetMovieWatched(btp.p.KodiID, 1, 0, 0)
+			if btp.p.KodiID != 0 && btp.xbmcHost != nil {
+				btp.xbmcHost.SetMovieWatched(btp.p.KodiID, 1, 0, 0)
 			}
 		} else if btp.p.ContentType == episodeType {
 			watched = &trakt.WatchedItem{
@@ -891,8 +898,8 @@ func (btp *Player) UpdateWatched() {
 				Episode:   btp.p.Episode,
 				Watched:   true,
 			}
-			if btp.p.KodiID != 0 {
-				xbmc.SetEpisodeWatched(btp.p.KodiID, 1, 0, 0)
+			if btp.p.KodiID != 0 && btp.xbmcHost != nil {
+				btp.xbmcHost.SetEpisodeWatched(btp.p.KodiID, 1, 0, 0)
 			}
 		}
 
@@ -907,14 +914,18 @@ func (btp *Player) UpdateWatched() {
 			btp.p.Resume.Total = btp.p.VideoDuration
 		}
 
-		if btp.p.ContentType == movieType {
-			xbmc.SetMovieProgress(btp.p.KodiID, int(btp.p.WatchedTime), int(btp.p.VideoDuration))
-		} else if btp.p.ContentType == episodeType {
-			xbmc.SetEpisodeProgress(btp.p.KodiID, int(btp.p.WatchedTime), int(btp.p.VideoDuration))
+		if btp.xbmcHost != nil {
+			if btp.p.ContentType == movieType {
+				btp.xbmcHost.SetMovieProgress(btp.p.KodiID, int(btp.p.WatchedTime), int(btp.p.VideoDuration))
+			} else if btp.p.ContentType == episodeType {
+				btp.xbmcHost.SetEpisodeProgress(btp.p.KodiID, int(btp.p.WatchedTime), int(btp.p.VideoDuration))
+			}
 		}
 	}
 	time.Sleep(200 * time.Millisecond)
-	xbmc.Refresh()
+	if btp.xbmcHost != nil {
+		btp.xbmcHost.Refresh()
+	}
 }
 
 // IsWatched ...
@@ -1146,9 +1157,9 @@ func (btp *Player) InitAudio() {
 			}
 		}
 
-		if len(collected) > 0 {
+		if len(collected) > 0 && btp.xbmcHost != nil {
 			log.Debugf("Adding player audio tracks: %#v", collected)
-			xbmc.PlayerSetSubtitles(collected)
+			btp.xbmcHost.PlayerSetSubtitles(collected)
 		}
 	}
 
@@ -1161,11 +1172,11 @@ func (btp *Player) InitSubtitles() {
 		return
 	}
 
-	if config.Get().OSDBIncludedEnabled && (!config.Get().OSDBIncludedSkipExists || len(xbmc.PlayerGetSubtitles()) == 0) {
+	if config.Get().OSDBIncludedEnabled && (!config.Get().OSDBIncludedSkipExists || len(btp.xbmcHost.PlayerGetSubtitles()) == 0) {
 		btp.SetSubtitles()
 	}
 
-	if config.Get().OSDBAutoLoad && (!config.Get().OSDBAutoLoadSkipExists || len(xbmc.PlayerGetSubtitles()) == 0) {
+	if config.Get().OSDBAutoLoad && (!config.Get().OSDBAutoLoadSkipExists || len(btp.xbmcHost.PlayerGetSubtitles()) == 0) {
 		btp.DownloadSubtitles()
 	}
 
@@ -1174,7 +1185,7 @@ func (btp *Player) InitSubtitles() {
 
 // DownloadSubtitles ...
 func (btp *Player) DownloadSubtitles() {
-	payloads, preferredLanguage := osdb.GetPayloads("", []string{"English"}, xbmc.SettingsGetSettingValue("locale.subtitlelanguage"), btp.p.ShowID, xbmc.PlayerGetPlayingFile())
+	payloads, preferredLanguage := osdb.GetPayloads(btp.xbmcHost, "", []string{"English"}, btp.xbmcHost.SettingsGetSettingValue("locale.subtitlelanguage"), btp.p.ShowID, btp.xbmcHost.PlayerGetPlayingFile())
 	log.Infof("Subtitles payload auto: %#v; %s", payloads, preferredLanguage)
 
 	results, err := osdb.DoSearch(payloads, preferredLanguage)
@@ -1201,7 +1212,7 @@ func (btp *Player) DownloadSubtitles() {
 		log.Infof("Setting subtitles to Kodi Player: %+v", btp.subtitlesLoaded)
 
 		sort.Sort(sort.Reverse(sort.StringSlice(btp.subtitlesLoaded)))
-		xbmc.PlayerSetSubtitles(btp.subtitlesLoaded)
+		btp.xbmcHost.PlayerSetSubtitles(btp.subtitlesLoaded)
 	}
 }
 
@@ -1223,9 +1234,9 @@ func (btp *Player) SetSubtitles() {
 			}
 		}
 
-		if len(collected) > 0 {
+		if len(collected) > 0 && btp.xbmcHost != nil {
 			log.Debugf("Adding player subtitles: %#v", collected)
-			xbmc.PlayerSetSubtitles(collected)
+			btp.xbmcHost.PlayerSetSubtitles(collected)
 		}
 	}
 }
@@ -1280,7 +1291,9 @@ func (btp *Player) processUpNextPayload() {
 		log.Warningf("Could not prepare UpNext payload: %s", err)
 	}
 
-	xbmc.UpNextNotify(xbmc.Args{payload})
+	if btp.xbmcHost != nil {
+		btp.xbmcHost.UpNextNotify(xbmc.Args{payload})
+	}
 }
 
 func (btp *Player) processUpNextShow() (upnext.Payload, error) {
@@ -1564,4 +1577,8 @@ func removeTrailingMinus(in string) string {
 	}
 
 	return in
+}
+
+func (btp *Player) GetXBMCHost() *xbmc.XBMCHost {
+	return btp.xbmcHost
 }

@@ -37,18 +37,18 @@ func (a ByStatus) Len() int           { return len(a) }
 func (a ByStatus) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByStatus) Less(i, j int) bool { return a[i].Status < a[j].Status }
 
-func getProviders() []Addon {
+func getProviders(xbmcHost *xbmc.XBMCHost) []Addon {
 	defer perf.ScopeTimer()()
 
 	list := make([]Addon, 0)
-	for _, addon := range xbmc.GetAddons("xbmc.python.script", "executable", "all", []string{"name", "version", "enabled"}).Addons {
+	for _, addon := range xbmcHost.GetAddons("xbmc.python.script", "executable", "all", []string{"name", "version", "enabled"}).Addons {
 		if strings.HasPrefix(addon.ID, "script.elementum.") {
 			list = append(list, Addon{
 				ID:      addon.ID,
 				Name:    addon.Name,
 				Version: addon.Version,
 				Enabled: addon.Enabled,
-				Status:  xbmc.AddonCheck(addon.ID),
+				Status:  xbmcHost.AddonCheck(addon.ID),
 			})
 		}
 	}
@@ -59,7 +59,9 @@ func getProviders() []Addon {
 
 // ProviderList ...
 func ProviderList(ctx *gin.Context) {
-	providers := getProviders()
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	providers := getProviders(xbmcHost)
 
 	items := make(xbmc.ListItems, 0, len(providers))
 	for _, provider := range providers {
@@ -103,73 +105,87 @@ func ProviderList(ctx *gin.Context) {
 
 // ProviderSettings ...
 func ProviderSettings(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	addonID := ctx.Params.ByName("provider")
-	xbmc.AddonSettings(addonID)
+	xbmcHost.AddonSettings(addonID)
 	ctx.String(200, "")
 }
 
 // ProviderCheck ...
 func ProviderCheck(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	addonID := ctx.Params.ByName("provider")
-	failures := xbmc.AddonCheck(addonID)
-	translated := xbmc.GetLocalizedString(30243)
-	xbmc.Notify("Elementum", fmt.Sprintf("%s: %d", translated, failures), config.AddonIcon())
+	failures := xbmcHost.AddonCheck(addonID)
+	translated := xbmcHost.GetLocalizedString(30243)
+	xbmcHost.Notify("Elementum", fmt.Sprintf("%s: %d", translated, failures), config.AddonIcon())
 	ctx.String(200, "")
 }
 
 // ProviderFailure ...
 func ProviderFailure(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	addonID := ctx.Params.ByName("provider")
-	xbmc.AddonFailure(addonID)
+	xbmcHost.AddonFailure(addonID)
 	ctx.String(200, "")
 }
 
 // ProviderEnable ...
 func ProviderEnable(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	addonID := ctx.Params.ByName("provider")
-	xbmc.SetAddonEnabled(addonID, true)
-	path := xbmc.InfoLabel("Container.FolderPath")
+	xbmcHost.SetAddonEnabled(addonID, true)
+	path := xbmcHost.InfoLabel("Container.FolderPath")
 	if path == providerPrefix {
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 	}
 	ctx.String(200, "")
 }
 
 // ProviderDisable ...
 func ProviderDisable(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
 	addonID := ctx.Params.ByName("provider")
-	xbmc.SetAddonEnabled(addonID, false)
-	path := xbmc.InfoLabel("Container.FolderPath")
+	xbmcHost.SetAddonEnabled(addonID, false)
+	path := xbmcHost.InfoLabel("Container.FolderPath")
 	if path == providerPrefix {
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 	}
 	ctx.String(200, "")
 }
 
 // ProvidersEnableAll ...
 func ProvidersEnableAll(ctx *gin.Context) {
-	providers := getProviders()
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	providers := getProviders(xbmcHost)
 
 	for _, addon := range providers {
-		xbmc.SetAddonEnabled(addon.ID, true)
+		xbmcHost.SetAddonEnabled(addon.ID, true)
 	}
-	path := xbmc.InfoLabel("Container.FolderPath")
+	path := xbmcHost.InfoLabel("Container.FolderPath")
 	if path == providerPrefix {
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 	}
 	ctx.String(200, "")
 }
 
 // ProvidersDisableAll ...
 func ProvidersDisableAll(ctx *gin.Context) {
-	providers := getProviders()
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+
+	providers := getProviders(xbmcHost)
 
 	for _, addon := range providers {
-		xbmc.SetAddonEnabled(addon.ID, false)
+		xbmcHost.SetAddonEnabled(addon.ID, false)
 	}
-	path := xbmc.InfoLabel("Container.FolderPath")
+	path := xbmcHost.InfoLabel("Container.FolderPath")
 	if path == providerPrefix {
-		xbmc.Refresh()
+		xbmcHost.Refresh()
 	}
 	ctx.String(200, "")
 }

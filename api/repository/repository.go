@@ -257,6 +257,7 @@ func GetAddonFiles(ctx *gin.Context) {
 		user = "ElementumOrg"
 	}
 
+	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
 	lastReleaseTag := getLastRelease(user + "/" + repository)
 
 	switch filepath {
@@ -281,7 +282,7 @@ func GetAddonFiles(ctx *gin.Context) {
 
 	switch {
 	case addonZipRE.MatchString(filepath):
-		addonZip(ctx, user, repository, lastReleaseTag)
+		addonZip(ctx, xbmcHost, user, repository, lastReleaseTag)
 	case addonChangelogRE.MatchString(filepath):
 		writeChangelog(user, repository)
 		addonChangelog(ctx, user, repository)
@@ -295,7 +296,7 @@ func GetAddonFilesHead(ctx *gin.Context) {
 	ctx.String(200, "")
 }
 
-func addonZip(ctx *gin.Context, user string, repository string, lastReleaseTag string) {
+func addonZip(ctx *gin.Context, xbmcHost *xbmc.XBMCHost, user string, repository string, lastReleaseTag string) {
 	defer perf.ScopeTimer()()
 	release := getLatestRelease(user, repository)
 	// if there a release with an asset that matches a addon zip, use it
@@ -303,7 +304,7 @@ func addonZip(ctx *gin.Context, user string, repository string, lastReleaseTag s
 		return
 	}
 
-	platformStruct := xbmc.GetPlatform()
+	platformStruct := xbmcHost.GetPlatform()
 	platform := platformStruct.OS + "_" + platformStruct.Arch
 	var assetAllPlatforms string
 	for _, asset := range release.Assets {

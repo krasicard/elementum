@@ -30,8 +30,9 @@ type AddonSearcher struct {
 	SeasonSearcher
 	EpisodeSearcher
 
-	addonID string
-	log     *logging.Logger
+	addonID  string
+	xbmcHost *xbmc.XBMCHost
+	log      *logging.Logger
 }
 
 var cbLock = sync.RWMutex{}
@@ -72,57 +73,58 @@ func CallbackHandler(ctx *gin.Context) {
 	close(c)
 }
 
-func getSearchers() []interface{} {
+func getSearchers(xbmcHost *xbmc.XBMCHost) []interface{} {
 	list := make([]interface{}, 0)
-	for _, addon := range xbmc.GetAddons("xbmc.python.script", "executable", true).Addons {
+	for _, addon := range xbmcHost.GetAddons("xbmc.python.script", "executable", true).Addons {
 		if strings.HasPrefix(addon.ID, "script.elementum.") {
-			list = append(list, NewAddonSearcher(addon.ID))
+			list = append(list, NewAddonSearcher(xbmcHost, addon.ID))
 		}
 	}
 	return list
 }
 
 // GetMovieSearchers ...
-func GetMovieSearchers() []MovieSearcher {
+func GetMovieSearchers(xbmcHost *xbmc.XBMCHost) []MovieSearcher {
 	searchers := make([]MovieSearcher, 0)
-	for _, searcher := range getSearchers() {
+	for _, searcher := range getSearchers(xbmcHost) {
 		searchers = append(searchers, searcher.(MovieSearcher))
 	}
 	return searchers
 }
 
 // GetSeasonSearchers ...
-func GetSeasonSearchers() []SeasonSearcher {
+func GetSeasonSearchers(xbmcHost *xbmc.XBMCHost) []SeasonSearcher {
 	searchers := make([]SeasonSearcher, 0)
-	for _, searcher := range getSearchers() {
+	for _, searcher := range getSearchers(xbmcHost) {
 		searchers = append(searchers, searcher.(SeasonSearcher))
 	}
 	return searchers
 }
 
 // GetEpisodeSearchers ...
-func GetEpisodeSearchers() []EpisodeSearcher {
+func GetEpisodeSearchers(xbmcHost *xbmc.XBMCHost) []EpisodeSearcher {
 	searchers := make([]EpisodeSearcher, 0)
-	for _, searcher := range getSearchers() {
+	for _, searcher := range getSearchers(xbmcHost) {
 		searchers = append(searchers, searcher.(EpisodeSearcher))
 	}
 	return searchers
 }
 
 // GetSearchers ...
-func GetSearchers() []Searcher {
+func GetSearchers(xbmcHost *xbmc.XBMCHost) []Searcher {
 	searchers := make([]Searcher, 0)
-	for _, searcher := range getSearchers() {
+	for _, searcher := range getSearchers(xbmcHost) {
 		searchers = append(searchers, searcher.(Searcher))
 	}
 	return searchers
 }
 
 // NewAddonSearcher ...
-func NewAddonSearcher(addonID string) *AddonSearcher {
+func NewAddonSearcher(xbmcHost *xbmc.XBMCHost, addonID string) *AddonSearcher {
 	return &AddonSearcher{
-		addonID: addonID,
-		log:     logging.MustGetLogger(fmt.Sprintf("AddonSearcher %s", addonID)),
+		xbmcHost: xbmcHost,
+		addonID:  addonID,
+		log:      logging.MustGetLogger(fmt.Sprintf("AddonSearcher %s", addonID)),
 	}
 }
 
@@ -386,7 +388,7 @@ func (as *AddonSearcher) call(method string, searchObject interface{}) []*bittor
 		SearchObject: searchObject,
 	}
 
-	xbmc.ExecuteAddon(as.addonID, payload.String())
+	as.xbmcHost.ExecuteAddon(as.addonID, payload.String())
 
 	timeout := providerTimeout()
 	if config.Get().CustomProviderTimeoutEnabled == true {

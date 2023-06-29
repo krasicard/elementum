@@ -80,7 +80,7 @@ func DoDownload(file, dl string) (*os.File, string, error) {
 }
 
 // GetPayloads ...
-func GetPayloads(searchString string, languages []string, preferredLanguage string, showID int, playingFile string) ([]SearchPayload, string) {
+func GetPayloads(xbmcHost *xbmc.XBMCHost, searchString string, languages []string, preferredLanguage string, showID int, playingFile string) ([]SearchPayload, string) {
 	log.Debugf("GetPayloads: %s; %#v; %s; %s", searchString, languages, preferredLanguage, playingFile)
 
 	// First of all, we get Subtitles language settings from Kodi
@@ -97,7 +97,7 @@ func GetPayloads(searchString string, languages []string, preferredLanguage stri
 		preferredLanguage = ""
 	}
 
-	labels := xbmc.InfoLabels(
+	labels := xbmcHost.InfoLabels(
 		"VideoPlayer.Title",
 		"VideoPlayer.OriginalTitle",
 		"VideoPlayer.Year",
@@ -112,7 +112,7 @@ func GetPayloads(searchString string, languages []string, preferredLanguage stri
 		if lang == "Portuguese (Brazil)" {
 			languages[i] = "pob"
 		} else {
-			isoLang := xbmc.ConvertLanguage(lang, xbmc.Iso639_2)
+			isoLang := xbmcHost.ConvertLanguage(lang, xbmc.Iso639_2)
 			if isoLang == "gre" {
 				isoLang = "ell"
 			}
@@ -151,7 +151,7 @@ func GetPayloads(searchString string, languages []string, preferredLanguage stri
 		}
 
 		if err != nil {
-			if strings.HasPrefix(playingFile, "http://") == false && strings.HasPrefix(playingFile, "https://") == false {
+			if !strings.HasPrefix(playingFile, "http://") && !strings.HasPrefix(playingFile, "https://") {
 				appendLocalFilePayloads(playingFile, &payloads)
 			} else {
 				appendRemoteFilePayloads(playingFile, &payloads)

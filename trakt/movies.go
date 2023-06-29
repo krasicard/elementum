@@ -115,7 +115,9 @@ func GetMovie(ID string) (movie *Movie) {
 
 		if err != nil {
 			log.Error(err)
-			xbmc.Notify("Elementum", fmt.Sprintf("Failed getting Trakt movie (%s), check your logs.", ID), config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", fmt.Sprintf("Failed getting Trakt movie (%s), check your logs.", ID), config.AddonIcon())
+			}
 		}
 
 		if err := resp.Unmarshal(&movie); err != nil {
@@ -140,7 +142,9 @@ func GetMovieByTMDB(tmdbID string) (movie *Movie) {
 		resp, err := Get(endPoint, params)
 		if err != nil {
 			log.Error(err)
-			xbmc.Notify("Elementum", "Failed getting Trakt movie using TMDB ID, check your logs.", config.AddonIcon())
+			if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+				xbmcHost.Notify("Elementum", "Failed getting Trakt movie using TMDB ID, check your logs.", config.AddonIcon())
+			}
 			return
 		}
 
@@ -357,7 +361,9 @@ func CollectionMovies(isUpdateNeeded bool) (movies []*Movies, err error) {
 func Userlists() (lists []*List) {
 	traktUsername := config.Get().TraktUsername
 	if traktUsername == "" || config.Get().TraktToken == "" || !config.Get().TraktAuthorized {
-		xbmc.Notify("Elementum", "LOCALIZE[30149]", config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", "LOCALIZE[30149]", config.AddonIcon())
+		}
 		return lists
 	}
 	endPoint := fmt.Sprintf("users/%s/lists", traktUsername)
@@ -374,13 +380,17 @@ func Userlists() (lists []*List) {
 	}
 
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
+		}
 		log.Error(err)
 		return lists
 	}
 	if resp.Status() != 200 {
 		errMsg := fmt.Sprintf("Bad status getting custom lists for %s: %d", traktUsername, resp.Status())
-		xbmc.Notify("Elementum", errMsg, config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", errMsg, config.AddonIcon())
+		}
 		log.Warningf(errMsg)
 		return lists
 	}
@@ -400,7 +410,9 @@ func Userlists() (lists []*List) {
 func Likedlists() (lists []*List) {
 	traktUsername := config.Get().TraktUsername
 	if traktUsername == "" || config.Get().TraktToken == "" {
-		xbmc.Notify("Elementum", "LOCALIZE[30149]", config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", "LOCALIZE[30149]", config.AddonIcon())
+		}
 		return lists
 	}
 	endPoint := "users/likes/lists"
@@ -416,13 +428,17 @@ func Likedlists() (lists []*List) {
 	}
 
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
+		}
 		log.Error(err)
 		return lists
 	}
 	if resp.Status() != 200 {
 		errMsg := fmt.Sprintf("Bad status getting liked lists for %s: %d", traktUsername, resp.Status())
-		xbmc.Notify("Elementum", errMsg, config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", errMsg, config.AddonIcon())
+		}
 		log.Warningf(errMsg)
 		return lists
 	}
@@ -463,13 +479,17 @@ func TopLists(page string) (lists []*ListContainer, hasNext bool) {
 	}
 
 	if err != nil {
-		xbmc.Notify("Elementum", err.Error(), config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
+		}
 		log.Error(err)
 		return lists, hasNext
 	}
 	if resp.Status() != 200 {
 		errMsg := fmt.Sprintf("Bad status getting top lists: %d", resp.Status())
-		xbmc.Notify("Elementum", errMsg, config.AddonIcon())
+		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
+			xbmcHost.Notify("Elementum", errMsg, config.AddonIcon())
+		}
 		log.Warningf(errMsg)
 		return lists, hasNext
 	}

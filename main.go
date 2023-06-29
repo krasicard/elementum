@@ -3,6 +3,7 @@ package main
 import (
 	_ "github.com/anacrolix/envpprof"
 
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -136,6 +136,9 @@ func main() {
 	}
 	log.Infof("Version: %s LibTorrent: %s Go: %s, Threads: %d", util.GetVersion(), util.GetTorrentVersion(), runtime.Version(), runtime.GOMAXPROCS(0))
 
+	// Init default XBMC connections
+	xbmc.Init()
+
 	conf, err := config.Reload()
 	if err != nil || conf == nil {
 		log.Errorf("Could not get addon configuration: %s", err)
@@ -243,7 +246,9 @@ func main() {
 	}))
 
 	if config.Get().GreetingEnabled {
-		xbmc.Notify("Elementum", "LOCALIZE[30208]", config.AddonIcon())
+		if xbmcHost, _ := xbmc.GetLocalXBMCHost(); xbmcHost != nil {
+			xbmcHost.Notify("Elementum", "LOCALIZE[30208]", config.AddonIcon())
+		}
 	}
 
 	sigc := make(chan os.Signal, 2)
@@ -271,13 +276,18 @@ func main() {
 	}()
 
 	go func() {
-		if checkRepository() {
-			log.Info("Updating Kodi add-on repositories... ")
-			xbmc.UpdateAddonRepos()
+		xbmcHost, _ := xbmc.GetLocalXBMCHost()
+		if xbmcHost == nil || !xbmcHost.Ping() {
+			return
 		}
 
-		xbmc.DialogProgressBGCleanup()
-		xbmc.ResetRPC()
+		if checkRepository(xbmcHost) {
+			log.Info("Updating Kodi add-on repositories... ")
+			xbmcHost.UpdateAddonRepos()
+		}
+
+		xbmcHost.DialogProgressBGCleanup()
+		xbmcHost.ResetRPC()
 	}()
 
 	go library.Init()
@@ -287,11 +297,12 @@ func main() {
 	go scrape.Start()
 	go util.FreeMemoryGC()
 
+	localAddress := fmt.Sprintf("%s:%d", config.Args.LocalHost, config.Args.LocalPort)
 	log.Infof("Prepared in %s", time.Since(now))
-	log.Infof("Starting HTTP server")
+	log.Infof("Starting HTTP server at %s", localAddress)
 
 	exit.Server = &http.Server{
-		Addr:    ":" + strconv.Itoa(config.Args.LocalPort),
+		Addr:    localAddress,
 		Handler: nil,
 	}
 

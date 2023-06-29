@@ -219,7 +219,7 @@ func (t *Torrent) Watch() {
 
 		case <-t.nextTimer.C:
 			if t.IsNextFile {
-				go t.Service.RemoveTorrent(t, false, false, false)
+				go t.Service.RemoveTorrent(nil, t, false, false, false)
 			}
 
 		case <-updateMetadataTicker.C:
@@ -1574,7 +1574,7 @@ func (t *Torrent) HasMetadata() bool {
 }
 
 // WaitForMetadata waits for getting torrent information or cancels if torrent is closed
-func (t *Torrent) WaitForMetadata(infoHash string) (err error) {
+func (t *Torrent) WaitForMetadata(xbmcHost *xbmc.XBMCHost, infoHash string) (err error) {
 	sc := t.Service.Closer.C()
 	tc := t.Closer.C()
 	mc := t.GotInfo()
@@ -1582,7 +1582,11 @@ func (t *Torrent) WaitForMetadata(infoHash string) (err error) {
 	defer to.Stop()
 
 	log.Infof("Waiting for information fetched for torrent: %s", infoHash)
-	dialog := xbmc.NewDialogProgressBG("Elementum", "LOCALIZE[30583]", "LOCALIZE[30583]")
+	var dialog *xbmc.DialogProgressBG
+	if xbmcHost != nil {
+		dialog = xbmcHost.NewDialogProgressBG("Elementum", "LOCALIZE[30583]", "LOCALIZE[30583]")
+	}
+
 	defer func() {
 		if dialog != nil {
 			dialog.Close()
@@ -1754,7 +1758,7 @@ func (t *Torrent) GetCandidateFiles(btp *Player) ([]*CandidateFile, int, error) 
 
 		if reRar.MatchString(fileName) && size > 10*1024*1024 {
 			t.IsRarArchive = true
-			if !xbmc.DialogConfirm("Elementum", "LOCALIZE[30303]") {
+			if !btp.xbmcHost.DialogConfirm("Elementum", "LOCALIZE[30303]") {
 				if btp != nil {
 					btp.notEnoughSpace = true
 				}
@@ -1967,7 +1971,7 @@ func (t *Torrent) ChooseFile(btp *Player) (*File, int, error) {
 			items = append(items, choice.DisplayName)
 		}
 
-		choice := xbmc.ListDialog("LOCALIZE[30560];;"+searchTitle, items...)
+		choice := btp.xbmcHost.ListDialog("LOCALIZE[30560];;"+searchTitle, items...)
 		log.Debugf("Choice selected: %d", choice)
 		if choice >= 0 {
 			if btp == nil {
@@ -2045,7 +2049,7 @@ func (t *Torrent) GetPlayURL(fileIndex string) string {
 }
 
 // TorrentInfo writes torrent status to io.Writer
-func (t *Torrent) TorrentInfo(w io.Writer, showTrackers, showPieces bool) {
+func (t *Torrent) TorrentInfo(xbmcHost *xbmc.XBMCHost, w io.Writer, showTrackers, showPieces bool) {
 	if t.Closer.IsSet() {
 		return
 	}
@@ -2061,7 +2065,7 @@ func (t *Torrent) TorrentInfo(w io.Writer, showTrackers, showPieces bool) {
 	fmt.Fprintf(w, "    Name:               %s \n", st.GetName())
 	fmt.Fprintf(w, "    Title:              %s \n", t.Title())
 	fmt.Fprintf(w, "    Infohash:           %s \n", hex.EncodeToString([]byte(st.GetInfoHash().ToString())))
-	fmt.Fprintf(w, "    Status:             %s \n", xbmc.Translate(StatusStrings[st.GetState()]))
+	fmt.Fprintf(w, "    Status:             %s \n", xbmcHost.Translate(StatusStrings[st.GetState()]))
 	fmt.Fprintf(w, "    Piece size:         %d \n", t.ti.NumPieces())
 	fmt.Fprintf(w, "    Piece length:       %s \n", humanize.Bytes(uint64(t.ti.PieceLength())))
 	fmt.Fprint(w, "\n")
@@ -2184,7 +2188,9 @@ func (t *Torrent) AlertFinished() {
 
 	t.IsNeedFinishNotification = false
 
-	xbmc.Notify("Elementum", "LOCALIZE[30618];;"+t.Name(), config.AddonIcon())
+	if xbmcHost, err := xbmc.GetLocalXBMCHost(); xbmcHost != nil && err == nil {
+		xbmcHost.Notify("Elementum", "LOCALIZE[30618];;"+t.Name(), config.AddonIcon())
+	}
 }
 
 // GetLastStatus gets, or initially sets torrenthandle status
