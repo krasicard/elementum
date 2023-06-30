@@ -261,7 +261,7 @@ libs: force
 
 binaries:
 	git config --global push.default simple
-	git clone --depth=1 https://github.com/elgatito/elementum-binaries binaries
+	git clone --depth=1 https://${GH_USER}:${GH_TOKEN}@github.com/elgatito/elementum-binaries binaries
 	cp -Rf build/* binaries/
 	cd binaries && \
 	git add * && \
