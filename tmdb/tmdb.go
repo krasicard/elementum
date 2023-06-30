@@ -778,7 +778,7 @@ func (season *Season) HasEpisode(episode int) bool {
 	}
 
 	for _, e := range season.Episodes {
-		if e.EpisodeNumber == episode {
+		if e != nil && e.EpisodeNumber == episode {
 			return true
 		}
 	}
@@ -792,7 +792,7 @@ func (season *Season) GetEpisode(episode int) *Episode {
 	}
 
 	for _, e := range season.Episodes {
-		if e.EpisodeNumber == episode {
+		if e != nil && e.EpisodeNumber == episode {
 			return e
 		}
 	}
