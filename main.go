@@ -218,31 +218,12 @@ func main() {
 
 	// Make sure HTTP mux is empty
 	http.DefaultServeMux = new(http.ServeMux)
-	http.Handle("/", api.Routes(s))
-
-	http.Handle("/debug/all", bittorrent.DebugAll(s))
-	http.Handle("/debug/bundle", bittorrent.DebugBundle(s))
+	http.Handle("/", api.Routes(s, shutdown))
 
 	http.Handle("/files/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Connection", "close")
 		handler := http.StripPrefix("/files/", http.FileServer(bittorrent.NewTorrentFS(s, r.Method)))
 		handler.ServeHTTP(w, r)
-	}))
-	http.Handle("/reload", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s.Reconfigure()
-		w.Write([]byte("true"))
-	}))
-	http.Handle("/notification", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		Notification(r, s)
-		w.Write([]byte("true"))
-	}))
-	http.Handle("/shutdown", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		go shutdown(exit.ExitCodeSuccess)
-		w.Write([]byte("true"))
-	}))
-	http.Handle("/restart", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		shutdown(exit.ExitCodeRestart)
-		w.Write([]byte("true"))
 	}))
 
 	if config.Get().GreetingEnabled {

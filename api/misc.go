@@ -12,8 +12,10 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
 
+	"github.com/elgatito/elementum/bittorrent"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/database"
+	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/library"
 	"github.com/elgatito/elementum/proxy"
 	"github.com/elgatito/elementum/tmdb"
@@ -226,4 +228,31 @@ func SelectStrmLanguage(ctx *gin.Context) {
 	}
 
 	ctx.String(200, "")
+}
+
+func Reload(s *bittorrent.Service) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		defer perf.ScopeTimer()()
+
+		s.Reconfigure()
+		ctx.String(200, "true")
+	}
+}
+
+func Restart(shutdown func(code int)) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		defer perf.ScopeTimer()()
+
+		ctx.String(200, "true")
+		shutdown(exit.ExitCodeRestart)
+	}
+}
+
+func Shutdown(shutdown func(code int)) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		defer perf.ScopeTimer()()
+
+		ctx.String(200, "true")
+		go shutdown(exit.ExitCodeSuccess)
+	}
 }

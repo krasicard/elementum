@@ -32,12 +32,25 @@ func CORS() gin.HandlerFunc {
 	}
 }
 
+// CORS allows all external source to request data from Elementum
+func Auth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if config.Args.LocalLogin == "" && config.Args.LocalPassword == "" {
+			c.Next()
+			return
+		}
+
+		gin.BasicAuth(gin.Accounts{config.Args.LocalLogin: config.Args.LocalPassword})(c)
+	}
+}
+
 // Routes ...
-func Routes(s *bittorrent.Service) *gin.Engine {
+func Routes(s *bittorrent.Service, shutdown func(code int)) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(gin.LoggerWithWriter(gin.DefaultWriter, "/torrents/list", "/notification"))
 	r.Use(CORS())
+	r.Use(Auth())
 
 	gin.SetMode(gin.ReleaseMode)
 
@@ -51,6 +64,14 @@ func Routes(s *bittorrent.Service) *gin.Engine {
 
 	r.Any("/info", s.ClientInfo)
 	r.Any("/info/*ident", s.ClientInfo)
+
+	r.Any("/debug/all", bittorrent.DebugAll(s))
+	r.Any("/debug/bundle", bittorrent.DebugBundle(s))
+
+	r.Any("/reload", Reload(s))
+	r.Any("/notification", Notification(s))
+	r.Any("/restart", Restart(shutdown))
+	r.Any("/shutdown", Shutdown(shutdown))
 
 	history := r.Group("/history")
 	{

@@ -9,39 +9,38 @@ import (
 	"time"
 
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/gin-gonic/gin"
 
 	"github.com/elgatito/elementum/config"
-	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 )
 
-// DebugAll ...
-func DebugAll(s *Service) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func DebugAll(s *Service) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		w.Header().Set("Content-Type", "text/plain")
+		ctx.Writer.Header().Set("Content-Type", "text/plain")
 
-		writeHeader(w, "Torrent Client")
-		writeResponse(w, "/info")
+		writeHeader(ctx.Writer, "Torrent Client")
+		writeResponse(ctx.Writer, "/info")
 
-		writeHeader(w, "Debug Perf")
-		writeResponse(w, "/debug/perf")
+		writeHeader(ctx.Writer, "Debug Perf")
+		writeResponse(ctx.Writer, "/debug/perf")
 
-		writeHeader(w, "Debug LockTimes")
-		writeResponse(w, "/debug/lockTimes")
+		writeHeader(ctx.Writer, "Debug LockTimes")
+		writeResponse(ctx.Writer, "/debug/lockTimes")
 
-		writeHeader(w, "Debug Vars")
-		writeResponse(w, "/debug/vars")
-	})
+		writeHeader(ctx.Writer, "Debug Vars")
+		writeResponse(ctx.Writer, "/debug/vars")
+	}
 }
 
 // DebugBundle ...
-func DebugBundle(s *Service) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func DebugBundle(s *Service) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		xbmcHost, err := xbmc.GetXBMCHost(util.RequestUserIP(r))
+		xbmcHost, err := xbmc.GetXBMCHost(ctx.ClientIP())
 		if err != nil {
 			log.Infof("Could not find attached Kodi: %s", err)
 			return
@@ -57,24 +56,24 @@ func DebugBundle(s *Service) http.Handler {
 
 		now := time.Now()
 		fileName := fmt.Sprintf("bundle_%d_%d_%d_%d_%d.log", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute())
-		w.Header().Set("Content-Disposition", "attachment; filename="+fileName)
-		w.Header().Set("Content-Type", "text/plain")
+		ctx.Writer.Header().Set("Content-Disposition", "attachment; filename="+fileName)
+		ctx.Writer.Header().Set("Content-Type", "text/plain")
 
-		writeHeader(w, "Torrent Client")
-		writeResponse(w, "/info")
+		writeHeader(ctx.Writer, "Torrent Client")
+		writeResponse(ctx.Writer, "/info")
 
-		writeHeader(w, "Debug Perf")
-		writeResponse(w, "/debug/perf")
+		writeHeader(ctx.Writer, "Debug Perf")
+		writeResponse(ctx.Writer, "/debug/perf")
 
-		writeHeader(w, "Debug LockTimes")
-		writeResponse(w, "/debug/lockTimes")
+		writeHeader(ctx.Writer, "Debug LockTimes")
+		writeResponse(ctx.Writer, "/debug/lockTimes")
 
-		writeHeader(w, "Debug Vars")
-		writeResponse(w, "/debug/vars")
+		writeHeader(ctx.Writer, "Debug Vars")
+		writeResponse(ctx.Writer, "/debug/vars")
 
-		writeHeader(w, "kodi.log")
-		io.Copy(w, logFile)
-	})
+		writeHeader(ctx.Writer, "kodi.log")
+		io.Copy(ctx.Writer, logFile)
+	}
 }
 
 func writeHeader(w http.ResponseWriter, title string) {

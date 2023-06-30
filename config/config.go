@@ -296,8 +296,10 @@ var (
 		RemoteHost string `help:"Remote host IP or Hostname (Host with plugin.video.elementum running)"`
 		RemotePort int    `help:"Remote host Port (Host with plugin.video.elementum running)"`
 
-		LocalHost string `help:"Local host IP (IP that would be used for running Elementum HTTP server on a local host)"`
-		LocalPort int    `help:"Local host Port (Port that would be used for running Elementum HTTP server on a local host)"`
+		LocalHost     string `help:"Local host IP (IP that would be used for running Elementum HTTP server on a local host)"`
+		LocalPort     int    `help:"Local host Port (Port that would be used for running Elementum HTTP server on a local host)"`
+		LocalLogin    string `help:"Local host Login (To use for authentication from plugin.video.elementum calls)"`
+		LocalPassword string `help:"Local host Password (To use for authentication from plugin.video.elementum calls)"`
 
 		LogPath string `help:"Log location path"`
 
@@ -310,11 +312,8 @@ var (
 	}{
 		DisableBackup: false,
 
-		RemoteHost: "",
 		RemotePort: 65221,
-
-		LocalHost: "",
-		LocalPort: 65220,
+		LocalPort:  65220,
 	}
 )
 
@@ -336,6 +335,10 @@ func Reload() (ret *Configuration, err error) {
 		xbmcHost, err = xbmc.AddLocalXBMCHost(Args.RemoteHost)
 	} else {
 		xbmcHost, err = xbmc.GetLocalXBMCHost()
+	}
+
+	if Args.LocalLogin != "" || Args.LocalPassword != "" {
+		log.Infof("Setting authentication for remote connections to %s:%s (login:password)", Args.LocalLogin, Args.LocalPassword)
 	}
 
 	defer func() {
