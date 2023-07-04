@@ -304,7 +304,8 @@ var (
 		LogPath string `help:"Log location path"`
 
 		ConfigPath   string `help:"Custom path to Elementum config (Yaml or JSON format)"`
-		ProfilePath  string `help:"Custom path to addon files folder"`
+		AddonPath    string `help:"Custom path to addon folder (where Kodi stored files, coming with addon zip)"`
+		ProfilePath  string `help:"Custom path to addon files folder (where Elementum will write data)"`
 		LibraryPath  string `help:"Custom path to addon library folder"`
 		TorrentsPath string `help:"Custom path to addon downloads folder"`
 
@@ -370,6 +371,16 @@ func Reload() (ret *Configuration, err error) {
 		return nil, err
 	}
 
+	// Apply custom addon paths
+	if Args.AddonPath != "" {
+		log.Infof("Setting custom addon path to: %s", Args.AddonPath)
+		configBundle.Info.Path = Args.AddonPath
+	}
+	if Args.ProfilePath != "" {
+		log.Infof("Setting custom profile path to: %s", Args.ProfilePath)
+		configBundle.Info.Profile = Args.ProfilePath
+	}
+
 	if Args.ExportConfig != "" {
 		if err := exportConfig(Args.ExportConfig, configBundle); err != nil {
 			log.Errorf("Could not export current configuration: %s", err)
@@ -408,18 +419,14 @@ func Reload() (ret *Configuration, err error) {
 		log.Infof("Could not create temporary directory: %#v", err)
 	}
 
-	if platform.OS == "android" {
+	// For Android try to use legacy path, but only if specific path was not applied
+	if platform.OS == "android" && Args.ProfilePath == "" {
 		legacyPath := strings.Replace(info.Path, "/storage/emulated/0", "/storage/emulated/legacy", 1)
 		if _, err := os.Stat(legacyPath); err == nil {
 			info.Path = legacyPath
 			info.Profile = strings.Replace(info.Profile, "/storage/emulated/0", "/storage/emulated/legacy", 1)
 			log.Info("Using /storage/emulated/legacy path.")
 		}
-	}
-
-	// Apply custom Profile folder
-	if Args.ProfilePath != "" {
-		info.Profile = Args.ProfilePath
 	}
 
 	if !PathExists(info.Profile) {
