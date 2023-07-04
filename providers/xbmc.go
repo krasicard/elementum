@@ -380,7 +380,7 @@ func (as *AddonSearcher) GetEpisodeSearchObject(show *tmdb.Show, episode *tmdb.E
 func (as *AddonSearcher) call(method string, searchObject interface{}) []*bittorrent.TorrentFile {
 	torrents := make([]*bittorrent.TorrentFile, 0)
 	cid, c := GetCallback()
-	cbURL := fmt.Sprintf("%s/callbacks/%s", util.GetHTTPHost(), cid)
+	cbURL := fmt.Sprintf("%s/callbacks/%s", as.xbmcHost.Host, cid)
 
 	payload := &SearchPayload{
 		Method:       method,
