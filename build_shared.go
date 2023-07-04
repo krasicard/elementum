@@ -35,7 +35,7 @@ func initLog(arg string) {
 		}
 		defer logFile.Close()
 
-		os.Stdout.WriteString("Redirecting Stdout/Stderr\r\n")
+		os.Stdout.WriteString(fmt.Sprintf("Redirecting Stdout/Stderr to %s\r\n", logPath))
 		scanner := bufio.NewScanner(r)
 		for scanner.Scan() {
 			s := scanner.Text() + "\r\n"
@@ -53,9 +53,9 @@ func start() {
 }
 
 //export startWithLog
-func startWithLog(log string) int {
+func startWithLog(log *C.char) int {
 	initShared()
-	initLog(log)
+	initLog(C.GoString(log))
 
 	main()
 
@@ -63,21 +63,21 @@ func startWithLog(log string) int {
 }
 
 //export startWithArgs
-func startWithArgs(args string) int {
+func startWithArgs(args *C.char) int {
 	initShared()
 
-	exit.Args = args
+	exit.Args = C.GoString(args)
 	main()
 
 	return exit.Code
 }
 
 //export startWithLogAndArgs
-func startWithLogAndArgs(log, args string) int {
+func startWithLogAndArgs(log, args *C.char) int {
 	initShared()
-	initLog(log)
+	initLog(C.GoString(log))
 
-	exit.Args = args
+	exit.Args = C.GoString(args)
 	main()
 
 	return exit.Code
