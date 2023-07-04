@@ -444,7 +444,7 @@ func Reload() (ret *Configuration, err error) {
 		downloadStorage = 1
 	}
 
-	log.Noticef("Paths translated by Kodi: Download = %s , Library = %s , Torrents = %s , Storage = %d", downloadPath, libraryPath, torrentsPath, downloadStorage)
+	log.Noticef("Paths translated by Kodi: Download: %s , Library: %s , Torrents: %s , Profile: %s , Default Storage: %s", downloadPath, libraryPath, torrentsPath, info.Profile, Storages[downloadStorage])
 
 	// Apply custom Library/Torrents folders
 	if Args.LibraryPath != "" {

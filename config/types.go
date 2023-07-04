@@ -16,3 +16,11 @@ const (
 	JsonConfigFormat ConfigFormat = "json"
 	YamlConfigFormat ConfigFormat = "yaml"
 )
+
+var (
+	// Storages ...
+	Storages = []string{
+		"File",
+		"Memory",
+	}
+)

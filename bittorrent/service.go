@@ -400,7 +400,7 @@ func (s *Service) configure() {
 		settings.SetInt("alert_queue_size", 2500)
 	}
 
-	log.Infof("DownloadStorage: %s", Storages[s.config.DownloadStorage])
+	log.Infof("DownloadStorage: %s", config.Storages[s.config.DownloadStorage])
 	if s.IsMemoryStorage() {
 		needSize := s.config.BufferSize + int(s.config.EndBufferSize) + 8*1024*1024
 

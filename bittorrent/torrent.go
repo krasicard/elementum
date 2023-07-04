@@ -114,7 +114,7 @@ type Torrent struct {
 
 // NewTorrent ...
 func NewTorrent(service *Service, handle lt.TorrentHandle, info lt.TorrentInfo, path string, downloadStorage int) *Torrent {
-	log.Infof("Adding torrent with storage: %s", Storages[downloadStorage])
+	log.Infof("Adding torrent with storage: %s", config.Storages[downloadStorage])
 
 	ts := handle.Status()
 	defer lt.DeleteTorrentStatus(ts)

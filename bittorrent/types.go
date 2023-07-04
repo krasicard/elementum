@@ -23,14 +23,6 @@ const (
 	DownloadFileAll
 )
 
-var (
-	// Storages ...
-	Storages = []string{
-		"File",
-		"Memory",
-	}
-)
-
 const (
 	// StatusQueued ...
 	StatusQueued = iota
