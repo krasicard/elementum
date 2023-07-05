@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"fmt"
+	"strings"
 
 	"github.com/ElementumOrg/libtorrent-go"
 
@@ -23,6 +24,15 @@ func GetVersion() string {
 
 	// Return Dummy version if none provided by compiler
 	return "0.0.1"
+}
+
+// GetCleanVersion returns version, provided to compiler, but without possible commit information
+func GetCleanVersion() string {
+	v := GetVersion()
+	if strings.Contains(v, "-") {
+		return strings.Split(v, "-")[0]
+	}
+	return v
 }
 
 // GetTorrentVersion returns version of GoTorrent, provided to compiler
