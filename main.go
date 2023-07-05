@@ -49,7 +49,7 @@ func ensureSingleInstance(conf *config.Configuration) (lock *lockfile.LockFile, 
 		return
 	}
 
-	file := filepath.Join(conf.Info.Path, ".lockfile")
+	file := filepath.Join(conf.Info.Profile, ".lockfile")
 	lock, err = lockfile.New(file)
 	if err != nil {
 		log.Critical("Unable to initialize lockfile:", err)
@@ -90,7 +90,7 @@ func setupLogging() {
 	if config.Args.LogPath != "" {
 		logPath = config.Args.LogPath
 	}
-	if logPath != "" {
+	if logPath != "" && config.IsWritablePath(filepath.Base(logPath)) == nil {
 		backend = logging.NewLogBackend(&lumberjack.Logger{
 			Filename:   logPath,
 			MaxSize:    10, // Size in Megabytes
@@ -113,7 +113,11 @@ func main() {
 	if !exit.IsShared || exit.Args == "" {
 		tagflag.Parse(&config.Args)
 	} else {
-		tagflag.ParseArgs(&config.Args, strings.Fields(exit.Args))
+		if err := tagflag.ParseErr(&config.Args, strings.Fields(exit.Args)); err != nil {
+			fmt.Printf("Error parsing CLI arguments: %s", err)
+			exit.Exit(exit.ExitCodeError)
+			return
+		}
 	}
 
 	// Make sure we are properly multithreaded.
