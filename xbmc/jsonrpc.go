@@ -40,9 +40,10 @@ func Init() {
 		"::1",
 		"127.0.0.1",
 	} {
-		if _, err := net.DialTimeout("tcp", net.JoinHostPort(host, XBMCJSONRPCPort), time.Second*5); err == nil {
+		if conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, XBMCJSONRPCPort), time.Second*3); err == nil {
 			XBMCLocalHost = &XBMCHost{host}
 			XBMCHosts = append(XBMCHosts, XBMCLocalHost)
+			conn.Close()
 		}
 	}
 }
