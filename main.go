@@ -1,7 +1,8 @@
 package main
 
 import (
-	_ "github.com/anacrolix/envpprof"
+	"expvar"
+	"net/http/pprof"
 
 	"fmt"
 	"io/ioutil"
@@ -15,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
 	"github.com/anacrolix/tagflag"
 	"github.com/op/go-logging"
@@ -222,6 +224,22 @@ func main() {
 
 	// Make sure HTTP mux is empty
 	http.DefaultServeMux = new(http.ServeMux)
+
+	// Debug handlers
+	http.HandleFunc("/debug/pprof/", pprof.Index)
+	http.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	http.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	http.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	http.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	http.HandleFunc("/debug/perf", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+		perf.WriteEventsTable(w)
+	})
+	http.HandleFunc("/debug/lockTimes", func(w http.ResponseWriter, r *http.Request) {
+		sync.PrintLockTimes(w)
+	})
+	http.Handle("/debug/vars", expvar.Handler())
+
 	http.Handle("/", api.Routes(s, shutdown))
 
 	http.Handle("/files/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -31,6 +31,9 @@ func DebugAll(s *Service) gin.HandlerFunc {
 		writeHeader(ctx.Writer, "Debug LockTimes")
 		writeResponse(ctx.Writer, "/debug/lockTimes")
 
+		writeHeader(ctx.Writer, "Debug GoRoutines")
+		writeResponse(ctx.Writer, "/debug/pprof/goroutine?debug=1")
+
 		writeHeader(ctx.Writer, "Debug Vars")
 		writeResponse(ctx.Writer, "/debug/vars")
 	}
@@ -68,6 +71,9 @@ func DebugBundle(s *Service) gin.HandlerFunc {
 
 		writeHeader(ctx.Writer, "Debug LockTimes")
 		writeResponse(ctx.Writer, "/debug/lockTimes")
+
+		writeHeader(ctx.Writer, "Debug GoRoutines")
+		writeResponse(ctx.Writer, "/debug/pprof/goroutine?debug=1")
 
 		writeHeader(ctx.Writer, "Debug Vars")
 		writeResponse(ctx.Writer, "/debug/vars")
