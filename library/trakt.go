@@ -25,7 +25,8 @@ var (
 // to see if we need to add movies/set watched status and so on
 func RefreshTrakt() error {
 	xbmcHost, err := xbmc.GetLocalXBMCHost()
-	if xbmcHost == nil || err == nil {
+	if xbmcHost == nil || err != nil {
+		log.Debugf("Stopping Trakt refresh due to missing XBMC host")
 		return err
 	}
 

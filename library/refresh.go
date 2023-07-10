@@ -156,7 +156,7 @@ func RefreshMovies() error {
 // RefreshShows updates shows in the library
 func RefreshShows() error {
 	xbmcHost, err := xbmc.GetLocalXBMCHost()
-	if xbmcHost == nil || err == nil {
+	if xbmcHost == nil || err != nil {
 		return err
 	}
 
@@ -267,7 +267,7 @@ func RefreshShows() error {
 // RefreshSeasons updates seasons list for selected show in the library
 func RefreshSeasons() error {
 	xbmcHost, err := xbmc.GetLocalXBMCHost()
-	if xbmcHost == nil || err == nil {
+	if xbmcHost == nil || err != nil {
 		return err
 	}
 
@@ -337,7 +337,7 @@ func RefreshEpisodes() error {
 	}()
 
 	xbmcHost, err := xbmc.GetLocalXBMCHost()
-	if xbmcHost == nil || err == nil {
+	if xbmcHost == nil || err != nil {
 		return err
 	}
 
