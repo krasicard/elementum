@@ -44,6 +44,9 @@ func Init() {
 			XBMCLocalHost = &XBMCHost{host}
 			XBMCHosts = append(XBMCHosts, XBMCLocalHost)
 			conn.Close()
+			log.Debugf("Adding local host %s", host)
+		} else {
+			log.Debugf("Could not connect to the host %s: %s", host, err)
 		}
 	}
 }

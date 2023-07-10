@@ -42,6 +42,14 @@ func LocalIP() (net.IP, error) {
 	return nil, errors.New("cannot find local IP address")
 }
 
+func GetLocalHost() string {
+	if config.Args.LocalHost != "" {
+		return config.Args.LocalHost
+	} else {
+		return "127.0.0.1"
+	}
+}
+
 // GetHTTPHost ...
 func GetHTTPHost() string {
 	// We should always use local IP, instead of external one, if possible
