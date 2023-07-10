@@ -16,10 +16,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/anacrolix/sync"
 	"github.com/cespare/xxhash"
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"

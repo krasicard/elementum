@@ -11,18 +11,18 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/xbmc"
-	"gopkg.in/yaml.v3"
 
+	"github.com/anacrolix/sync"
 	"github.com/dustin/go-humanize"
 	"github.com/op/go-logging"
 	"github.com/pbnjay/memory"
 	"github.com/sanity-io/litter"
 	"github.com/spf13/cast"
+	"gopkg.in/yaml.v3"
 )
 
 var log = logging.MustGetLogger("config")

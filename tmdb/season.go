@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
@@ -14,6 +13,8 @@ import (
 	"github.com/elgatito/elementum/library/uid"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
+
+	"github.com/anacrolix/sync"
 	"github.com/jmcvetta/napping"
 )
 

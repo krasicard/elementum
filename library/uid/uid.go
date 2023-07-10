@@ -1,9 +1,9 @@
 package uid
 
 import (
-	"sync"
 	"time"
 
+	"github.com/anacrolix/sync"
 	"github.com/elgatito/elementum/xbmc"
 	"github.com/op/go-logging"
 )

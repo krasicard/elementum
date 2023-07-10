@@ -5,9 +5,9 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/anacrolix/sync"
 	"github.com/op/go-logging"
 	"github.com/zeebo/bencode"
 

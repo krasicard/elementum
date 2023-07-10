@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"strconv"
-	"sync"
 	"time"
 
+	"github.com/anacrolix/sync"
 	"github.com/klauspost/compress/gzip"
 	"github.com/vmihailenco/msgpack"
 

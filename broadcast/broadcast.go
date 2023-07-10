@@ -10,7 +10,7 @@
 package broadcast
 
 import (
-	"sync"
+	"github.com/anacrolix/sync"
 )
 
 // message contains a snapshot of a value.

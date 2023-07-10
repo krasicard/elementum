@@ -14,7 +14,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 	"unsafe"
 
@@ -22,6 +21,7 @@ import (
 	"github.com/RoaringBitmap/roaring"
 	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/missinggo/slices"
+	"github.com/anacrolix/sync"
 	"github.com/dustin/go-humanize"
 	"github.com/fatih/color"
 	"github.com/valyala/bytebufferpool"

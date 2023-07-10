@@ -13,11 +13,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	lt "github.com/ElementumOrg/libtorrent-go"
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/anacrolix/sync"
 	"github.com/cespare/xxhash"
 	"github.com/dustin/go-humanize"
 	"github.com/sanity-io/litter"

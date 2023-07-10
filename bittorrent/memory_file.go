@@ -4,11 +4,12 @@ import (
 	"errors"
 	"io"
 	"os"
-	"sync"
 	"time"
 
 	lt "github.com/ElementumOrg/libtorrent-go"
+
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/anacrolix/sync"
 )
 
 type pieceRange struct {

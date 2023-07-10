@@ -2,8 +2,8 @@ package playcount
 
 import (
 	"fmt"
-	"sync"
 
+	"github.com/anacrolix/sync"
 	"github.com/cespare/xxhash"
 )
 

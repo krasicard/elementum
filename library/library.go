@@ -10,10 +10,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/anacrolix/sync"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/q"
 	"github.com/op/go-logging"

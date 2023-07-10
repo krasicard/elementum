@@ -12,7 +12,8 @@ import (
 	"io"
 	"net"
 	"net/rpc"
-	"sync"
+
+	"github.com/anacrolix/sync"
 )
 
 type clientCodec struct {

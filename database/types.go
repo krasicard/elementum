@@ -2,9 +2,9 @@ package database
 
 import (
 	"database/sql"
-	"sync"
 	"time"
 
+	"github.com/anacrolix/sync"
 	"github.com/asdine/storm"
 	"github.com/op/go-logging"
 	bolt "go.etcd.io/bbolt"

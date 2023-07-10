@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/elgatito/elementum/cache"
@@ -16,6 +15,8 @@ import (
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
+
+	"github.com/anacrolix/sync"
 	"github.com/jmcvetta/napping"
 )
 

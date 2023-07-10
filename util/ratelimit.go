@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 
+	"github.com/anacrolix/sync"
 	"github.com/op/go-logging"
 )
 

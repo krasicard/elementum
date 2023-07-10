@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/elgatito/elementum/jsonrpc"
+
+	"github.com/anacrolix/sync"
 )
 
 // Args ...

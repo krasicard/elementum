@@ -7,8 +7,9 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/anacrolix/sync"
 
 	"github.com/elgatito/elementum/bittorrent"
 	"github.com/elgatito/elementum/config"

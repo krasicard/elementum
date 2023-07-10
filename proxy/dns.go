@@ -3,9 +3,9 @@ package proxy
 import (
 	"context"
 	"strings"
-	"sync"
 
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/anacrolix/sync"
 	"github.com/bogdanovich/dns_resolver"
 	"github.com/likexian/doh-go"
 	"github.com/likexian/doh-go/dns"

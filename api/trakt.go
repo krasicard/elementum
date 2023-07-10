@@ -5,10 +5,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/anacrolix/sync"
 	"github.com/gin-gonic/gin"
 
 	"github.com/elgatito/elementum/cache"

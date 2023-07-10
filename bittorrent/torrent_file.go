@@ -15,8 +15,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 
+	"github.com/anacrolix/sync"
 	"github.com/dustin/go-humanize"
 	"github.com/op/go-logging"
 	"github.com/valyala/bytebufferpool"

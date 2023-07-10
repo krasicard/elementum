@@ -1,6 +1,6 @@
 package event
 
-import "sync"
+import "github.com/anacrolix/sync"
 
 //
 // Taken from missinggo.Event
