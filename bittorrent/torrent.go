@@ -2177,7 +2177,7 @@ func (t *Torrent) TorrentInfo(xbmcHost *xbmc.XBMCHost, w io.Writer, showTrackers
 
 // IsMemoryStorage is a shortcut for checking whether we run memory storage
 func (t *Torrent) IsMemoryStorage() bool {
-	return t.DownloadStorage == StorageMemory
+	return t.DownloadStorage == config.StorageMemory
 }
 
 // AlertFinished sends notification to user that this torrent is successfully downloaded

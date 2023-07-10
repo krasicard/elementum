@@ -448,7 +448,7 @@ func Reload() (ret *Configuration, err error) {
 	torrentsPath := TranslatePath(xbmcHost, settings.ToString("torrents_path"))
 	downloadStorage := settings.ToInt("download_storage")
 	if downloadStorage > 1 {
-		downloadStorage = 1
+		downloadStorage = StorageMemory
 	}
 
 	log.Noticef("Paths translated by Kodi: Download: %s , Library: %s , Torrents: %s , Profile: %s , Default Storage: %s", downloadPath, libraryPath, torrentsPath, info.Profile, Storages[downloadStorage])
@@ -461,7 +461,7 @@ func Reload() (ret *Configuration, err error) {
 		torrentsPath = Args.TorrentsPath
 	}
 
-	if downloadStorage != 1 {
+	if downloadStorage != StorageMemory {
 		if downloadPath == "." {
 			err = fmt.Errorf("Can't continue because download path is empty")
 			settingsWarning = "LOCALIZE[30113]"
@@ -735,12 +735,12 @@ func Reload() (ret *Configuration, err error) {
 
 	// Fallback for old configuration with additional storage variants
 	if newConfig.DownloadStorage > 1 {
-		newConfig.DownloadStorage = 1
+		newConfig.DownloadStorage = StorageMemory
 	}
 
 	// For memory storage we are changing configuration
 	// 	to stop downloading after playback has stopped and so on
-	if newConfig.DownloadStorage == 1 {
+	if newConfig.DownloadStorage == StorageMemory {
 		// TODO: Do we need this?
 		// newConfig.SeedTimeLimit = 24 * 60 * 60
 		// newConfig.SeedTimeRatioLimit = 10000

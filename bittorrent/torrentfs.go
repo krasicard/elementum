@@ -1,6 +1,7 @@
 package bittorrent
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	lt "github.com/ElementumOrg/libtorrent-go"
 	"github.com/anacrolix/missinggo/perf"
 
+	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/database"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/util/event"
@@ -143,7 +145,7 @@ func (tf *TorrentFSEntry) consumeAlerts() {
 		switch alert.Type {
 		case lt.TorrentRemovedAlertAlertType:
 			removedAlert := lt.SwigcptrTorrentAlert(alert.Pointer)
-			if tf.t.Closer.IsSet() || removedAlert.GetHandle().Equal(tf.t.th) {
+			if tf.t.Closer.IsSet() || hex.EncodeToString([]byte(removedAlert.GetHandle().InfoHash().ToString())) == tf.t.infoHash {
 				tf.removed.Set()
 				return
 			}
@@ -199,7 +201,7 @@ func (tf *TorrentFSEntry) Read(data []byte) (n int, err error) {
 		b := data[pos : pos+size]
 		n1 := 0
 
-		if tf.storageType == StorageMemory {
+		if tf.storageType == config.StorageMemory {
 			n1, err = tf.File.(*MemoryFile).ReadPiece(b, piece, pieceOffset)
 		} else {
 			n1, err = tf.File.Read(b)

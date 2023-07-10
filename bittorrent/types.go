@@ -8,13 +8,6 @@ const (
 )
 
 const (
-	// StorageFile ...
-	StorageFile int = iota
-	// StorageMemory ...
-	StorageMemory
-)
-
-const (
 	// DownloadFilePlaying ...
 	DownloadFilePlaying int = iota
 	// DownloadFileSeason ...

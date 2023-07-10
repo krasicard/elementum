@@ -17,6 +17,13 @@ const (
 	YamlConfigFormat ConfigFormat = "yaml"
 )
 
+const (
+	// StorageFile ...
+	StorageFile int = iota
+	// StorageMemory ...
+	StorageMemory
+)
+
 var (
 	// Storages ...
 	Storages = []string{

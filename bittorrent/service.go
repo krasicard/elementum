@@ -108,14 +108,14 @@ func NewService() *Service {
 	}
 
 	s.wg.Add(4)
-	go s.alertsConsumer()
+	go s.onAlertsConsumer()
 	go s.logAlerts()
 
 	go s.startServices()
 
 	go s.watchConfig()
-	go s.saveResumeDataConsumer()
-	go s.saveResumeDataLoop()
+	go s.onSaveResumeDataConsumer()
+	go s.onSaveResumeDataWriter()
 
 	go tmdb.CheckAPIKey()
 
@@ -123,7 +123,7 @@ func NewService() *Service {
 		UpdateDefaultTrackers()
 		s.loadTorrentFiles()
 	}()
-	go s.downloadProgress()
+	go s.onDownloadProgress()
 
 	return s
 }
@@ -138,7 +138,7 @@ func (s *Service) Close(isShutdown bool) {
 	s.isShutdown = isShutdown
 	s.Closer.Set()
 
-	log.Info("Stopping BT Services...")
+	log.Info("Stopping Libtorrent Services...")
 	s.stopServices()
 
 	log.Info("Stopping Libtorrent session...")
@@ -159,6 +159,8 @@ func (s *Service) CloseSession() {
 	}()
 
 	log.Info("Closing Session")
+	// TODO: Do we need to call this?
+	// s.SessionGlobal.Abort()
 	if err := lt.DeleteSession(s.SessionGlobal); err != nil {
 		log.Errorf("Could not delete libtorrent session: %s", err)
 	}
@@ -661,7 +663,7 @@ func (s *Service) AddTorrent(xbmcHost *xbmc.XBMCHost, uri string, paused bool, d
 
 	log.Infof("Adding torrent from %s", uri)
 
-	if downloadStorage != StorageMemory && s.config.DownloadPath == "." {
+	if downloadStorage != config.StorageMemory && s.config.DownloadPath == "." {
 		log.Warningf("Cannot add torrent since download path is not set")
 		if xbmcHost != nil {
 			xbmcHost.Notify("Elementum", "LOCALIZE[30113]", config.AddonIcon())
@@ -672,7 +674,7 @@ func (s *Service) AddTorrent(xbmcHost *xbmc.XBMCHost, uri string, paused bool, d
 	torrentParams := lt.NewAddTorrentParams()
 	defer lt.DeleteAddTorrentParams(torrentParams)
 
-	if downloadStorage == StorageMemory {
+	if downloadStorage == config.StorageMemory {
 		torrentParams.SetMemoryStorage(s.GetMemorySize())
 	}
 
@@ -754,7 +756,7 @@ func (s *Service) AddTorrent(xbmcHost *xbmc.XBMCHost, uri string, paused bool, d
 	torrentParams.SetSavePath(s.config.DownloadPath)
 
 	skipPriorities := false
-	if downloadStorage != StorageMemory {
+	if downloadStorage != config.StorageMemory {
 		log.Infof("Checking for fast resume data in %s.fastresume", infoHash)
 		fastResumeFile := filepath.Join(s.config.TorrentsPath, fmt.Sprintf("%s.fastresume", infoHash))
 		if _, err := os.Stat(fastResumeFile); err == nil {
@@ -836,13 +838,13 @@ func (s *Service) AddTorrent(xbmcHost *xbmc.XBMCHost, uri string, paused bool, d
 		log.Debugf("After modifications loaded torrent has %d trackers", th.Trackers().Size())
 	}
 
-	log.Infof("Setting sequential download to: %v", downloadStorage != StorageMemory)
-	th.SetSequentialDownload(downloadStorage != StorageMemory)
+	log.Infof("Setting sequential download to: %v", downloadStorage != config.StorageMemory)
+	th.SetSequentialDownload(downloadStorage != config.StorageMemory)
 
 	log.Infof("Adding new torrent item with url: %s", uri)
 	t := NewTorrent(s, th, th.TorrentFile(), uri, downloadStorage)
 
-	if downloadStorage == StorageMemory {
+	if downloadStorage == config.StorageMemory {
 		t.MemorySize = s.GetMemorySize()
 	}
 
@@ -959,7 +961,7 @@ func (s *Service) GetTorrentByURI(uri string) *Torrent {
 	return s.q.FindByURI(uri)
 }
 
-func (s *Service) saveResumeDataLoop() {
+func (s *Service) onSaveResumeDataWriter() {
 	defer s.wg.Done()
 
 	saveResumeWait := time.NewTicker(time.Duration(s.config.SessionSave) * time.Second)
@@ -969,7 +971,7 @@ func (s *Service) saveResumeDataLoop() {
 	for {
 		select {
 		case <-closing:
-			log.Info("Closing ...")
+			log.Info("Closing resume data loop...")
 			return
 		case <-saveResumeWait.C:
 			for _, t := range s.q.All() {
@@ -988,7 +990,7 @@ func (s *Service) saveResumeDataLoop() {
 	}
 }
 
-func (s *Service) saveResumeDataConsumer() {
+func (s *Service) onSaveResumeDataConsumer() {
 	defer s.wg.Done()
 
 	alerts, alertsDone := s.Alerts()
@@ -998,7 +1000,7 @@ func (s *Service) saveResumeDataConsumer() {
 	for {
 		select {
 		case <-closing:
-			log.Info("Closing ...")
+			log.Info("Closing resume data consumer ...")
 			return
 		case alert, ok := <-alerts:
 			if !ok { // was the alerts channel closed?
@@ -1026,7 +1028,7 @@ func (s *Service) saveResumeDataConsumer() {
 	}
 }
 
-func (s *Service) alertsConsumer() {
+func (s *Service) onAlertsConsumer() {
 	defer s.wg.Done()
 
 	closing := s.Closer.C()
@@ -1038,7 +1040,7 @@ func (s *Service) alertsConsumer() {
 	for {
 		select {
 		case <-closing:
-			log.Info("Closing all alert channels...")
+			log.Info("Closing alert consumer ...")
 
 			return
 		default:
@@ -1147,7 +1149,10 @@ func (s *Service) logAlerts() {
 			alert.Category&int(lt.UdpErrorAlertAlertType) != 0 ||
 			alert.Category&int(lt.AlertBlockProgressNotification) != 0 ||
 			alert.Category&int(lt.TrackerReplyAlertAlertType) != 0 ||
-			alert.Category&int(lt.DhtReplyAlertAlertType) != 0 {
+			alert.Category&int(lt.DhtReplyAlertAlertType) != 0 ||
+			alert.Category&int(lt.StateChangedAlertAlertType) != 0 ||
+			alert.Category&int(lt.TorrentFinishedAlertAlertType) != 0 ||
+			alert.Category&int(lt.DhtLogAlertStaticCategory) != 0 {
 			continue
 		} else if alert.Category&int(lt.AlertErrorNotification) != 0 {
 			log.Errorf("%s: %s", alert.What, alert.Message)
@@ -1156,9 +1161,7 @@ func (s *Service) logAlerts() {
 		} else if alert.Category&int(lt.AlertPerformanceWarning) != 0 {
 			log.Warningf("%s: %s", alert.What, alert.Message)
 		} else {
-			if alert.What != "state_changed_alert" && alert.What != "torrent_finished_alert" {
-				log.Noticef("%s: %s", alert.What, alert.Message)
-			}
+			log.Noticef("%s: %s", alert.What, alert.Message)
 		}
 	}
 }
@@ -1201,7 +1204,7 @@ func (s *Service) loadTorrentFiles() {
 		filePath := filepath.Join(s.config.TorrentsPath, torrentFile.Name())
 		log.Infof("Loading torrent file %s", torrentFile.Name())
 
-		t, err := s.AddTorrent(xbmcHost, filePath, s.config.AutoloadTorrentsPaused, StorageFile, false, torrentFile.ModTime())
+		t, err := s.AddTorrent(xbmcHost, filePath, s.config.AutoloadTorrentsPaused, config.StorageFile, false, torrentFile.ModTime())
 		if err != nil {
 			log.Warningf("Cannot add torrent from existing file %s: %s", filePath, err)
 			continue
@@ -1254,7 +1257,7 @@ func (s *Service) cleanStaleFiles(dir string, ext string) {
 	}
 }
 
-func (s *Service) downloadProgress() {
+func (s *Service) onDownloadProgress() {
 	defer s.wg.Done()
 
 	closing := s.Closer.C()
@@ -1270,7 +1273,7 @@ func (s *Service) downloadProgress() {
 	for {
 		select {
 		case <-closing:
-			log.Info("Closing ...")
+			log.Info("Closing download progress ...")
 			return
 
 		case <-rotateTicker.C:
@@ -1921,7 +1924,7 @@ func (s *Service) GetMemoryStats() (int64, int64) {
 
 // IsMemoryStorage is a shortcut for checking whether we run memory storage
 func (s *Service) IsMemoryStorage() bool {
-	return s.config.DownloadStorage == StorageMemory
+	return s.config.DownloadStorage == config.StorageMemory
 }
 
 // watchConfig watches for libtorrent.config changes to reapply libtorrent settings

@@ -194,7 +194,7 @@ func (btp *Player) addTorrent() error {
 	if btp.t == nil {
 		storage := config.Get().DownloadStorage
 		if btp.p.Background {
-			storage = StorageFile
+			storage = config.StorageFile
 		}
 
 		torrent, err := btp.s.AddTorrent(btp.xbmcHost, btp.p.URI, false, storage, true, time.Now())
