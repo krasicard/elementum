@@ -4,9 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/elgatito/elementum/bittorrent"
@@ -50,15 +48,6 @@ func Notification(s *bittorrent.Service) gin.HandlerFunc {
 				exit.Closer.Set()
 				return
 			}
-
-			log.Infof("Sending SIGHUP signal to shutdown Elementum properly")
-			p, err := os.FindProcess(os.Getpid())
-
-			if err != nil {
-				return
-			}
-
-			p.Signal(syscall.SIGHUP)
 
 		case "Playlist.OnAdd":
 			p := s.GetActivePlayer()
