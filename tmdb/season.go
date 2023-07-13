@@ -115,7 +115,7 @@ func (seasons SeasonList) ToListItems(show *Show) []*xbmc.ListItem {
 			continue
 		}
 
-		if config.Get().ShowUnairedSeasons == false {
+		if !config.Get().ShowUnairedSeasons {
 			if _, isExpired := util.AirDateWithExpireCheck(season.AirDate, config.Get().ShowEpisodesOnReleaseDay); isExpired {
 				continue
 			}

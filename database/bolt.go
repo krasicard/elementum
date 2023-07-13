@@ -254,7 +254,7 @@ func CreateBackup(db *bolt.DB, backupPath string) {
 	if config.Args.DisableBackup {
 		return
 	}
-	if stat, err := os.Stat(backupPath); err == nil && time.Now().Sub(stat.ModTime()) < backupPeriod {
+	if stat, err := os.Stat(backupPath); err == nil && time.Since(stat.ModTime()) < backupPeriod {
 		log.Infof("Skipping backup due to newer modification date of %s", backupPath)
 		return
 	}

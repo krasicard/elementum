@@ -16,7 +16,6 @@ import (
 
 	lt "github.com/ElementumOrg/libtorrent-go"
 	"github.com/anacrolix/missinggo/perf"
-	"github.com/anacrolix/sync"
 	"github.com/cespare/xxhash"
 	"github.com/dustin/go-humanize"
 	"github.com/sanity-io/litter"
@@ -24,7 +23,6 @@ import (
 	"github.com/elgatito/elementum/broadcast"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/database"
-	"github.com/elgatito/elementum/diskusage"
 	"github.com/elgatito/elementum/library/playcount"
 	"github.com/elgatito/elementum/library/uid"
 	"github.com/elgatito/elementum/osdb"
@@ -59,32 +57,28 @@ const (
 
 // Player ...
 type Player struct {
-	s                        *Service
-	t                        *Torrent
-	p                        *PlayerParams
-	xbmcHost                 *xbmc.XBMCHost
-	dialogProgress           *xbmc.DialogProgress
-	overlayStatus            *xbmc.OverlayStatus
-	next                     NextEpisode
-	contentType              string
-	scrobble                 bool
-	overlayStatusEnabled     bool
-	chosenFile               *File
-	subtitlesFile            *File
-	subtitlesLoaded          []string
-	fileSize                 int64
-	fileName                 string
-	extracted                string
-	hasChosenFile            bool
-	isDownloading            bool
-	notEnoughSpace           bool
-	bufferEvents             *broadcast.Broadcaster
-	bufferPiecesProgress     map[int]float64
-	bufferPiecesProgressLock sync.RWMutex
+	s                    *Service
+	t                    *Torrent
+	p                    *PlayerParams
+	xbmcHost             *xbmc.XBMCHost
+	dialogProgress       *xbmc.DialogProgress
+	overlayStatus        *xbmc.OverlayStatus
+	next                 NextEpisode
+	scrobble             bool
+	overlayStatusEnabled bool
+	chosenFile           *File
+	subtitlesFile        *File
+	subtitlesLoaded      []string
+	fileSize             int64
+	fileName             string
+	extracted            string
+	hasChosenFile        bool
+	isDownloading        bool
+	notEnoughSpace       bool
+	bufferEvents         *broadcast.Broadcaster
 
-	diskStatus *diskusage.DiskStatus
-	closer     event.Event
-	closed     bool
+	closer event.Event
+	closed bool
 }
 
 // PlayerParams ...
@@ -154,8 +148,8 @@ func NewPlayer(bts *Service, params PlayerParams) *Player {
 		p:        &params,
 		xbmcHost: xbmcHost,
 
-		overlayStatusEnabled: config.Get().EnableOverlayStatus == true,
-		scrobble:             config.Get().Scrobble == true && params.TMDBId > 0 && config.Get().TraktToken != "",
+		overlayStatusEnabled: config.Get().EnableOverlayStatus,
+		scrobble:             config.Get().Scrobble && params.TMDBId > 0 && config.Get().TraktToken != "",
 		hasChosenFile:        false,
 		fileSize:             0,
 		fileName:             "",
@@ -304,18 +298,14 @@ func (btp *Player) waitCheckAvailableSpace() {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			if btp.hasChosenFile {
-				if !btp.s.checkAvailableSpace(btp.xbmcHost, btp.t) {
-					btp.bufferEvents.Broadcast(errors.New("Not enough space on download destination"))
-					btp.notEnoughSpace = true
-				}
-
-				return
-			}
+	<-ticker.C
+	if btp.hasChosenFile {
+		if !btp.s.checkAvailableSpace(btp.xbmcHost, btp.t) {
+			btp.bufferEvents.Broadcast(errors.New("Not enough space on download destination"))
+			btp.notEnoughSpace = true
 		}
+
+		return
 	}
 }
 
@@ -762,57 +752,55 @@ playbackWaitLoop:
 
 playbackLoop:
 	for {
-		if btp.p.Background || btp.xbmcHost == nil || btp.xbmcHost.PlayerIsPlaying() == false {
+		if btp.p.Background || btp.xbmcHost == nil || !btp.xbmcHost.PlayerIsPlaying() {
 			btp.t.IsPlaying = false
 			break playbackLoop
 		}
-		select {
-		case <-oneSecond.C:
-			btp.updateWatchTimes()
+		<-oneSecond.C
+		btp.updateWatchTimes()
 
-			// Trigger UpNext notification if Player is done with initialization
-			if btp.p.VideoDuration > 0 && !btp.p.UpNextSent {
-				go btp.processUpNextPayload()
+		// Trigger UpNext notification if Player is done with initialization
+		if btp.p.VideoDuration > 0 && !btp.p.UpNextSent {
+			go btp.processUpNextPayload()
+		}
+
+		if btp.p.Seeked {
+			btp.p.Seeked = false
+			if btp.scrobble {
+				go trakt.Scrobble("start", btp.p.ContentType, btp.p.TMDBId, btp.p.WatchedTime, btp.p.VideoDuration)
+			}
+		} else if btp.xbmcHost == nil || btp.xbmcHost.PlayerIsPaused() {
+			if btp.overlayStatusEnabled && btp.p.Playing {
+				progress := btp.t.GetProgress()
+				line1, line2, line3 := btp.statusStrings(progress, btp.t.GetLastStatus(false))
+				btp.overlayStatus.Update(int(progress), line1, line2, line3)
+				if !overlayStatusActive {
+					btp.overlayStatus.Show()
+					overlayStatusActive = true
+				}
 			}
 
-			if btp.p.Seeked {
-				btp.p.Seeked = false
+			if playing {
+				playing = false
+				if btp.scrobble {
+					go trakt.Scrobble("pause", btp.p.ContentType, btp.p.TMDBId, btp.p.WatchedTime, btp.p.VideoDuration)
+				}
+			}
+		} else {
+			if overlayStatusActive {
+				btp.overlayStatus.Hide()
+				overlayStatusActive = false
+			}
+			if !playing {
+				playing = true
 				if btp.scrobble {
 					go trakt.Scrobble("start", btp.p.ContentType, btp.p.TMDBId, btp.p.WatchedTime, btp.p.VideoDuration)
 				}
-			} else if btp.xbmcHost == nil || btp.xbmcHost.PlayerIsPaused() {
-				if btp.overlayStatusEnabled && btp.p.Playing {
-					progress := btp.t.GetProgress()
-					line1, line2, line3 := btp.statusStrings(progress, btp.t.GetLastStatus(false))
-					btp.overlayStatus.Update(int(progress), line1, line2, line3)
-					if overlayStatusActive == false {
-						btp.overlayStatus.Show()
-						overlayStatusActive = true
-					}
-				}
-
-				if playing == true {
-					playing = false
-					if btp.scrobble {
-						go trakt.Scrobble("pause", btp.p.ContentType, btp.p.TMDBId, btp.p.WatchedTime, btp.p.VideoDuration)
-					}
-				}
-			} else {
-				if overlayStatusActive == true {
-					btp.overlayStatus.Hide()
-					overlayStatusActive = false
-				}
-				if playing == false {
-					playing = true
-					if btp.scrobble {
-						go trakt.Scrobble("start", btp.p.ContentType, btp.p.TMDBId, btp.p.WatchedTime, btp.p.VideoDuration)
-					}
-				}
 			}
+		}
 
-			if btp.next.f != nil && !btp.next.started && btp.isReadyForNextFile() {
-				btp.startNextFile()
-			}
+		if btp.next.f != nil && !btp.next.started && btp.isReadyForNextFile() {
+			btp.startNextFile()
 		}
 	}
 
@@ -1011,7 +999,7 @@ func (btp *Player) GetIdent() {
 func (btp *Player) setRateLimiting(enable bool) {
 	if btp.s.config.LimitAfterBuffering {
 		settings := btp.s.PackSettings
-		if enable == true {
+		if enable {
 			if btp.s.config.DownloadRateLimit > 0 {
 				log.Infof("Buffer filled, rate limiting download to %s", humanize.Bytes(uint64(btp.s.config.DownloadRateLimit)))
 				settings.SetInt("download_rate_limit", btp.s.config.UploadRateLimit)

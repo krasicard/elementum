@@ -581,12 +581,12 @@ func writeShowStrm(showID int, adding, force bool) (*tmdb.Show, error) {
 		if season.EpisodeCount == 0 {
 			continue
 		}
-		if config.Get().ShowUnairedSeasons == false {
+		if !config.Get().ShowUnairedSeasons {
 			if _, isExpired := util.AirDateWithExpireCheck(show.FirstAirDate, config.Get().ShowEpisodesOnReleaseDay); isExpired {
 				continue
 			}
 		}
-		if addSpecials == false && season.Season == 0 {
+		if !addSpecials && season.Season == 0 {
 			continue
 		}
 
@@ -602,7 +602,7 @@ func writeShowStrm(showID int, adding, force bool) (*tmdb.Show, error) {
 				continue
 			}
 
-			if config.Get().ShowUnairedEpisodes == false {
+			if !config.Get().ShowUnairedEpisodes {
 				if episode.AirDate == "" {
 					continue
 				}
@@ -1309,7 +1309,9 @@ func getShowPath(show *tmdb.Show) (showPath, showStrm string) {
 	}
 
 	showStrm = util.ToFileName(fmt.Sprintf("%s (%s)", showName, strings.Split(show.FirstAirDate, "-")[0]))
-	showPath = filepath.Join(ShowsLibraryPath(), showStrm)
+	if showPath == "" {
+		showPath = filepath.Join(ShowsLibraryPath(), showStrm)
+	}
 
 	return
 }

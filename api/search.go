@@ -179,7 +179,6 @@ func searchHistoryAppend(ctx *gin.Context, historyType string, query string) {
 
 	go xbmcHost.UpdatePath(searchHistoryGetXbmcURL(historyType, query))
 	ctx.String(200, "")
-	return
 }
 
 func searchHistoryList(ctx *gin.Context, historyType string) {
@@ -250,7 +249,6 @@ func SearchRemove(ctx *gin.Context) {
 	xbmcHost.Refresh()
 
 	ctx.String(200, "")
-	return
 }
 
 // SearchClear ...
@@ -266,7 +264,6 @@ func SearchClear(ctx *gin.Context) {
 	xbmcHost.Refresh()
 
 	ctx.String(200, "")
-	return
 }
 
 func searchHistoryGetXbmcURL(historyType string, query string) string {

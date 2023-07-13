@@ -31,12 +31,6 @@ const (
 	multiType = "\nmulti"
 )
 
-var (
-	libraryPath       string
-	moviesLibraryPath string
-	showsLibraryPath  string
-)
-
 // AddMovie ...
 func AddMovie(ctx *gin.Context) {
 	defer perf.ScopeTimer()()

@@ -46,7 +46,7 @@ func GetShowImages(showID int) *Images {
 			Description: "show images",
 		})
 
-		if images != nil {
+		if err == nil && images != nil {
 			cacheStore.Set(key, images, cache.TMDBShowImagesExpire)
 		}
 	}
@@ -69,7 +69,7 @@ func GetSeasonImages(showID int, season int) *Images {
 			Description: "season images",
 		})
 
-		if images != nil {
+		if err == nil && images != nil {
 			cacheStore.Set(key, images, cache.TMDBSeasonImagesExpire)
 		}
 	}
@@ -92,7 +92,7 @@ func GetEpisodeImages(showID, season, episode int) *Images {
 			Description: "season images",
 		})
 
-		if images != nil {
+		if err == nil && images != nil {
 			cacheStore.Set(key, images, cache.TMDBEpisodeImagesExpire)
 		}
 	}
@@ -420,7 +420,7 @@ func GetTVGenres(language string) []*Genre {
 
 		// That is a special case, when language in on TMDB, but it results empty names.
 		//   example of this: Catalan language.
-		if genres.Genres != nil && len(genres.Genres) > 0 && genres.Genres[0].Name == "" {
+		if err == nil && genres.Genres != nil && len(genres.Genres) > 0 && genres.Genres[0].Name == "" {
 			err = MakeRequest(APIRequest{
 				URL: fmt.Sprintf("%s/genre/tv/list", tmdbEndpoint),
 				Params: napping.Params{
@@ -432,7 +432,7 @@ func GetTVGenres(language string) []*Genre {
 			})
 		}
 
-		if genres.Genres != nil && len(genres.Genres) > 0 {
+		if err == nil && genres.Genres != nil && len(genres.Genres) > 0 {
 			for _, i := range genres.Genres {
 				i.Name = strings.Title(i.Name)
 			}

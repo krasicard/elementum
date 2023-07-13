@@ -14,7 +14,6 @@ import (
 	"github.com/anacrolix/missinggo/perf"
 
 	"github.com/elgatito/elementum/config"
-	"github.com/elgatito/elementum/database"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/util/event"
 )
@@ -43,8 +42,6 @@ type TorrentFSEntry struct {
 
 	seeked  event.Event
 	removed event.Event
-
-	dbItem *database.BTItem
 
 	id          int64
 	readahead   int64
@@ -258,18 +255,14 @@ func (tf *TorrentFSEntry) Seek(offset int64, whence int) (int64, error) {
 		}
 
 		tf.t.PrioritizePieces()
-
-		break
 	case io.SeekCurrent:
 		currentOffset, err := tf.File.Seek(0, io.SeekCurrent)
 		if err != nil {
 			return currentOffset, err
 		}
 		seekingOffset += currentOffset
-		break
 	case io.SeekEnd:
 		seekingOffset = tf.f.Size - offset
-		break
 	}
 
 	log.Infof("Seeking at %d... with %d", seekingOffset, whence)
@@ -293,11 +286,13 @@ func (tf *TorrentFSEntry) waitForPiece(piece int) error {
 
 	tf.t.PrioritizePiece(piece)
 
-	pieceRefreshTicker := time.Tick(piecesRefreshDuration)
+	pieceRefreshTicker := time.NewTicker(piecesRefreshDuration)
+	defer pieceRefreshTicker.Stop()
+
 	removed := tf.removed.C()
 	seeked := tf.seeked.C()
 
-	for tf.t.hasPiece(piece) == false {
+	for !tf.t.hasPiece(piece) {
 		select {
 		case <-seeked:
 			tf.seeked.Clear()
@@ -307,7 +302,7 @@ func (tf *TorrentFSEntry) waitForPiece(piece int) error {
 		case <-removed:
 			log.Warningf("Unable to wait for piece %d as file was closed", piece)
 			return errors.New("File was closed")
-		case <-pieceRefreshTicker:
+		case <-pieceRefreshTicker.C:
 			continue
 		}
 	}

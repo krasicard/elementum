@@ -12,10 +12,6 @@ import (
 	"github.com/anacrolix/sync"
 )
 
-type pieceRange struct {
-	begin, end int
-}
-
 // MemoryFile ...
 type MemoryFile struct {
 	tf   *TorrentFS
@@ -26,10 +22,7 @@ type MemoryFile struct {
 	opMu sync.Mutex
 	mu   sync.Mutex
 
-	pos       int64
-	readahead int64
-
-	pieces pieceRange
+	pos int64
 }
 
 // NewMemoryFile ...

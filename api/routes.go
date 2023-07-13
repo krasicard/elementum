@@ -32,7 +32,7 @@ func CORS() gin.HandlerFunc {
 	}
 }
 
-// CORS allows all external source to request data from Elementum
+// Auth middleware allows all external source to request data from Elementum
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if config.Args.LocalLogin == "" && config.Args.LocalPassword == "" {

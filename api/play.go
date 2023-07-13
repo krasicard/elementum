@@ -21,7 +21,6 @@ func Download(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		rURL, _ := url.Parse(fmt.Sprintf("%s%s", util.GetContextHTTPHost(ctx), strings.Replace(ctx.Request.RequestURI, "/download", "/play", 1)+"&background=true"))
 		ctx.Redirect(302, rURL.String())
-		return
 	}
 }
 
@@ -141,7 +140,6 @@ func PlayTorrent(ctx *gin.Context) {
 	xbmcHost.PlayURLWithTimeout(URLQuery(URLForXBMC("/play"), "uri", retval["path"]))
 
 	ctx.String(200, "")
-	return
 }
 
 // PlayURI ...

@@ -185,7 +185,7 @@ func GetShow(tvdbID int) (show *Show) {
 
 // GetMultipleImage returns multiple images in a list
 func GetMultipleImage(old string, lists ...[]*Image) []string {
-	if lists == nil || len(lists) == 0 {
+	if len(lists) == 0 {
 		return []string{old}
 	}
 
@@ -217,7 +217,7 @@ func GetMultipleImage(old string, lists ...[]*Image) []string {
 // GetBestImage returns best image from multiple lists,
 // according to the lang setting. Taking order of lists into account.
 func GetBestImage(old string, lists ...[]*Image) string {
-	if lists == nil || len(lists) == 0 {
+	if len(lists) == 0 {
 		return ""
 	}
 
@@ -252,7 +252,7 @@ func GetBestImage(old string, lists ...[]*Image) string {
 
 // GetMultipleShowImage returns multiple images in a list
 func GetMultipleShowImage(season, old string, lists ...[]*ShowImage) []string {
-	if lists == nil || len(lists) == 0 {
+	if len(lists) == 0 {
 		return []string{old}
 	}
 
@@ -307,7 +307,7 @@ func GetMultipleShowImage(season, old string, lists ...[]*ShowImage) []string {
 // GetBestShowImage returns best image from multiple lists,
 // according to the lang setting. Taking order of lists into account.
 func GetBestShowImage(season string, isStrict bool, old string, lists ...[]*ShowImage) string {
-	if lists == nil || len(lists) == 0 {
+	if len(lists) == 0 {
 		return ""
 	}
 

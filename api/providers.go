@@ -71,7 +71,7 @@ func ProviderList(ctx *gin.Context) {
 		}
 
 		enabled := "[COLOR FF009900]Enabled[/COLOR]"
-		if provider.Enabled == false {
+		if !provider.Enabled {
 			enabled = "[COLOR FF990000]Disabled[/COLOR]"
 		}
 

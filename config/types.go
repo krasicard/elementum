@@ -13,7 +13,7 @@ type ConfigBundle struct {
 }
 
 const (
-	JsonConfigFormat ConfigFormat = "json"
+	JSONConfigFormat ConfigFormat = "json"
 	YamlConfigFormat ConfigFormat = "yaml"
 )
 

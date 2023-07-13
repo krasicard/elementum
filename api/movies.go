@@ -117,7 +117,7 @@ func MovieGenres(ctx *gin.Context) {
 
 	items := make(xbmc.ListItems, 0)
 	for _, genre := range tmdb.GetMovieGenres(config.Get().Language) {
-		slug, _ := genreSlugs[genre.ID]
+		slug := genreSlugs[genre.ID]
 		items = append(items, &xbmc.ListItem{
 			Label:     genre.Name,
 			Path:      URLForXBMC("/movies/popular/genre/%s", strconv.Itoa(genre.ID)),

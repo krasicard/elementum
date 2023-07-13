@@ -25,8 +25,8 @@ func TrailerURL(u string) (ret string) {
 // DecodeFileURL decodes file path from url
 func DecodeFileURL(u string) (ret string) {
 	us := strings.Split(u, string("/"))
-	for _, v := range us {
-		v, _ = url.PathUnescape(v)
+	for i, v := range us {
+		us[i], _ = url.PathUnescape(v)
 	}
 
 	return strings.Join(us, string(os.PathSeparator))

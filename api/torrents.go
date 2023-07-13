@@ -24,8 +24,7 @@ import (
 )
 
 var (
-	torrentsLog    = logging.MustGetLogger("torrents")
-	cachedTorrents = map[int]string{}
+	torrentsLog = logging.MustGetLogger("torrents")
 )
 
 // TorrentsWeb ...

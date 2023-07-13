@@ -1,7 +1,6 @@
 package database
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/anacrolix/sync"
@@ -43,10 +42,7 @@ type BoltDatabase struct {
 // SqliteDatabase ...
 type SqliteDatabase struct {
 	Database
-	db *sql.DB
 }
-
-type schemaChange func(*int, *SqliteDatabase) (bool, error)
 
 type callBack func([]byte, []byte)
 type callBackWithError func([]byte, []byte) error
@@ -114,10 +110,6 @@ var (
 	backupStormFileName   = "storm-backup.db"
 	compressStormFileName = "storm-compress.db"
 
-	boltFileName         = "library.db"
-	backupBoltFileName   = "library-backup.db"
-	compressBoltFileName = "library-compress.db"
-
 	cacheFileName         = "cache.db"
 	backupCacheFileName   = "cache-backup.db"
 	compressCacheFileName = "cache-compress.db"
@@ -127,8 +119,6 @@ var (
 	boltDatabase  *BoltDatabase
 	cacheDatabase *BoltDatabase
 	stormDatabase *StormDatabase
-
-	once sync.Once
 )
 
 const (

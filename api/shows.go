@@ -87,7 +87,7 @@ func TVGenres(ctx *gin.Context) {
 
 	items := make(xbmc.ListItems, 0)
 	for _, genre := range tmdb.GetTVGenres(config.Get().Language) {
-		slug, _ := genreSlugs[genre.ID]
+		slug := genreSlugs[genre.ID]
 		items = append(items, &xbmc.ListItem{
 			Label:     genre.Name,
 			Path:      URLForXBMC("/shows/popular/genre/%s", strconv.Itoa(genre.ID)),
@@ -477,7 +477,7 @@ func ShowEpisodes(ctx *gin.Context) {
 			if s.EpisodeCount == 0 {
 				continue
 			}
-			if config.Get().ShowUnairedSeasons == false {
+			if !config.Get().ShowUnairedSeasons {
 				if _, isExpired := util.AirDateWithExpireCheck(s.AirDate, config.Get().ShowEpisodesOnReleaseDay); isExpired {
 					continue
 				}

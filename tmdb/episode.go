@@ -33,7 +33,7 @@ func GetEpisode(showID int, seasonNumber int, episodeNumber int, language string
 			Description: "episode",
 		})
 
-		if episode != nil {
+		if err == nil && episode != nil {
 			cacheStore.Set(key, episode, cache.TMDBEpisodeExpire)
 		}
 	}
@@ -57,7 +57,7 @@ func (episodes EpisodeList) ToListItems(show *Show, season *Season) []*xbmc.List
 			continue
 		}
 
-		if config.Get().ShowUnairedEpisodes == false {
+		if !config.Get().ShowUnairedEpisodes {
 			if episode.AirDate == "" {
 				continue
 			}

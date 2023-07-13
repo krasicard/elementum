@@ -172,7 +172,7 @@ func main() {
 		return
 	}
 
-	cacheDb, errCache := database.InitCacheDB(conf)
+	cacheDB, errCache := database.InitCacheDB(conf)
 	if errCache != nil {
 		log.Errorf("Could not open cache database: %s", errCache)
 		exit.Exit(exit.ExitCodeError)
@@ -197,7 +197,7 @@ func main() {
 		s.Close(true)
 
 		db.Close()
-		cacheDb.Close()
+		cacheDB.Close()
 
 		// Wait until service is finally stopped
 		<-s.CloserNotifier.C()
@@ -298,7 +298,7 @@ func main() {
 	go library.Init()
 	go trakt.TokenRefreshHandler()
 	go db.MaintenanceRefreshHandler()
-	go cacheDb.MaintenanceRefreshHandler()
+	go cacheDB.MaintenanceRefreshHandler()
 	go scrape.Start()
 	go util.FreeMemoryGC()
 

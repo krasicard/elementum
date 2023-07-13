@@ -392,7 +392,7 @@ func (as *AddonSearcher) call(method string, searchObject interface{}) []*bittor
 	as.xbmcHost.ExecuteAddon(as.addonID, payload.String())
 
 	timeout := providerTimeout()
-	if config.Get().CustomProviderTimeoutEnabled == true {
+	if config.Get().CustomProviderTimeoutEnabled {
 		timeout = time.Duration(config.Get().CustomProviderTimeout) * time.Second
 	}
 

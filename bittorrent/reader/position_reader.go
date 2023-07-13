@@ -1,11 +1,5 @@
 package reader
 
-import (
-	"github.com/op/go-logging"
-)
-
-var log = logging.MustGetLogger("reader")
-
 // PositionReader ...
 type PositionReader struct {
 	Pos         int64

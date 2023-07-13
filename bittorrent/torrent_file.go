@@ -363,7 +363,7 @@ func (t *TorrentFile) initializeFromMagnet() {
 
 // Magnet ...
 func (t *TorrentFile) Magnet(firstTime bool) {
-	if t.hasResolved == false {
+	if !t.hasResolved {
 		t.Resolve()
 	}
 
@@ -467,7 +467,7 @@ func (t *TorrentFile) Download() ([]byte, error) {
 		if err == nil {
 			return os.ReadFile(t.URI)
 		} else {
-			log.Errorf("Get local file failed: %s", err)
+			torrentFileLog.Errorf("Get local file failed: %s", err)
 		}
 	}
 
@@ -608,23 +608,18 @@ func (t *TorrentFile) StreamInfo() *xbmc.StreamInfo {
 	case Resolution480p:
 		sie.Video.Width = 853
 		sie.Video.Height = 480
-		break
 	case Resolution720p:
 		sie.Video.Width = 1280
 		sie.Video.Height = 720
-		break
 	case Resolution1080p:
 		sie.Video.Width = 1920
 		sie.Video.Height = 1080
-		break
 	case Resolution2K:
 		sie.Video.Width = 2560
 		sie.Video.Height = 1440
-		break
 	case Resolution4k:
 		sie.Video.Width = 4096
 		sie.Video.Height = 2160
-		break
 	}
 
 	return sie
@@ -657,7 +652,7 @@ func (t *TorrentFile) parseSize() {
 	if v, err := humanize.ParseBytes(t.Size); err == nil {
 		t.SizeParsed = v
 	} else {
-		log.Debugf("Could not parse torrent size for '%s': %#v", t.Size, err)
+		torrentFileLog.Debugf("Could not parse torrent size for '%s': %#v", t.Size, err)
 	}
 }
 

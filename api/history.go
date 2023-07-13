@@ -81,7 +81,6 @@ func HistoryRemove(ctx *gin.Context) {
 	xbmcHost.Refresh()
 
 	ctx.String(200, "")
-	return
 }
 
 // HistoryClear ...
@@ -99,7 +98,6 @@ func HistoryClear(ctx *gin.Context) {
 	xbmcHost.Refresh()
 
 	ctx.String(200, "")
-	return
 }
 
 func torrentHistoryGetXbmcURL(infohash string) string {

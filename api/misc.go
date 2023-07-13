@@ -164,8 +164,7 @@ func SelectNetworkInterface(ctx *gin.Context) {
 	items := make([]string, 0, len(ifaces))
 
 	for _, i := range ifaces {
-		name := i.Name
-		address := ""
+		var name, address string
 
 		addrs, err := i.Addrs()
 		if err != nil {

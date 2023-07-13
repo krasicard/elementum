@@ -43,7 +43,7 @@ var (
 
 // Reload ...
 func Reload() {
-	reloadDns()
+	reloadDNS()
 
 	if config.Get().ProxyURL == "" || !config.Get().ProxyUseHTTP {
 		directTransport.Proxy = nil
@@ -76,7 +76,7 @@ func CustomDial(network, addr string) (net.Conn, error) {
 	}
 
 	addrs := strings.Split(addr, ":")
-	if len(addrs) == 2 && len(addrs[0]) > 2 && strings.Index(addrs[0], ".") > -1 {
+	if len(addrs) == 2 && len(addrs[0]) > 2 && strings.Contains(addrs[0], ".") {
 		if ipTest := net.ParseIP(addrs[0]); ipTest == nil {
 			if ips, err := resolve(addrs[0]); err == nil && len(ips) > 0 {
 				for _, i := range ips {
@@ -104,7 +104,7 @@ func CustomDialContext(ctx context.Context, network, addr string) (net.Conn, err
 	}
 
 	addrs := strings.Split(addr, ":")
-	if len(addrs) == 2 && len(addrs[0]) > 2 && strings.Index(addrs[0], ".") > -1 {
+	if len(addrs) == 2 && len(addrs[0]) > 2 && strings.Contains(addrs[0], ".") {
 		if ipTest := net.ParseIP(addrs[0]); ipTest == nil {
 			if ip, err := resolve(addrs[0]); err == nil && len(ip) > 0 {
 				if !config.Get().InternalDNSSkipIPv6 {

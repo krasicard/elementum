@@ -399,28 +399,24 @@ func processLinks(xbmcHost *xbmc.XBMCHost, torrentsChan chan *bittorrent.Torrent
 			} else {
 				SortBy(resolutionDown, seeds).Sort(torrents)
 			}
-			break
 		case Sort480p720p1080p:
 			if sortMode == SortBalanced {
 				SortBy(balanced, resolutionUp).Sort(torrents)
 			} else {
 				SortBy(resolutionUp, seeds).Sort(torrents)
 			}
-			break
 		case Sort720p1080p480p:
 			if sortMode == SortBalanced {
 				SortBy(balanced, resolution720p1080p).Sort(torrents)
 			} else {
 				SortBy(resolution720p1080p, seeds).Sort(torrents)
 			}
-			break
 		case Sort720p480p1080p:
 			if sortMode == SortBalanced {
 				SortBy(balanced, resolution720p480p).Sort(torrents)
 			} else {
 				SortBy(resolution720p480p, seeds).Sort(torrents)
 			}
-			break
 		}
 	}
 

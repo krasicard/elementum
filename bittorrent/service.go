@@ -299,7 +299,7 @@ func (s *Service) configure() {
 		settings.SetInt("connection_speed", s.config.ConnTrackerLimit)
 	}
 
-	if s.config.LimitAfterBuffering == false {
+	if !s.config.LimitAfterBuffering {
 		if s.config.DownloadRateLimit > 0 {
 			log.Infof("Rate limiting download to %s", humanize.Bytes(uint64(s.config.DownloadRateLimit)))
 			settings.SetInt("download_rate_limit", s.config.DownloadRateLimit)
@@ -517,18 +517,18 @@ func (s *Service) configure() {
 }
 
 func (s *Service) startServices() {
-	if s.config.DisableLSD == false {
+	if !s.config.DisableLSD {
 		log.Info("Starting LSD...")
 		s.PackSettings.SetBool("enable_lsd", true)
 	}
 
-	if s.config.DisableDHT == false {
+	if !s.config.DisableDHT {
 		log.Info("Starting DHT...")
 		s.PackSettings.SetStr("dht_bootstrap_nodes", strings.Join(dhtBootstrapNodes, ","))
 		s.PackSettings.SetBool("enable_dht", true)
 	}
 
-	if s.config.DisableUPNP == false {
+	if !s.config.DisableUPNP {
 		log.Info("Starting UPNP...")
 		s.PackSettings.SetBool("enable_upnp", true)
 
@@ -576,17 +576,17 @@ func (s *Service) stopServices() {
 		}()
 	}
 
-	if s.config.DisableLSD == false {
+	if !s.config.DisableLSD {
 		log.Info("Stopping LSD...")
 		s.PackSettings.SetBool("enable_lsd", false)
 	}
 
-	if s.config.DisableDHT == false {
+	if !s.config.DisableDHT {
 		log.Info("Stopping DHT...")
 		s.PackSettings.SetBool("enable_dht", false)
 	}
 
-	if s.config.DisableUPNP == false {
+	if !s.config.DisableUPNP {
 		log.Info("Stopping UPNP...")
 		s.PackSettings.SetBool("enable_upnp", false)
 
@@ -902,7 +902,7 @@ func (s *Service) RemoveTorrent(xbmcHost *xbmc.XBMCHost, t *Torrent, forceDrop, 
 	deleteTorrentFiles := false
 	deleteTorrentData := false
 
-	if keepDownloading == false {
+	if !keepDownloading {
 		if forceDelete || len(t.ChosenFiles) == 0 {
 			deleteTorrentData = true
 		} else if keepSetting == 0 {
@@ -912,7 +912,7 @@ func (s *Service) RemoveTorrent(xbmcHost *xbmc.XBMCHost, t *Torrent, forceDrop, 
 		}
 	}
 
-	if keepDownloading == false || t.IsMemoryStorage() {
+	if !keepDownloading || t.IsMemoryStorage() {
 		deleteTorrentFiles = true
 	}
 
@@ -939,7 +939,7 @@ func (s *Service) onStateChanged(stateAlert lt.StateChangedAlert) {
 		shaHash := torrentStatus.GetInfoHash().ToString()
 		infoHash := hex.EncodeToString([]byte(shaHash))
 		if spaceChecked, exists := s.SpaceChecked[infoHash]; exists {
-			if spaceChecked == false {
+			if !spaceChecked {
 				if t := s.GetTorrentByHash(infoHash); t != nil {
 					xbmcHost, _ := xbmc.GetLocalXBMCHost()
 					s.checkAvailableSpace(xbmcHost, t)
@@ -979,7 +979,7 @@ func (s *Service) onSaveResumeDataWriter() {
 				}
 
 				status := t.GetLastStatus(false)
-				if status.GetHasMetadata() == false || status.GetNeedSaveResume() == false {
+				if !status.GetHasMetadata() || !status.GetNeedSaveResume() {
 					continue
 				}
 
@@ -1304,21 +1304,21 @@ func (s *Service) onDownloadProgress() {
 
 			for i := 0; i < torrentsVectorSize; i++ {
 				torrentHandle := torrentsVector.Get(i)
-				if torrentHandle.IsValid() == false {
+				if !torrentHandle.IsValid() {
 					continue
 				}
 
 				ts := torrentHandle.Status()
 				defer lt.DeleteTorrentStatus(ts)
 
-				if ts.GetHasMetadata() == false || s.Session.IsPaused() {
+				if !ts.GetHasMetadata() || s.Session.IsPaused() {
 					continue
 				}
 
 				shaHash := ts.GetInfoHash().ToString()
 				infoHash := hex.EncodeToString([]byte(shaHash))
 
-				status := StatusStrings[int(ts.GetState())]
+				status := ""
 				isPaused := ts.GetPaused()
 
 				t := s.GetTorrentByHash(infoHash)

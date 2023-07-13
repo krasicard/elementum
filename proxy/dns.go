@@ -56,7 +56,7 @@ func init() {
 	commonResolver.EnableCache(true)
 }
 
-func reloadDns() {
+func reloadDNS() {
 	opennicResolver = dns_resolver.New(config.Get().InternalDNSOpenNic)
 }
 

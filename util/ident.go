@@ -77,51 +77,51 @@ func GetUserAndPeer() (peerID, userAgent string) {
 		case 1:
 			userAgent = "Transmission/1.93"
 			peerID = "-TR1930-"
-			break
+			return
 		case 2:
 			userAgent = "libtorrent (Rasterbar) 1.1.0"
 			peerID = "-LT1100-"
-			break
+			return
 		case 3:
 			userAgent = "BitTorrent/7.5.0"
 			peerID = "-BT7500-"
-			break
+			return
 		case 4:
 			userAgent = "BitTorrent/7.4.3"
 			peerID = "-BT7430-"
-			break
+			return
 		case 5:
 			userAgent = "uTorrent/3.4.9"
 			peerID = "-UT3490-"
-			break
+			return
 		case 6:
 			userAgent = "uTorrent/3.2.0"
 			peerID = "-UT3200-"
-			break
+			return
 		case 7:
 			userAgent = "uTorrent/2.2.1"
 			peerID = "-UT2210-"
-			break
+			return
 		case 8:
 			userAgent = "Transmission/2.92"
 			peerID = "-TR2920-"
-			break
+			return
 		case 9:
 			userAgent = "Deluge/1.3.6.0"
 			peerID = "-DG1360-"
-			break
+			return
 		case 10:
 			userAgent = "Deluge/1.3.12.0"
 			peerID = "-DG1312-"
-			break
+			return
 		case 11:
 			userAgent = "Vuze/5.7.3.0"
 			peerID = "-VZ5730-"
-			break
+			return
 		default:
 			userAgent = "uTorrent/3.4.9"
 			peerID = "-UT3490-"
-			break
+			return
 		}
 	}
 

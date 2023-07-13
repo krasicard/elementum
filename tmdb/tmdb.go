@@ -203,7 +203,7 @@ type IDName struct {
 	Name string `json:"name"`
 }
 
-// IDName ...
+// IDNameLogo ...
 type IDNameLogo struct {
 	ID            int    `json:"id"`
 	Name          string `json:"name"`
@@ -437,7 +437,7 @@ func CheckAPIKey() {
 			}
 		}
 	}
-	if result == false {
+	if !result {
 		log.Error("No valid TMDB API key found")
 	}
 }
@@ -544,7 +544,7 @@ func Find(externalID string, externalSource string) *FindResult {
 			Description: "find",
 		})
 
-		if result != nil {
+		if err == nil && result != nil {
 			cacheStore.Set(key, result, cache.TMDBFindExpire)
 		}
 	}
@@ -568,10 +568,12 @@ func GetCountries(language string) []*Country {
 			Description: "countries",
 		})
 
-		sort.Slice(countries, func(i, j int) bool {
-			return countries[i].EnglishName < countries[j].EnglishName
-		})
-		cacheStore.Set(key, countries, cache.TMDBCountriesExpire)
+		if err == nil {
+			sort.Slice(countries, func(i, j int) bool {
+				return countries[i].EnglishName < countries[j].EnglishName
+			})
+			cacheStore.Set(key, countries, cache.TMDBCountriesExpire)
+		}
 	}
 	return countries
 }
@@ -592,16 +594,18 @@ func GetLanguages(language string) []*Language {
 			Description: "languages",
 		})
 
-		for _, l := range languages {
-			if l.Name == "" {
-				l.Name = l.EnglishName
+		if err == nil {
+			for _, l := range languages {
+				if l.Name == "" {
+					l.Name = l.EnglishName
+				}
 			}
-		}
 
-		sort.Slice(languages, func(i, j int) bool {
-			return languages[i].Name < languages[j].Name
-		})
-		cacheStore.Set(key, languages, cache.TMDBLanguagesExpire)
+			sort.Slice(languages, func(i, j int) bool {
+				return languages[i].Name < languages[j].Name
+			})
+			cacheStore.Set(key, languages, cache.TMDBLanguagesExpire)
+		}
 	}
 	return languages
 }
@@ -611,8 +615,8 @@ func MakeRequest(r APIRequest) (ret error) {
 	rl.Call(func() error {
 		httpTransport := &http.Transport{}
 		if config.Get().ProxyURL != "" {
-			proxyUrl, _ := url.Parse(config.Get().ProxyURL)
-			httpTransport.Proxy = http.ProxyURL(proxyUrl)
+			proxyURL, _ := url.Parse(config.Get().ProxyURL)
+			httpTransport.Proxy = http.ProxyURL(proxyURL)
 		}
 		httpClient := &http.Client{
 			Transport: httpTransport,
@@ -672,7 +676,7 @@ func (movie *Movie) GetStudios() []string {
 	return studios
 }
 
-// GetGenred returns list of genres
+// GetGenres returns list of genres
 func (movie *Movie) GetGenres() []string {
 	genres := make([]string, 0, len(movie.Genres))
 	for _, genre := range movie.Genres {
@@ -761,7 +765,7 @@ func (show *Show) GetNetworks() []string {
 	return networks
 }
 
-// GetGenred returns list of genres
+// GetGenres returns list of genres
 func (show *Show) GetGenres() []string {
 	genres := make([]string, 0, len(show.Genres))
 	for _, genre := range show.Genres {
@@ -824,7 +828,7 @@ func (credits *Credits) GetDirectors() []string {
 	return directors
 }
 
-// GetDirectors returns list of writers
+// GetWriters returns list of writers
 func (credits *Credits) GetWriters() []string {
 	writers := make([]string, 0)
 	for _, crew := range credits.Crew {

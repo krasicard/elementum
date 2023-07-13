@@ -153,7 +153,7 @@ func GetMovieByTMDB(tmdbID string) (movie *Movie) {
 		if err := resp.Unmarshal(&results); err != nil {
 			log.Warning(err)
 		}
-		if results != nil && len(results) > 0 && results[0].Movie != nil {
+		if len(results) > 0 && results[0].Movie != nil {
 			movie = results[0].Movie
 		}
 		cacheStore.Set(key, movie, cache.TraktMovieByTMDBExpire)

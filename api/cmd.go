@@ -158,8 +158,6 @@ func ClearDatabaseMovies(ctx *gin.Context) {
 	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
-	return
-
 }
 
 // ClearDatabaseShows ...
@@ -174,8 +172,6 @@ func ClearDatabaseShows(ctx *gin.Context) {
 	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
-	return
-
 }
 
 // ClearDatabaseTorrentHistory ...
@@ -191,8 +187,6 @@ func ClearDatabaseTorrentHistory(ctx *gin.Context) {
 	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
-	return
-
 }
 
 // ClearDatabaseSearchHistory ...
@@ -206,8 +200,6 @@ func ClearDatabaseSearchHistory(ctx *gin.Context) {
 	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
-	return
-
 }
 
 // ClearDatabase ...
@@ -230,7 +222,6 @@ func ClearDatabase(ctx *gin.Context) {
 	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
 
 	ctx.String(200, "")
-	return
 }
 
 // CompactDatabase ...
@@ -251,7 +242,6 @@ func CompactDatabase(ctx *gin.Context) {
 	}
 
 	ctx.String(200, "")
-	return
 }
 
 // CompactCache ...
@@ -272,5 +262,4 @@ func CompactCache(ctx *gin.Context) {
 	}
 
 	ctx.String(200, "")
-	return
 }

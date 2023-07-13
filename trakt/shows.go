@@ -167,7 +167,7 @@ func GetShowByTMDB(tmdbID string) (show *Show) {
 		if err := resp.Unmarshal(&results); err != nil {
 			log.Warning(err)
 		}
-		if results != nil && len(results) > 0 && results[0].Show != nil {
+		if len(results) > 0 && results[0].Show != nil {
 			show = results[0].Show
 		}
 		cacheStore.Set(key, show, cache.TraktShowTMDBExpire)
@@ -317,7 +317,7 @@ func GetEpisodeByTMDB(tmdbID string) (episode *Episode) {
 		if err := resp.Unmarshal(&results); err != nil {
 			log.Warning(err)
 		}
-		if results != nil && len(results) > 0 && results[0].Episode != nil {
+		if len(results) > 0 && results[0].Episode != nil {
 			episode = results[0].Episode
 		}
 		cacheStore.Set(key, episode, cache.TraktEpisodeByTMDBExpire)

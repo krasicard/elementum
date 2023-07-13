@@ -39,8 +39,6 @@ var AlwaysHTTPMitm goproxy.FuncHttpsHandler = func(host string, ctx *goproxy.Pro
 	return &goproxy.ConnectAction{Action: goproxy.ConnectMitm, TLSConfig: CustomTLS(&goproxy.GoproxyCa)}, host
 }
 
-var goproxySignerVersion = ":goroxy1"
-
 // CustomTLS ...
 func CustomTLS(ca *tls.Certificate) func(host string, ctx *goproxy.ProxyCtx) (*tls.Config, error) {
 	return func(host string, ctx *goproxy.ProxyCtx) (*tls.Config, error) {

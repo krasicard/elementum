@@ -43,7 +43,7 @@ func GetImages(movieID int) *Images {
 			Description: "movie images",
 		})
 
-		if images != nil {
+		if err == nil && images != nil {
 			cacheStore.Set(key, images, cache.TMDBMovieImagesExpire)
 		}
 	}
@@ -73,7 +73,7 @@ func GetMovieByID(movieID string, language string) *Movie {
 			Description: "movie",
 		})
 
-		if movie != nil {
+		if err == nil && movie != nil {
 			if config.Get().UseFanartTv {
 				movie.FanArt = fanart.GetMovie(movie.ID)
 			}
@@ -128,7 +128,7 @@ func GetMovieGenres(language string) []*Genre {
 
 		// That is a special case, when language in on TMDB, but it results empty names.
 		//   example of this: Catalan language.
-		if genres.Genres != nil && len(genres.Genres) > 0 && genres.Genres[0].Name == "" {
+		if err == nil && genres.Genres != nil && len(genres.Genres) > 0 && genres.Genres[0].Name == "" {
 			err = MakeRequest(APIRequest{
 				URL: fmt.Sprintf("%s/genre/movie/list", tmdbEndpoint),
 				Params: napping.Params{
@@ -140,7 +140,7 @@ func GetMovieGenres(language string) []*Genre {
 			})
 		}
 
-		if genres.Genres != nil && len(genres.Genres) > 0 {
+		if err == nil && genres.Genres != nil && len(genres.Genres) > 0 {
 			for _, i := range genres.Genres {
 				i.Name = strings.Title(i.Name)
 			}
@@ -216,7 +216,7 @@ func GetIMDBList(listID string, language string, page int) (movies Movies, total
 			tmdbIds = append(tmdbIds, results.Items[i].ID)
 		}
 		movies = GetMovies(tmdbIds, language)
-		if movies != nil && len(movies) > 0 {
+		if len(movies) > 0 {
 			cacheStore.Set(key, movies, cache.TMDBMoviesIMDBExpire)
 		}
 		totalResults = results.ItemCount

@@ -154,7 +154,7 @@ func NewTorrent(service *Service, handle lt.TorrentHandle, info lt.TorrentInfo, 
 func (t *Torrent) init() {
 	// Run setters in MemoryStorage
 	if t.IsMemoryStorage() {
-		t.ms = t.th.GetMemoryStorage().(lt.MemoryStorage)
+		t.ms = t.th.GetMemoryStorage()
 		t.ms.SetTorrentHandle(t.th)
 
 		if t.MemorySize < t.pieceLength*10 {
@@ -1502,14 +1502,6 @@ func (t *Torrent) hasPiece(idx int) bool {
 	t.piecesMx.RLock()
 	defer t.piecesMx.RUnlock()
 	return t.pieces.GetBit(idx)
-}
-
-func average(xs []int64) float64 {
-	var total int64
-	for _, v := range xs {
-		total += v
-	}
-	return float64(total) / float64(len(xs))
 }
 
 func (t *Torrent) onMetadataReceived() {

@@ -161,7 +161,7 @@ func (tracker *Tracker) sendRequest(action Action, request interface{}) error {
 
 // Connect ...
 func (tracker *Tracker) Connect() error {
-	if strings.Index(tracker.URL.Host, ":") < 0 {
+	if !strings.Contains(tracker.URL.Host, ":") {
 		tracker.URL.Host += ":80"
 	}
 	var err error

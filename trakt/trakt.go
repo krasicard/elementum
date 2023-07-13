@@ -886,8 +886,13 @@ func TokenRefreshHandler() {
 
 	var token *Token
 	ticker := time.NewTicker(12 * time.Hour)
+	closer := broadcast.Closer.C()
+	defer ticker.Stop()
+
 	for {
 		select {
+		case <-closer:
+			return
 		case <-ticker.C:
 			if time.Now().Unix() > int64(config.Get().TraktTokenExpiry)-int64(259200) {
 				resp, err := RefreshToken()
@@ -984,6 +989,9 @@ func Authorize(fromSettings bool) error {
 				// Getting username for currently authorized user
 				params := napping.Params{}.AsUrlValues()
 				resp, err := GetWithAuth("users/settings", params)
+				if err != nil {
+					return
+				}
 				if resp.Status() == 200 {
 					user := &UserSettings{}
 					errJSON := resp.Unmarshal(user)

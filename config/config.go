@@ -727,8 +727,8 @@ func Reload() (ret *Configuration, err error) {
 		LogLevel:        settings.ToInt("log_level"),
 	}
 
-	reDns := regexp.MustCompile(`\s*,\s*`)
-	newConfig.InternalDNSOpenNic = reDns.Split(settings.ToString("internal_dns_opennic"), -1)
+	reDNS := regexp.MustCompile(`\s*,\s*`)
+	newConfig.InternalDNSOpenNic = reDNS.Split(settings.ToString("internal_dns_opennic"), -1)
 
 	updateLoggingLevel(newConfig.LogLevel)
 
@@ -1031,7 +1031,7 @@ func exportConfig(path string, bundle *ConfigBundle) (err error) {
 	}
 
 	var content []byte
-	if format == JsonConfigFormat {
+	if format == JSONConfigFormat {
 		content, err = json.MarshalIndent(*bundle, "", "    ")
 	} else if format == YamlConfigFormat {
 		content, err = yaml.Marshal(*bundle)
@@ -1058,7 +1058,7 @@ func importConfig(path string) (*ConfigBundle, error) {
 	}
 
 	bundle := ConfigBundle{}
-	if format == JsonConfigFormat {
+	if format == JSONConfigFormat {
 		err = json.Unmarshal(content, &bundle)
 	} else if format == YamlConfigFormat {
 		err = yaml.Unmarshal(content, &bundle)
@@ -1071,7 +1071,7 @@ func detectConfigFormat(path string) ConfigFormat {
 	path = strings.ToLower(path)
 
 	if strings.HasSuffix(path, ".json") {
-		return JsonConfigFormat
+		return JSONConfigFormat
 	} else if strings.HasSuffix(path, ".yaml") || strings.HasSuffix(path, ".yml") {
 		return YamlConfigFormat
 	}

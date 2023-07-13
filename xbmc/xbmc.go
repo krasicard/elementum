@@ -43,7 +43,7 @@ func (h *XBMCHost) VideoLibraryClean() (retVal string) {
 	return
 }
 
-// VideoLibraryClean initiates Kodi library cleanup for specific removed directory
+// VideoLibraryCleanDirectory initiates Kodi library cleanup for specific removed directory
 func (h *XBMCHost) VideoLibraryCleanDirectory(directory string, content string, showDialogs bool) (retVal string) {
 	params := map[string]interface{}{
 		"showdialogs": showDialogs,
@@ -71,8 +71,6 @@ func (h *XBMCHost) VideoLibraryGetMovies() (movies *VideoLibraryMovies, err erro
 	params := map[string]interface{}{"properties": list}
 
 	for tries := 1; tries <= 3; tries++ {
-		var err error
-
 		err = h.executeJSONRPCO("VideoLibrary.GetMovies", &movies, params)
 		if movies == nil || (err != nil && !strings.Contains(err.Error(), "invalid error")) {
 			time.Sleep(time.Duration(tries*2) * time.Second)
@@ -657,7 +655,6 @@ func (h *XBMCHost) SettingsGetSettingValue(setting string) string {
 func (h *XBMCHost) ToggleWatched() {
 	retVal := ""
 	h.executeJSONRPCEx("ToggleWatched", &retVal, nil)
-	return
 }
 
 func (h *XBMCHost) WaitForSettingsClosed() {
@@ -665,11 +662,9 @@ func (h *XBMCHost) WaitForSettingsClosed() {
 	defer ticker.Stop()
 
 	for {
-		select {
-		case <-ticker.C:
-			if !h.AddonSettingsOpened() {
-				return
-			}
+		<-ticker.C
+		if !h.AddonSettingsOpened() {
+			return
 		}
 	}
 }

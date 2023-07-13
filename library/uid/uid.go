@@ -9,15 +9,6 @@ import (
 )
 
 const (
-	movieType   = "movie"
-	showType    = "show"
-	episodeType = "episode"
-
-	trueType  = "true"
-	falseType = "false"
-)
-
-const (
 	// MovieType ...
 	MovieType = iota
 	// ShowType ...
