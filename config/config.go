@@ -5,13 +5,12 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/xbmc"
@@ -831,8 +830,6 @@ func Reload() (ret *Configuration, err error) {
 	config = &newConfig
 	lock.Unlock()
 
-	go CheckBurst(xbmcHost)
-
 	// Replacing passwords with asterisks
 	configOutput := litter.Sdump(config)
 	configOutput = privacyRegex.ReplaceAllString(configOutput, `$1: "********"`)
@@ -919,55 +916,6 @@ func IsWritablePath(path string) error {
 	return nil
 }
 
-// CheckBurst ...
-func CheckBurst(h *xbmc.XBMCHost) {
-	if h == nil || !h.Ping() {
-		return
-	}
-
-	// Check for enabled providers and Elementum Burst
-	for _, addon := range h.GetAddons("xbmc.python.script", "executable", "all", []string{"name", "version", "enabled"}).Addons {
-		if strings.HasPrefix(addon.ID, "script.elementum.") {
-			if addon.Enabled {
-				return
-			}
-		}
-	}
-
-	for timeout := 0; timeout < 10; timeout++ {
-		if h.IsAddonInstalled("repository.elementum") {
-			break
-		}
-		log.Info("Sleeping 1 second while waiting for Elementum repository add-on to be installed")
-		time.Sleep(1 * time.Second)
-	}
-
-	log.Info("Updating Kodi add-on repositories for Burst...")
-	h.UpdateLocalAddons()
-	h.UpdateAddonRepos()
-
-	if !Get().SkipBurstSearch && h.DialogConfirmFocused("Elementum", "LOCALIZE[30271]") {
-		log.Infof("Triggering Kodi to check for script.elementum.burst plugin")
-		h.InstallAddon("script.elementum.burst")
-
-		for timeout := 0; timeout < 30; timeout++ {
-			if h.IsAddonInstalled("script.elementum.burst") {
-				break
-			}
-			log.Info("Sleeping 1 second while waiting for script.elementum.burst add-on to be installed")
-			time.Sleep(1 * time.Second)
-		}
-
-		log.Infof("Checking for existence of script.elementum.burst plugin now")
-		if h.IsAddonInstalled("script.elementum.burst") {
-			h.SetAddonEnabled("script.elementum.burst", true)
-			h.Notify("Elementum", "LOCALIZE[30272]", AddonIcon())
-		} else {
-			h.Dialog("Elementum", "LOCALIZE[30273]")
-		}
-	}
-}
-
 func findExistingPath(paths []string, addon string) string {
 	// We add plugin folder to avoid getting dummy path, we should take care only for real folder
 	for _, v := range paths {
@@ -994,7 +942,7 @@ func getKodiBufferSize(xbmcHost *xbmc.XBMCHost) int {
 
 	defer xmlFile.Close()
 
-	b, _ := ioutil.ReadAll(xmlFile)
+	b, _ := io.ReadAll(xmlFile)
 
 	var as *xbmc.AdvancedSettings
 	if err = xml.Unmarshal(b, &as); err != nil {
@@ -1093,7 +1041,7 @@ func exportConfig(path string, bundle *ConfigBundle) (err error) {
 		return err
 	}
 
-	err = ioutil.WriteFile(path, content, 0644)
+	err = os.WriteFile(path, content, 0644)
 	return err
 }
 
@@ -1104,7 +1052,7 @@ func importConfig(path string) (*ConfigBundle, error) {
 		return nil, fmt.Errorf("Configuration file %s is not of Yaml or Json format", path)
 	}
 
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

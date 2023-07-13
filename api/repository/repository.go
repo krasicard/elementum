@@ -161,7 +161,7 @@ func getLastRelease(repository string) string {
 	return string(bodyBytes)
 }
 
-func getLatestRelease(user string, repository string) *Release {
+func GetLatestRelease(user string, repository string) *Release {
 	defer perf.ScopeTimer()()
 
 	res, _ := http.Get(fmt.Sprintf(githubLatestReleaseURL, user, repository))
@@ -298,7 +298,7 @@ func GetAddonFilesHead(ctx *gin.Context) {
 
 func addonZip(ctx *gin.Context, xbmcHost *xbmc.XBMCHost, user string, repository string, lastReleaseTag string) {
 	defer perf.ScopeTimer()()
-	release := getLatestRelease(user, repository)
+	release := GetLatestRelease(user, repository)
 	// if there a release with an asset that matches a addon zip, use it
 	if release == nil {
 		return

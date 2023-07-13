@@ -30,6 +30,7 @@ import (
 	"github.com/elgatito/elementum/exit"
 	"github.com/elgatito/elementum/library"
 	"github.com/elgatito/elementum/lockfile"
+	"github.com/elgatito/elementum/repository"
 	"github.com/elgatito/elementum/scrape"
 	"github.com/elgatito/elementum/trakt"
 	"github.com/elgatito/elementum/util"
@@ -273,6 +274,7 @@ func main() {
 			case <-exit.Closer.C():
 				shutdown(exit.ExitCodeSuccess)
 			case <-sigc:
+				log.Infof("Initiating shutdown after receiving signal")
 				shutdown(exit.ExitCodeError)
 			}
 		}
@@ -284,9 +286,10 @@ func main() {
 			return
 		}
 
-		if checkRepository(xbmcHost) {
+		if repository.CheckRepository(xbmcHost, config.Get().Info.Path) {
 			log.Info("Updating Kodi add-on repositories... ")
 			xbmcHost.UpdateAddonRepos()
+			go repository.CheckBurst(xbmcHost, conf.SkipBurstSearch, config.AddonIcon())
 		}
 
 		xbmcHost.DialogProgressBGCleanup()
