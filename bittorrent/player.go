@@ -83,7 +83,6 @@ type Player struct {
 
 // PlayerParams ...
 type PlayerParams struct {
-	ClientIP          string
 	Playing           bool
 	Paused            bool
 	Seeked            bool
@@ -138,10 +137,8 @@ type CandidateFile struct {
 }
 
 // NewPlayer ...
-func NewPlayer(bts *Service, params PlayerParams) *Player {
+func NewPlayer(bts *Service, params PlayerParams, xbmcHost *xbmc.XBMCHost) *Player {
 	params.Playing = true
-
-	xbmcHost, _ := xbmc.GetXBMCHost(params.ClientIP)
 
 	btp := &Player{
 		s:        bts,

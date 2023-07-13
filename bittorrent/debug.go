@@ -44,7 +44,7 @@ func DebugBundle(s *Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		xbmcHost, err := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, err := xbmc.GetXBMCHostWithContext(ctx)
 		if err != nil {
 			log.Infof("Could not find attached Kodi: %s", err)
 			return

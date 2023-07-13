@@ -1686,7 +1686,7 @@ func (s *Service) ClientInfo(ctx *gin.Context) {
 	w := bufio.NewWriter(ctx.Writer)
 	defer w.Flush()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	for _, t := range s.q.All() {
 		if t == nil || t.th == nil || (torrentID != "" && t.infoHash != torrentID) {

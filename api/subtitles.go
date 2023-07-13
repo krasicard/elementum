@@ -22,7 +22,7 @@ func SubtitlesIndex(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		q := ctx.Request.URL.Query()
 
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		playingFile := xbmcHost.PlayerGetPlayingFile()
 

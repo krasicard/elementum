@@ -26,7 +26,7 @@ import (
 func Changelog(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	changelogPath := filepath.Join(config.Get().Info.Path, "whatsnew.txt")
 	if _, err := os.Stat(changelogPath); err != nil {
@@ -47,7 +47,7 @@ func Changelog(ctx *gin.Context) {
 
 // Donate display
 func Donate(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	xbmcHost.Dialog("Elementum", "LOCALIZE[30141]")
 	ctx.String(200, "")
@@ -55,7 +55,7 @@ func Donate(ctx *gin.Context) {
 
 // Settings display
 func Settings(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	addon := ctx.Params.ByName("addon")
 	if addon == "" {
@@ -70,7 +70,7 @@ func Settings(ctx *gin.Context) {
 func Status(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	title := "LOCALIZE[30393]"
 	text := ""
@@ -151,7 +151,7 @@ func fileSize(path string) string {
 
 // SelectNetworkInterface ...
 func SelectNetworkInterface(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	typeName := ctx.Params.ByName("type")
 
@@ -208,7 +208,7 @@ func SelectNetworkInterface(ctx *gin.Context) {
 
 // SelectStrmLanguage ...
 func SelectStrmLanguage(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	items := make([]string, 0)
 	items = append(items, xbmcHost.GetLocalizedString(30477))

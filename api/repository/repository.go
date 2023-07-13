@@ -257,7 +257,7 @@ func GetAddonFiles(ctx *gin.Context) {
 		user = "ElementumOrg"
 	}
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 	lastReleaseTag := getLastRelease(user + "/" + repository)
 
 	switch filepath {

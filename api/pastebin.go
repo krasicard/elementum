@@ -76,7 +76,7 @@ var pasteProjects = []PasteProject{
 
 // Pastebin uploads /debug/:type to pastebin
 func Pastebin(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	dialog := xbmcHost.NewDialogProgressBG("Elementum", "LOCALIZE[30457]", "LOCALIZE[30457]")
 	if dialog != nil {

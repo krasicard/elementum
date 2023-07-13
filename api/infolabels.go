@@ -77,7 +77,7 @@ func InfoLabelsStored(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		labelsString := "{}"
 
@@ -106,7 +106,7 @@ func InfoLabelsEpisode(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		tmdbID := ctx.Params.ByName("showId")
 		showID, _ := strconv.Atoi(tmdbID)
@@ -127,7 +127,7 @@ func InfoLabelsMovie(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		tmdbID := ctx.Params.ByName("tmdbId")
 
@@ -145,7 +145,7 @@ func InfoLabelsSearch(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		tmdbID := ctx.Params.ByName("tmdbId")
 		idx := ctx.DefaultQuery("index", "-1")

@@ -144,7 +144,7 @@ func TVCountries(ctx *gin.Context) {
 func TVLibrary(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	shows, err := xbmcHost.VideoLibraryGetElementumShows()
 	if err != nil || shows == nil || shows.Limits == nil || shows.Limits.Total == 0 {
@@ -593,7 +593,7 @@ func ShowSeasonRun(action string, s *bittorrent.Service) gin.HandlerFunc {
 // ShowSeasonLinks ...
 func ShowSeasonLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		tmdbID := ctx.Params.ByName("showId")
 		showID, _ := strconv.Atoi(tmdbID)
@@ -789,7 +789,7 @@ func ShowEpisodeRun(action string, s *bittorrent.Service) gin.HandlerFunc {
 // ShowEpisodeLinks ...
 func ShowEpisodeLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		tmdbID := ctx.Params.ByName("showId")
 		showID, _ := strconv.Atoi(tmdbID)

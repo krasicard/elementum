@@ -18,7 +18,7 @@ import (
 // ContextPlaySelector plays/downloads/toggles_watched media from Kodi in elementum
 func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		action := ctx.Params.ByName("action")
 		id := ctx.Params.ByName("kodiID")
@@ -90,7 +90,7 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 // ContextAssignKodiSelector assigns torrent to movie/episode by Kodi library ID
 func ContextAssignKodiSelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		torrentID := ctx.Params.ByName("torrentId")
 		id := ctx.Params.ByName("kodiID")
@@ -131,7 +131,7 @@ func ContextAssignKodiSelector(s *bittorrent.Service) gin.HandlerFunc {
 // ContextAssignTMDBSelector assigns torrent to media by TMDB ID
 func ContextAssignTMDBSelector(s *bittorrent.Service, media string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		torrentID := ctx.Params.ByName("torrentId")
 		id := ctx.Params.ByName("tmdbId")
@@ -195,7 +195,7 @@ func ContextAssignTMDBSelector(s *bittorrent.Service, media string) gin.HandlerF
 // ContextActionFromKodiLibrarySelector does action for media in Kodi library (by Kodi library ID)
 func ContextActionFromKodiLibrarySelector(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		action := ctx.Params.ByName("action")
 		id := ctx.Params.ByName("kodiID")

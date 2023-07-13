@@ -63,7 +63,7 @@ func torrentHistoryEmpty() bool {
 func HistoryRemove(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	infohash := ctx.DefaultQuery("infohash", "")
 
@@ -87,7 +87,7 @@ func HistoryRemove(ctx *gin.Context) {
 func HistoryClear(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	log.Debugf("Cleaning queries with torrent history")
 	if err := database.GetStormDB().Drop(&database.TorrentHistory{}); err != nil {

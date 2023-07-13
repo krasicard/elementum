@@ -18,7 +18,7 @@ func init() {
 // Index ...
 func Index(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		action := ctx.Query("action")
 		if action == "search" || action == "manualsearch" {

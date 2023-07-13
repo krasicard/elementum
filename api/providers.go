@@ -59,7 +59,7 @@ func getProviders(xbmcHost *xbmc.XBMCHost) []Addon {
 
 // ProviderList ...
 func ProviderList(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	providers := getProviders(xbmcHost)
 
@@ -105,7 +105,7 @@ func ProviderList(ctx *gin.Context) {
 
 // ProviderSettings ...
 func ProviderSettings(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	addonID := ctx.Params.ByName("provider")
 	xbmcHost.AddonSettings(addonID)
@@ -114,7 +114,7 @@ func ProviderSettings(ctx *gin.Context) {
 
 // ProviderCheck ...
 func ProviderCheck(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	addonID := ctx.Params.ByName("provider")
 	failures := xbmcHost.AddonCheck(addonID)
@@ -125,7 +125,7 @@ func ProviderCheck(ctx *gin.Context) {
 
 // ProviderFailure ...
 func ProviderFailure(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	addonID := ctx.Params.ByName("provider")
 	xbmcHost.AddonFailure(addonID)
@@ -134,7 +134,7 @@ func ProviderFailure(ctx *gin.Context) {
 
 // ProviderEnable ...
 func ProviderEnable(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	addonID := ctx.Params.ByName("provider")
 	xbmcHost.SetAddonEnabled(addonID, true)
@@ -147,7 +147,7 @@ func ProviderEnable(ctx *gin.Context) {
 
 // ProviderDisable ...
 func ProviderDisable(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	addonID := ctx.Params.ByName("provider")
 	xbmcHost.SetAddonEnabled(addonID, false)
@@ -160,7 +160,7 @@ func ProviderDisable(ctx *gin.Context) {
 
 // ProvidersEnableAll ...
 func ProvidersEnableAll(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	providers := getProviders(xbmcHost)
 
@@ -176,7 +176,7 @@ func ProvidersEnableAll(ctx *gin.Context) {
 
 // ProvidersDisableAll ...
 func ProvidersDisableAll(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	providers := getProviders(xbmcHost)
 

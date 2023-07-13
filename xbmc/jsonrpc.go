@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/elgatito/elementum/jsonrpc"
+	"github.com/gin-gonic/gin"
 
 	"github.com/anacrolix/sync"
 )
@@ -116,6 +117,16 @@ func GetLocalXBMCHost() (*XBMCHost, error) {
 	}
 
 	return nil, errors.New("No local XBMCHost found")
+}
+
+func GetXBMCHostWithContext(ctx *gin.Context) (*XBMCHost, error) {
+	// If request is not coming from addon's python part - then it can be a browser request or Kodi,
+	// so we communicate with any existing Kodi connection.
+	if ctx.GetHeader("User-Agent") != "plugin.video.elementum" {
+		return GetLocalXBMCHost()
+	}
+
+	return GetXBMCHost(ctx.ClientIP())
 }
 
 func GetXBMCHost(host string) (*XBMCHost, error) {

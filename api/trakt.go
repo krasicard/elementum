@@ -118,7 +118,7 @@ func inShowsCollection(tmdbID int) bool {
 
 // AuthorizeTrakt ...
 func AuthorizeTrakt(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	err := trakt.Authorize(true)
 	if err == nil {
@@ -131,7 +131,7 @@ func AuthorizeTrakt(ctx *gin.Context) {
 
 // DeauthorizeTrakt ...
 func DeauthorizeTrakt(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	err := trakt.Deauthorize(true)
 	if err == nil {
@@ -150,7 +150,7 @@ func DeauthorizeTrakt(ctx *gin.Context) {
 func WatchlistMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	movies, err := trakt.WatchlistMovies(false)
 	if err != nil {
@@ -163,7 +163,7 @@ func WatchlistMovies(ctx *gin.Context) {
 func WatchlistShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	shows, err := trakt.WatchlistShows(false)
 	if err != nil {
@@ -176,7 +176,7 @@ func WatchlistShows(ctx *gin.Context) {
 func CollectionMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	movies, err := trakt.CollectionMovies(false)
 	if err != nil {
@@ -189,7 +189,7 @@ func CollectionMovies(ctx *gin.Context) {
 func CollectionShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	shows, err := trakt.CollectionShows(false)
 	if err != nil {
@@ -202,7 +202,7 @@ func CollectionShows(ctx *gin.Context) {
 func UserlistMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	user := ctx.Params.ByName("user")
 	listID := ctx.Params.ByName("listId")
@@ -219,7 +219,7 @@ func UserlistMovies(ctx *gin.Context) {
 func UserlistShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	user := ctx.Params.ByName("user")
 	listID := ctx.Params.ByName("listId")
@@ -248,7 +248,7 @@ func UserlistShows(ctx *gin.Context) {
 func AddMovieToWatchlist(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("tmdbId")
 	resp, err := trakt.AddToWatchlist("movies", tmdbID)
@@ -271,7 +271,7 @@ func AddMovieToWatchlist(ctx *gin.Context) {
 func RemoveMovieFromWatchlist(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("tmdbId")
 	resp, err := trakt.RemoveFromWatchlist("movies", tmdbID)
@@ -294,7 +294,7 @@ func RemoveMovieFromWatchlist(ctx *gin.Context) {
 func AddShowToWatchlist(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("showId")
 	resp, err := trakt.AddToWatchlist("shows", tmdbID)
@@ -317,7 +317,7 @@ func AddShowToWatchlist(ctx *gin.Context) {
 func RemoveShowFromWatchlist(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("showId")
 	resp, err := trakt.RemoveFromWatchlist("shows", tmdbID)
@@ -340,7 +340,7 @@ func RemoveShowFromWatchlist(ctx *gin.Context) {
 func AddMovieToCollection(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("tmdbId")
 	resp, err := trakt.AddToCollection("movies", tmdbID)
@@ -363,7 +363,7 @@ func AddMovieToCollection(ctx *gin.Context) {
 func RemoveMovieFromCollection(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("tmdbId")
 	resp, err := trakt.RemoveFromCollection("movies", tmdbID)
@@ -386,7 +386,7 @@ func RemoveMovieFromCollection(ctx *gin.Context) {
 func AddShowToCollection(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("showId")
 	resp, err := trakt.AddToCollection("shows", tmdbID)
@@ -409,7 +409,7 @@ func AddShowToCollection(ctx *gin.Context) {
 func RemoveShowFromCollection(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("showId")
 	resp, err := trakt.RemoveFromCollection("shows", tmdbID)
@@ -559,7 +559,7 @@ func renderTraktMovies(ctx *gin.Context, movies []*trakt.Movies, total int, page
 func TraktPopularMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -574,7 +574,7 @@ func TraktPopularMovies(ctx *gin.Context) {
 func TraktRecommendationsMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -589,7 +589,7 @@ func TraktRecommendationsMovies(ctx *gin.Context) {
 func TraktTrendingMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -604,7 +604,7 @@ func TraktTrendingMovies(ctx *gin.Context) {
 func TraktMostPlayedMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -619,7 +619,7 @@ func TraktMostPlayedMovies(ctx *gin.Context) {
 func TraktMostWatchedMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -634,7 +634,7 @@ func TraktMostWatchedMovies(ctx *gin.Context) {
 func TraktMostCollectedMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -649,7 +649,7 @@ func TraktMostCollectedMovies(ctx *gin.Context) {
 func TraktMostAnticipatedMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -664,7 +664,7 @@ func TraktMostAnticipatedMovies(ctx *gin.Context) {
 func TraktBoxOffice(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	movies, _, err := trakt.TopMovies("boxoffice", "1")
 	if err != nil {
@@ -677,7 +677,7 @@ func TraktBoxOffice(ctx *gin.Context) {
 func TraktHistoryMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -701,7 +701,7 @@ func TraktHistoryMovies(ctx *gin.Context) {
 func TraktHistoryShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -725,7 +725,7 @@ func TraktHistoryShows(ctx *gin.Context) {
 func TraktProgressShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	shows, err := trakt.WatchedShowsProgress()
 	if err != nil {
@@ -829,7 +829,7 @@ func renderTraktShows(ctx *gin.Context, shows []*trakt.Shows, total int, page in
 func TraktPopularShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -844,7 +844,7 @@ func TraktPopularShows(ctx *gin.Context) {
 func TraktRecommendationsShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -859,7 +859,7 @@ func TraktRecommendationsShows(ctx *gin.Context) {
 func TraktTrendingShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -874,7 +874,7 @@ func TraktTrendingShows(ctx *gin.Context) {
 func TraktMostPlayedShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -889,7 +889,7 @@ func TraktMostPlayedShows(ctx *gin.Context) {
 func TraktMostWatchedShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -904,7 +904,7 @@ func TraktMostWatchedShows(ctx *gin.Context) {
 func TraktMostCollectedShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -919,7 +919,7 @@ func TraktMostCollectedShows(ctx *gin.Context) {
 func TraktMostAnticipatedShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -938,7 +938,7 @@ func TraktMostAnticipatedShows(ctx *gin.Context) {
 func TraktMyShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -953,7 +953,7 @@ func TraktMyShows(ctx *gin.Context) {
 func TraktMyNewShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -968,7 +968,7 @@ func TraktMyNewShows(ctx *gin.Context) {
 func TraktMyPremieres(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -983,7 +983,7 @@ func TraktMyPremieres(ctx *gin.Context) {
 func TraktMyMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -998,7 +998,7 @@ func TraktMyMovies(ctx *gin.Context) {
 func TraktMyReleases(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -1013,7 +1013,7 @@ func TraktMyReleases(ctx *gin.Context) {
 func TraktAllShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -1028,7 +1028,7 @@ func TraktAllShows(ctx *gin.Context) {
 func TraktAllNewShows(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -1043,7 +1043,7 @@ func TraktAllNewShows(ctx *gin.Context) {
 func TraktAllPremieres(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -1058,7 +1058,7 @@ func TraktAllPremieres(ctx *gin.Context) {
 func TraktAllMovies(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -1073,7 +1073,7 @@ func TraktAllMovies(ctx *gin.Context) {
 func TraktAllReleases(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	pageParam := ctx.DefaultQuery("page", "1")
 	page, _ := strconv.Atoi(pageParam)
@@ -1578,7 +1578,7 @@ func renderProgressShows(ctx *gin.Context, shows []*trakt.ProgressShow, total in
 func SelectTraktUserList(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	action := ctx.Params.ByName("action")
 	media := ctx.Params.ByName("media")
@@ -1604,7 +1604,7 @@ func ToggleWatched(media string, setWatched bool) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		defer perf.ScopeTimer()()
 
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		var watched *trakt.WatchedItem
 		var foundInLibrary bool

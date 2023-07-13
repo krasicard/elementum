@@ -171,7 +171,7 @@ func MovieCountries(ctx *gin.Context) {
 func MovieLibrary(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	movies, err := xbmcHost.VideoLibraryGetElementumMovies()
 	if err != nil || movies == nil || movies.Limits == nil || movies.Limits.Total == 0 {
@@ -521,7 +521,7 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 			return
 		}
 
-		xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+		xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 		existingTorrent := s.HasTorrentByID(movie.ID)
 		if existingTorrent != nil && (config.Get().SilentStreamStart || existingTorrent.IsPlaying || xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30608];;[COLOR gold]%s[/COLOR]", existingTorrent.Title()))) {

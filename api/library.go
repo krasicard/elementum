@@ -35,7 +35,7 @@ const (
 func AddMovie(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("tmdbId")
 	force := ctx.DefaultQuery("force", falseType) == trueType
@@ -97,7 +97,7 @@ func AddMoviesList(ctx *gin.Context) {
 func RemoveMovie(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID, _ := strconv.Atoi(ctx.Params.ByName("tmdbId"))
 	tmdbStr := ctx.Params.ByName("tmdbId")
@@ -133,7 +133,7 @@ func RemoveMovie(ctx *gin.Context) {
 func AddShow(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("tmdbId")
 	force := ctx.DefaultQuery("force", falseType) == trueType
@@ -192,7 +192,7 @@ func AddShowsList(ctx *gin.Context) {
 func RemoveShow(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
 
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("tmdbId")
 	show, paths, err := library.RemoveShow(tmdbID)
@@ -221,7 +221,7 @@ func RemoveShow(ctx *gin.Context) {
 
 // UpdateLibrary ...
 func UpdateLibrary(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	if err := library.Refresh(); err != nil {
 		ctx.String(200, err.Error())
@@ -233,7 +233,7 @@ func UpdateLibrary(ctx *gin.Context) {
 
 // UpdateTrakt ...
 func UpdateTrakt(ctx *gin.Context) {
-	xbmcHost, _ := xbmc.GetXBMCHost(ctx.ClientIP())
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	xbmcHost.Notify("Elementum", "LOCALIZE[30358]", config.AddonIcon())
 	ctx.String(200, "")
