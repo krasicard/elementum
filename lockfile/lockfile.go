@@ -3,7 +3,6 @@ package lockfile
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"strconv"
@@ -66,7 +65,7 @@ func (lf *LockFile) Lock() (int, error) {
 		}
 	}
 
-	ioutil.WriteFile(lf.File, []byte(strconv.Itoa(ownPID)), 0666) // The file's not locked, so we lock it with our PID.
+	os.WriteFile(lf.File, []byte(strconv.Itoa(ownPID)), 0666) // The file's not locked, so we lock it with our PID.
 	// For Windows we use ACL to properly set World-Wide permissions, so that after restart users could remove this lockfile.
 	if runtime.GOOS == "windows" {
 		if err := acl.Chmod(lf.File, 0755); err != nil {
@@ -90,7 +89,7 @@ func (lf *LockFile) Unlock() error {
 }
 
 func getPid(file string) (int, error) {
-	pid, err := ioutil.ReadFile(file)
+	pid, err := os.ReadFile(file)
 	if err != nil {
 		return 0, err
 	}

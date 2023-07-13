@@ -3,7 +3,6 @@ package library
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -503,7 +502,7 @@ func writeMovieStrm(tmdbID string, force bool) (*tmdb.Movie, error) {
 		// return movie, fmt.Errorf("LOCALIZE[30287];;%s", movie.Title)
 		return movie, nil
 	}
-	if err := ioutil.WriteFile(movieStrmPath, []byte(playLink), 0644); err != nil {
+	if err := os.WriteFile(movieStrmPath, []byte(playLink), 0644); err != nil {
 		log.Errorf("Could not write strm file: %s", err)
 		return movie, err
 	}
@@ -540,7 +539,7 @@ https://www.themoviedb.org/movie/%v
 		out += fmt.Sprintf("https://www.imdb.com/title/%s/\n", m.ExternalIDs.IMDBId)
 	}
 
-	if err := ioutil.WriteFile(p, []byte(out), 0644); err != nil {
+	if err := os.WriteFile(p, []byte(out), 0644); err != nil {
 		log.Errorf("Could not write NFO file: %s", err)
 		return err
 	}
@@ -626,7 +625,7 @@ func writeShowStrm(showID int, adding, force bool) (*tmdb.Show, error) {
 				continue
 			}
 
-			if err := ioutil.WriteFile(episodeStrmPath, []byte(playLink), 0644); err != nil {
+			if err := os.WriteFile(episodeStrmPath, []byte(playLink), 0644); err != nil {
 				log.Error(err)
 				return show, err
 			}
@@ -673,7 +672,7 @@ https://www.themoviedb.org/tv/%v
 		out += fmt.Sprintf("https://www.thetvdb.com/?tab=series&id=%v&lid=7\n", s.ExternalIDs.TVDBID)
 	}
 
-	if err := ioutil.WriteFile(p, []byte(out), 0644); err != nil {
+	if err := os.WriteFile(p, []byte(out), 0644); err != nil {
 		log.Errorf("Could not write NFO file: %s", err)
 		return err
 	}

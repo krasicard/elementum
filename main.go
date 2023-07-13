@@ -2,11 +2,10 @@ package main
 
 import (
 	"expvar"
-	"net/http/pprof"
-
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -106,7 +105,7 @@ func setupLogging() {
 	logging.SetFormatter(logging.MustStringFormatter(
 		`%{color}%{level:.4s}  %{module:-12s} ▶ %{shortfunc:-15s}  %{color:reset}%{message}`,
 	))
-	logging.SetBackend(logging.NewLogBackend(ioutil.Discard, "", 0), backend)
+	logging.SetBackend(logging.NewLogBackend(io.Discard, "", 0), backend)
 }
 
 func main() {

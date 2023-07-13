@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -455,7 +454,7 @@ func (t *TorrentFile) Download() ([]byte, error) {
 	if p, ok := cachedInfoHash.Load(t.URI); ok && config.Get().UseCacheTorrents {
 		_, errf := os.Stat(p.(string))
 		if errf == nil {
-			b, err := ioutil.ReadFile(p.(string))
+			b, err := os.ReadFile(p.(string))
 			return b, err
 		}
 
@@ -466,7 +465,7 @@ func (t *TorrentFile) Download() ([]byte, error) {
 	if strings.HasPrefix(t.URI, "/") {
 		_, err := os.Stat(t.URI)
 		if err == nil {
-			return ioutil.ReadFile(t.URI)
+			return os.ReadFile(t.URI)
 		} else {
 			log.Errorf("Get local file failed: %s", err)
 		}
@@ -685,7 +684,10 @@ func (t *TorrentFile) UpdateTorrentTrackers() error {
 		}
 
 		var b []byte
-		b, err = ioutil.ReadFile(t.URI)
+		b, err = os.ReadFile(t.URI)
+		if err != nil {
+			return err
+		}
 
 		var torrentFile *TorrentFileRaw
 		if err := bencode.DecodeBytes(b, &torrentFile); err != nil {

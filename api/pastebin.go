@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os/user"
@@ -102,7 +102,7 @@ func Pastebin(ctx *gin.Context) {
 		return
 	}
 	defer resp.Body.Close()
-	content, _ := ioutil.ReadAll(resp.Body)
+	content, _ := io.ReadAll(resp.Body)
 
 	// u, err := user.Current()
 	// if err != nil {
@@ -166,7 +166,7 @@ func Pastebin(ctx *gin.Context) {
 		if !p.IsJSON && !p.IsRAW {
 			pasteURL = resp.Request.URL.String()
 		} else {
-			content, _ := ioutil.ReadAll(resp.Body)
+			content, _ := io.ReadAll(resp.Body)
 
 			var respData map[string]*json.RawMessage
 			if err := json.Unmarshal(content, &respData); err != nil {

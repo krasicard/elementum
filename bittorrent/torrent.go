@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/url"
 	"os"
@@ -1285,7 +1284,7 @@ func (t *Torrent) SaveMetainfo(path string) (string, error) {
 	}
 
 	out, _ := t.UpdateDatabaseMetadata(t.GetMetadata())
-	ioutil.WriteFile(path, out, 0644)
+	os.WriteFile(path, out, 0644)
 
 	return path, nil
 }

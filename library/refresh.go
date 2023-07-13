@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -679,8 +678,6 @@ func parseUniqueID(entityType int, i *uid.UniqueIDs, xbmcIDs *xbmc.UniqueIDs, fi
 			}
 		}
 	}
-
-	return
 }
 
 func convertKodiIDsToLibrary(i *uid.UniqueIDs, xbmcIDs *xbmc.UniqueIDs) {
@@ -728,7 +725,7 @@ func findTMDBInFile(fileName string, pattern string) (id int, err error) {
 		return 0, errStat
 	}
 
-	fileContent, errRead := ioutil.ReadFile(fileName)
+	fileContent, errRead := os.ReadFile(fileName)
 	if errRead != nil {
 		return 0, errRead
 	}
@@ -880,8 +877,8 @@ func refreshLocalMovies() {
 	files := searchStrm(moviesLibraryPath)
 	IDs := []int{}
 	for _, f := range files {
-		fileContent, err := ioutil.ReadFile(f)
-		if err != nil || len(fileContent) == 0 || bytes.Index(fileContent, addon) < 0 {
+		fileContent, err := os.ReadFile(f)
+		if err != nil || len(fileContent) == 0 || !bytes.Contains(fileContent, addon) {
 			continue
 		}
 
@@ -896,8 +893,6 @@ func refreshLocalMovies() {
 	}
 
 	log.Debugf("Finished updating %d local movies in %s", len(IDs), time.Since(begin))
-
-	return
 }
 
 func refreshLocalShows() {
@@ -915,8 +910,8 @@ func refreshLocalShows() {
 	files := searchStrm(showsLibraryPath)
 	IDs := map[int]bool{}
 	for _, f := range files {
-		fileContent, err := ioutil.ReadFile(f)
-		if err != nil || len(fileContent) == 0 || bytes.Index(fileContent, addon) < 0 {
+		fileContent, err := os.ReadFile(f)
+		if err != nil || len(fileContent) == 0 || !bytes.Contains(fileContent, addon) {
 			continue
 		}
 
@@ -937,8 +932,6 @@ func refreshLocalShows() {
 		updateDBItem(id, StateActive, ShowType, id)
 	}
 	log.Debugf("Finished updating %d local shows in %s", len(IDs), time.Since(begin))
-
-	return
 }
 
 func searchStrm(dir string) []string {

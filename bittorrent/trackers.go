@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net"
 	"net/url"
@@ -230,7 +230,7 @@ func UpdateDefaultTrackers() {
 			}
 			defer resp.Body.Close()
 
-			bodyBytes, _ := ioutil.ReadAll(resp.Body)
+			bodyBytes, _ := io.ReadAll(resp.Body)
 			scanner := bufio.NewScanner(bytes.NewReader(bodyBytes))
 			for scanner.Scan() {
 				tracker := strings.TrimSpace(scanner.Text())

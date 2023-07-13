@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -689,7 +688,7 @@ func (s *Service) AddTorrent(xbmcHost *xbmc.XBMCHost, uri string, paused bool, d
 
 	// Dummy check if torrent file is a file containing a magnet link
 	if _, err := os.Stat(uri); err == nil {
-		dat, err := ioutil.ReadFile(uri)
+		dat, err := os.ReadFile(uri)
 		if err == nil && bytes.HasPrefix(dat, []byte("magnet:")) {
 			uri = string(dat)
 		}
@@ -761,7 +760,7 @@ func (s *Service) AddTorrent(xbmcHost *xbmc.XBMCHost, uri string, paused bool, d
 		fastResumeFile := filepath.Join(s.config.TorrentsPath, fmt.Sprintf("%s.fastresume", infoHash))
 		if _, err := os.Stat(fastResumeFile); err == nil {
 			log.Info("Found fast resume data")
-			fastResumeData, err := ioutil.ReadFile(fastResumeFile)
+			fastResumeData, err := os.ReadFile(fastResumeFile)
 			if err != nil {
 				return nil, err
 			}
@@ -1020,7 +1019,7 @@ func (s *Service) onSaveResumeDataConsumer() {
 					log.Warningf("Resume data corrupted for %s, %d bytes received and failed to decode with: %s, skipping...", alert.Name, len(bEncoded), err.Error())
 				} else {
 					path := filepath.Join(s.config.TorrentsPath, fmt.Sprintf("%s.fastresume", alert.InfoHash))
-					ioutil.WriteFile(path, bEncoded, 0644)
+					os.WriteFile(path, bEncoded, 0644)
 				}
 				lt.DeleteEntry(alert.Entry)
 			}
@@ -1179,7 +1178,13 @@ func (s *Service) loadTorrentFiles() {
 	xbmcHost, _ := xbmc.GetLocalXBMCHost()
 
 	log.Infof("Loading torrents from: %s", s.config.TorrentsPath)
-	files, err := ioutil.ReadDir(s.config.TorrentsPath)
+	dir, err := os.Open(s.config.TorrentsPath)
+	if err != nil {
+		log.Infof("Cannot read torrents dir: %s", err)
+		return
+	}
+
+	files, err := dir.Readdir(-1)
 	if err != nil {
 		log.Infof("Cannot read torrents dir: %s", err)
 		return
@@ -1489,7 +1494,7 @@ func (s *Service) onDownloadProgress() {
 						re := regexp.MustCompile(`(?i).*\.rar$`)
 						if re.MatchString(fileName) {
 							extractedPath := filepath.Join(s.config.DownloadPath, filepath.Dir(filePath), "extracted")
-							files, err := ioutil.ReadDir(extractedPath)
+							files, err := os.ReadDir(extractedPath)
 							if err != nil {
 								return err
 							}

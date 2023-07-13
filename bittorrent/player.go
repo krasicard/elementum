@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"os/exec"
@@ -677,7 +676,7 @@ func (btp *Player) updateBufferDialog() (bool, error) {
 }
 
 func (btp *Player) findExtracted(destPath string) {
-	files, err := ioutil.ReadDir(destPath)
+	files, err := os.ReadDir(destPath)
 	if err != nil {
 		log.Error(err)
 		btp.bufferEvents.Broadcast(err)

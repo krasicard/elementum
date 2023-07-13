@@ -1,7 +1,6 @@
 package providers
 
 import (
-	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
@@ -327,7 +326,7 @@ func processLinks(xbmcHost *xbmc.XBMCHost, torrentsChan chan *bittorrent.Torrent
 			continue
 		}
 
-		in, err := ioutil.ReadFile(t.URI)
+		in, err := os.ReadFile(t.URI)
 		if err != nil {
 			log.Debugf("Cannot read torrent file: %s", err)
 			continue
@@ -361,7 +360,7 @@ func processLinks(xbmcHost *xbmc.XBMCHost, torrentsChan chan *bittorrent.Torrent
 			continue
 		}
 
-		err = ioutil.WriteFile(t.URI, out, 0666)
+		err = os.WriteFile(t.URI, out, 0666)
 		if err != nil {
 			log.Debugf("Cannot write torrent file: %s", err)
 			continue

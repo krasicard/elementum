@@ -3,7 +3,7 @@ package util
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -270,7 +270,7 @@ func Move(src, dst string) (string, error) {
 // The optional ignore argument is a callable. If given, it
 // is called with the `src` parameter, which is the directory
 // being visited by CopyTree(), and `names` which is the list of
-// `src` contents, as returned by ioutil.ReadDir():
+// `src` contents, as returned by os.ReadDir():
 //
 //   callable(src, entries) -> ignoredNames
 //
@@ -290,7 +290,7 @@ type CopyTreeOptions struct {
 	Symlinks               bool
 	IgnoreDanglingSymlinks bool
 	CopyFunction           func(string, string, bool) (string, error)
-	Ignore                 func(string, []os.FileInfo) []string
+	Ignore                 func(string, []fs.DirEntry) []string
 }
 
 // CopyTree ...
@@ -316,7 +316,7 @@ func CopyTree(src, dst string, options *CopyTreeOptions) error {
 		return &AlreadyExistsError{dst}
 	}
 
-	entries, err := ioutil.ReadDir(src)
+	entries, err := os.ReadDir(src)
 	if err != nil {
 		return err
 	}

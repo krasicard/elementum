@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -36,7 +35,7 @@ func Changelog(ctx *gin.Context) {
 	}
 
 	title := "LOCALIZE[30355]"
-	text, err := ioutil.ReadFile(changelogPath)
+	text, err := os.ReadFile(changelogPath)
 	if err != nil {
 		ctx.String(404, err.Error())
 		return

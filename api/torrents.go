@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -67,7 +66,7 @@ func AddToTorrentsMap(tmdbID string, torrent *bittorrent.TorrentFile) {
 		return
 	}
 
-	b, err := ioutil.ReadFile(torrent.URI)
+	b, err := os.ReadFile(torrent.URI)
 	if err != nil {
 		return
 	}

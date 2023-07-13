@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"sort"
 	"strconv"
 	"time"
@@ -137,7 +137,7 @@ func getShow(tvdbID int, language string) (*Show, error) {
 		return nil, err
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

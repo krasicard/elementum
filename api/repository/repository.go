@@ -8,7 +8,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -157,7 +157,7 @@ func getLastRelease(repository string) string {
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+	bodyBytes, _ := io.ReadAll(resp.Body)
 	return string(bodyBytes)
 }
 
@@ -199,7 +199,7 @@ func getAddonXML(repository string) (string, error) {
 	}
 
 	defer resp.Body.Close()
-	retBytes, _ := ioutil.ReadAll(resp.Body)
+	retBytes, _ := io.ReadAll(resp.Body)
 	return string(retBytes), nil
 }
 

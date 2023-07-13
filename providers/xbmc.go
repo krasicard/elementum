@@ -3,7 +3,7 @@ package providers
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -69,7 +69,7 @@ func CallbackHandler(ctx *gin.Context) {
 		return
 	}
 	RemoveCallback(cid)
-	body, _ := ioutil.ReadAll(ctx.Request.Body)
+	body, _ := io.ReadAll(ctx.Request.Body)
 	c <- body
 	close(c)
 }

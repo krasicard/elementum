@@ -3,7 +3,7 @@ package proxy
 import (
 	"bytes"
 	"crypto/tls"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -68,11 +68,11 @@ func handleRequest(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *ht
 		dumpRequest(req, ctx, false, true)
 	}
 
-	bodyBytes, _ := ioutil.ReadAll(req.Body)
+	bodyBytes, _ := io.ReadAll(req.Body)
 	defer req.Body.Close()
 
 	ctx.UserData = bodyBytes
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	return req, nil
 }
