@@ -72,6 +72,8 @@ then
   test go build -ldflags="-w -X github.com/elgatito/elementum/util.Version=${GIT_VERSION}" -o /var/tmp/${DEST_NAME} .
   test chmod +x /var/tmp/elementum*
   manage
+  mkdir -p $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
+  mkdir -p $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
   chmod +x $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/${DEST_NAME}
@@ -82,6 +84,8 @@ then
   test go build -ldflags="-w -X github.com/elgatito/elementum/util.Version=${GIT_VERSION}" -tags shared -buildmode=c-shared -o /var/tmp/${DEST_LIBRARY} .
   test chmod +x /var/tmp/elementum*
   manage
+  mkdir -p $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
+  mkdir -p $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
 elif [ "${DEST_ACTION}" == "sanitize" ]
@@ -91,6 +95,8 @@ then
   CGO_ENABLED=1 CGO_LDFLAGS='-fsanitize=leak -fsanitize=address' CGO_CFLAGS='-fsanitize=leak -fsanitize=address' test go build -ldflags="-w -X github.com/elgatito/elementum/util.Version=${GIT_VERSION}" -o /var/tmp/elementum github.com/elgatito/elementum
   test chmod +x /var/tmp/elementum*
   manage
+  mkdir -p $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
+  mkdir -p $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
   test cp -rf /var/tmp/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
 elif [ "${DEST_ACTION}" == "docker" ]
@@ -98,6 +104,8 @@ then
   # This will run with docker libtorrent:$DEST_MAKE image
   test make $DEST_MAKE
   manage
+  mkdir -p $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
+  mkdir -p $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
   test cp -rf build/$DEST_PLATFORM/elementum* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
   test cp -rf build/$DEST_PLATFORM/elementum* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
 elif [ "${DEST_ACTION}" == "docker-library" ]
@@ -105,6 +113,8 @@ then
   # This will run with docker libtorrent:$DEST_MAKE image
   test make ${DEST_MAKE}-shared
   manage
+  mkdir -p $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
+  mkdir -p $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
   test cp -rf build/${DEST_PLATFORM}/elementum.* $DEST_DIR/addons/plugin.video.elementum/resources/bin/$DEST_PLATFORM/
   test cp -rf build/${DEST_PLATFORM}/elementum.* $DEST_DIR/userdata/addon_data/plugin.video.elementum/bin/$DEST_PLATFORM/
 fi
