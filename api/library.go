@@ -101,7 +101,7 @@ func RemoveMovie(ctx *gin.Context) {
 
 	tmdbID, _ := strconv.Atoi(ctx.Params.ByName("tmdbId"))
 	tmdbStr := ctx.Params.ByName("tmdbId")
-	movie, paths, err := library.RemoveMovie(tmdbID)
+	movie, paths, err := library.RemoveMovie(tmdbID, false)
 	if err != nil {
 		ctx.String(200, err.Error())
 	}
@@ -195,7 +195,7 @@ func RemoveShow(ctx *gin.Context) {
 	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	tmdbID := ctx.Params.ByName("tmdbId")
-	show, paths, err := library.RemoveShow(tmdbID)
+	show, paths, err := library.RemoveShow(tmdbID, false)
 	if err != nil {
 		ctx.String(200, err.Error())
 	}

@@ -426,7 +426,7 @@ func RefreshMovie(kodiID, action int) {
 
 	if action == ActionDelete || action == ActionSafeDelete {
 		if action == ActionDelete {
-			if _, _, err := RemoveMovie(uids.TMDB); err != nil {
+			if _, _, err := RemoveMovie(uids.TMDB, false); err != nil {
 				log.Warning("Nothing left to remove from Elementum")
 			}
 		}
@@ -445,7 +445,7 @@ func RefreshMovie(kodiID, action int) {
 		}
 		l.Mu.Movies.Unlock()
 	} else if action == ActionUpdate {
-		deleteDBItem(uids.TMDB, ShowType, false)
+		deleteDBItem(uids.TMDB, ShowType, false, false)
 	}
 }
 
@@ -462,7 +462,7 @@ func RefreshShow(kodiID, action int) {
 	if action == ActionDelete || action == ActionSafeDelete {
 		if action == ActionDelete {
 			id := strconv.Itoa(uids.TMDB)
-			if _, _, err := RemoveShow(id); err != nil {
+			if _, _, err := RemoveShow(id, false); err != nil {
 				log.Warning("Nothing left to remove from Elementum")
 			}
 		}
@@ -481,7 +481,7 @@ func RefreshShow(kodiID, action int) {
 		}
 		l.Mu.Shows.Unlock()
 	} else if action == ActionUpdate {
-		deleteDBItem(uids.TMDB, ShowType, false)
+		deleteDBItem(uids.TMDB, ShowType, false, false)
 	}
 }
 

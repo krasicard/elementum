@@ -191,9 +191,11 @@ type Configuration struct {
 	TraktSyncAddedShowsLocation    int
 	TraktSyncAddedShowsList        int
 	TraktSyncRemovedMovies         bool
+	TraktSyncRemovedMoviesBack     bool
 	TraktSyncRemovedMoviesLocation int
 	TraktSyncRemovedMoviesList     int
 	TraktSyncRemovedShows          bool
+	TraktSyncRemovedShowsBack      bool
 	TraktSyncRemovedShowsLocation  int
 	TraktSyncRemovedShowsList      int
 	TraktProgressUnaired           bool
@@ -656,9 +658,11 @@ func Reload() (ret *Configuration, err error) {
 		TraktSyncAddedShowsLocation:    settings.ToInt("trakt_sync_added_shows_location"),
 		TraktSyncAddedShowsList:        settings.ToInt("trakt_sync_added_shows_list"),
 		TraktSyncRemovedMovies:         settings.ToBool("trakt_sync_removed_movies"),
+		TraktSyncRemovedMoviesBack:     settings.ToBool("trakt_sync_removed_movies_back"),
 		TraktSyncRemovedMoviesLocation: settings.ToInt("trakt_sync_removed_movies_location"),
 		TraktSyncRemovedMoviesList:     settings.ToInt("trakt_sync_removed_movies_list"),
 		TraktSyncRemovedShows:          settings.ToBool("trakt_sync_removed_shows"),
+		TraktSyncRemovedShowsBack:      settings.ToBool("trakt_sync_removed_shows_back"),
 		TraktSyncRemovedShowsLocation:  settings.ToInt("trakt_sync_removed_shows_location"),
 		TraktSyncRemovedShowsList:      settings.ToInt("trakt_sync_removed_shows_list"),
 		TraktProgressUnaired:           settings.ToBool("trakt_progress_unaired"),

@@ -1,6 +1,7 @@
 package library
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -190,7 +191,7 @@ func RefreshTraktWatched(xbmcHost *xbmc.XBMCHost, itemType int, isRefreshNeeded 
 
 	started := time.Now()
 	defer func() {
-		log.Debugf("Trakt sync watched for '%d' finished in %s", itemType, time.Since(started))
+		log.Debugf("Trakt sync watched for '%s' finished in %s", ItemTypes[itemType], time.Since(started))
 		RefreshUIDsRunner(true)
 	}()
 
@@ -704,7 +705,7 @@ func RefreshTraktPaused(xbmcHost *xbmc.XBMCHost, itemType int, isRefreshNeeded b
 
 	started := time.Now()
 	defer func() {
-		log.Debugf("Trakt sync paused for '%d' finished in %s", itemType, time.Since(started))
+		log.Debugf("Trakt sync paused for '%s' finished in %s", ItemTypes[itemType], time.Since(started))
 	}()
 
 	l := uid.Get()
@@ -808,6 +809,60 @@ func RefreshTraktLists(xbmcHost *xbmc.XBMCHost, isRefreshNeeded bool) error {
 		}
 		if err := SyncShowsList(strconv.Itoa(list.IDs.Trakt), false, isRefreshNeeded); err != nil {
 			continue
+		}
+	}
+
+	return nil
+}
+
+func syncMoviesRemovedBack(movies []*trakt.Movies) error {
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if xbmcHost == nil || err != nil {
+		return errors.New("No Kodi instance found")
+	}
+
+	for _, m := range movies {
+		if m == nil || m.Movie == nil || m.Movie.IDs == nil {
+			continue
+		}
+
+		if kodiMovie, err := uid.GetMovieByTMDB(m.Movie.IDs.TMDB); err == nil && kodiMovie != nil {
+			movie, paths, err := RemoveMovie(m.Movie.IDs.TMDB, true)
+			if err != nil {
+				log.Warningf("Could not remove movie from Kodi library: %s", err)
+			} else if movie != nil && paths != nil {
+				for _, path := range paths {
+					xbmcHost.VideoLibraryCleanDirectory(path, "movies", false)
+				}
+				xbmcHost.VideoLibraryRemoveMovie(kodiMovie.XbmcUIDs.Kodi)
+			}
+		}
+	}
+
+	return nil
+}
+
+func syncShowsRemovedBack(shows []*trakt.Shows) error {
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if xbmcHost == nil || err != nil {
+		return errors.New("No Kodi instance found")
+	}
+
+	for _, s := range shows {
+		if s == nil || s.Show == nil || s.Show.IDs == nil {
+			continue
+		}
+
+		if kodiShow, err := uid.FindShowByTMDB(s.Show.IDs.TMDB); err == nil && kodiShow != nil {
+			show, paths, err := RemoveShow(strconv.Itoa(s.Show.IDs.TMDB), true)
+			if err != nil {
+				log.Warningf("Could not remove show from Kodi library: %s", err)
+			} else if show != nil && paths != nil {
+				for _, path := range paths {
+					xbmcHost.VideoLibraryCleanDirectory(path, "tvshows", false)
+				}
+				xbmcHost.VideoLibraryRemoveTVShow(kodiShow.XbmcUIDs.Kodi)
+			}
 		}
 	}
 

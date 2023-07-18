@@ -268,6 +268,15 @@ func TopMovies(topCategory string, page string) (movies []*Movies, total int, er
 	return
 }
 
+// PreviousWatchlistMovies ...
+func PreviousWatchlistMovies() (movies []*Movies, err error) {
+	err = cache.
+		NewDBStore().
+		Get(cache.TraktMoviesWatchlistKey, &movies)
+
+	return movies, err
+}
+
 // WatchlistMovies ...
 func WatchlistMovies(isUpdateNeeded bool) (movies []*Movies, err error) {
 	if err := Authorized(); err != nil {
@@ -312,6 +321,15 @@ func WatchlistMovies(isUpdateNeeded bool) (movies []*Movies, err error) {
 
 	cacheStore.Set(cache.TraktMoviesWatchlistKey, &movies, cache.TraktMoviesWatchlistExpire)
 	return
+}
+
+// PreviousCollectionMovies ...
+func PreviousCollectionMovies() (movies []*Movies, err error) {
+	err = cache.
+		NewDBStore().
+		Get(cache.TraktMoviesCollectionKey, &movies)
+
+	return movies, err
 }
 
 // CollectionMovies ...
@@ -507,6 +525,15 @@ func TopLists(page string) (lists []*ListContainer, hasNext bool) {
 	hasNext = p.PageCount > pageInt
 
 	return lists, hasNext
+}
+
+// PreviousListItemsMovies ...
+func PreviousListItemsMovies(listID string) (movies []*Movies, err error) {
+	cacheStore := cache.NewDBStore()
+	key := fmt.Sprintf(cache.TraktMoviesListKey, listID)
+	err = cacheStore.Get(key, &movies)
+
+	return
 }
 
 // ListItemsMovies ...

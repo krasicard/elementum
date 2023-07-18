@@ -95,6 +95,15 @@ const (
 )
 
 var (
+	ItemTypes = []string{
+		"Movie",
+		"Show",
+		"Season",
+		"Episode",
+	}
+)
+
+var (
 	removedEpisodes chan *removedEpisode
 	closer          = event.Event{}
 
@@ -194,7 +203,7 @@ func Init() {
 						}
 						if len(showEpisodes) == libraryTotal {
 							ID := strconv.Itoa(showEpisodes[0].ShowID)
-							if _, _, err := RemoveShow(ID); err != nil {
+							if _, _, err := RemoveShow(ID, false); err != nil {
 								log.Error("Unable to remove show after removing all episodes...")
 							}
 						} else {
@@ -339,7 +348,7 @@ func Init() {
 				// Remove from Elementum's library to prevent duplicates
 				if item.Type == movieType {
 					if uid.IsDuplicateMovie(strconv.Itoa(item.ID)) {
-						if _, _, err := RemoveMovie(item.ID); err != nil {
+						if _, _, err := RemoveMovie(item.ID, false); err != nil {
 							log.Warning("Nothing left to remove from Elementum")
 						}
 					}
@@ -464,6 +473,8 @@ func checkShowsPath() error {
 //
 
 func writeMovieStrm(tmdbID string, force bool) (*tmdb.Movie, error) {
+	defer perf.ScopeTimer()()
+
 	// We should not write strm files for movies that are marked as deleted
 	ID, _ := strconv.Atoi(tmdbID)
 	if wasRemoved(ID, MovieType) && !force {
@@ -548,12 +559,12 @@ https://www.themoviedb.org/movie/%v
 }
 
 func writeShowStrm(showID int, adding, force bool) (*tmdb.Show, error) {
+	defer perf.ScopeTimer()()
+
 	// We should not write strm files for shows that are marked as deleted
 	if wasRemoved(showID, ShowType) && !force {
 		return nil, ErrVideoRemoved
 	}
-
-	defer perf.ScopeTimer()()
 
 	show := tmdb.GetShow(showID, config.Get().StrmLanguage)
 	if show == nil {
@@ -685,12 +696,12 @@ https://www.themoviedb.org/tv/%v
 //
 
 // RemoveMovie removes movie from the library
-func RemoveMovie(tmdbID int) (*tmdb.Movie, []string, error) {
+func RemoveMovie(tmdbID int, purge bool) (*tmdb.Movie, []string, error) {
 	if err := checkMoviesPath(); err != nil {
 		return nil, nil, err
 	}
 	defer func() {
-		deleteDBItem(tmdbID, MovieType, true)
+		deleteDBItem(tmdbID, MovieType, true, purge)
 	}()
 
 	ID := strconv.Itoa(tmdbID)
@@ -721,13 +732,13 @@ func RemoveMovie(tmdbID int) (*tmdb.Movie, []string, error) {
 }
 
 // RemoveShow removes show from the library
-func RemoveShow(tmdbID string) (*tmdb.Show, []string, error) {
+func RemoveShow(tmdbID string, purge bool) (*tmdb.Show, []string, error) {
 	if err := checkShowsPath(); err != nil {
 		return nil, nil, err
 	}
 	ID, _ := strconv.Atoi(tmdbID)
 	defer func() {
-		deleteDBItem(ID, ShowType, true)
+		deleteDBItem(ID, ShowType, true, purge)
 	}()
 
 	show := tmdb.GetShow(ID, config.Get().StrmLanguage)
@@ -854,7 +865,7 @@ func updateBatchDBItem(tmdbIds []int, state int, mediaType int, showID int) erro
 	return tx.Commit()
 }
 
-func deleteDBItem(tmdbID int, mediaType int, removal bool) error {
+func deleteDBItem(tmdbID int, mediaType int, removal bool, purge bool) error {
 	defer perf.ScopeTimer()()
 
 	var li database.LibraryItem
@@ -869,9 +880,16 @@ func deleteDBItem(tmdbID int, mediaType int, removal bool) error {
 		li.State = StateActive
 	}
 
-	if err := database.GetStormDB().Save(&li); err != nil {
-		log.Debugf("Cannot update deleted item: %s", err)
-		return err
+	if !purge {
+		if err := database.GetStormDB().Save(&li); err != nil {
+			log.Debugf("Cannot update deleted item: %s", err)
+			return err
+		}
+	} else {
+		if err := database.GetStormDB().DeleteStruct(&li); err != nil {
+			log.Debugf("Cannot purge deleted item: %s", err)
+			return err
+		}
 	}
 
 	return nil
@@ -901,7 +919,7 @@ func wasRemoved(id int, mediaType int) (wasRemoved bool) {
 
 	var li database.LibraryItem
 	if err := database.GetStormDB().Select(q.Eq("ID", id), q.Eq("MediaType", mediaType), q.Eq("State", StateDeleted)).First(&li); err == nil && li.ID != 0 {
-		log.Debugf("mediaType=%d id=%d marked as removed in database", mediaType, id)
+		log.Debugf("mediaType=%s id=%d marked as removed in database", ItemTypes[mediaType], id)
 		return true
 	}
 
@@ -1005,18 +1023,35 @@ func SyncMoviesList(listID string, updating bool, isUpdateNeeded bool) (err erro
 	}()
 
 	var label string
-	var movies []*trakt.Movies
+	var addedMovies []*trakt.Movies
+	var removedMovies []*trakt.Movies
+	var previous []*trakt.Movies
+	var current []*trakt.Movies
 
 	switch listID {
 	case "watchlist":
-		movies, err = trakt.WatchlistMovies(isUpdateNeeded)
+		previous, _ = trakt.PreviousWatchlistMovies()
+		current, _ = trakt.WatchlistMovies(isUpdateNeeded)
+
 		label = "LOCALIZE[30254]"
 	case "collection":
-		movies, err = trakt.CollectionMovies(isUpdateNeeded)
+		previous, _ = trakt.PreviousCollectionMovies()
+		current, _ = trakt.CollectionMovies(isUpdateNeeded)
+
 		label = "LOCALIZE[30257]"
 	default:
-		movies, err = trakt.ListItemsMovies("", listID, isUpdateNeeded)
+		previous, _ = trakt.PreviousListItemsMovies(listID)
+		current, _ = trakt.ListItemsMovies("", listID, isUpdateNeeded)
+
 		label = "LOCALIZE[30263]"
+	}
+
+	// For first run we will try to write all movies, not only the delta
+	if !IsTraktInitialized {
+		addedMovies = current
+	} else {
+		addedMovies = DiffTraktMovies(previous, current, IsTraktInitialized)
+		removedMovies = DiffTraktMovies(current, previous, IsTraktInitialized)
 	}
 
 	if err != nil {
@@ -1025,7 +1060,7 @@ func SyncMoviesList(listID string, updating bool, isUpdateNeeded bool) (err erro
 	}
 
 	var movieIDs []int
-	for _, movie := range movies {
+	for _, movie := range addedMovies {
 		title := movie.Movie.Title
 		// Try to resolve TMDB id through IMDB id, if provided
 		if movie.Movie.IDs.TMDB == 0 && len(movie.Movie.IDs.IMDB) > 0 {
@@ -1064,8 +1099,16 @@ func SyncMoviesList(listID string, updating bool, isUpdateNeeded bool) (err erro
 		return err
 	}
 
+	// Sync back removed Movies, meaning removing them from Kodi library.
+	if config.Get().TraktSyncRemovedMoviesBack && len(removedMovies) != 0 {
+		if err := syncMoviesRemovedBack(removedMovies); err != nil {
+			log.Warningf("Could not sync back removed movies: %s", err)
+		}
+		log.Infof("Movies list (%s) removed %d items", listID, len(removedMovies))
+	}
+
 	if !updating && len(movieIDs) > 0 {
-		log.Noticef("Movies list (%s) added", listID)
+		log.Infof("Movies list (%s) added %d items", listID, len(addedMovies))
 		xbmcHost, _ := xbmc.GetLocalXBMCHost()
 		if xbmcHost != nil {
 			if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30277];;%s", label))) {
@@ -1092,7 +1135,8 @@ func SyncShowsList(listID string, updating bool, isUpdateNeeded bool) (err error
 	}()
 
 	var label string
-	var shows []*trakt.Shows
+	var addedShows []*trakt.Shows
+	var removedShows []*trakt.Shows
 	var previous []*trakt.Shows
 	var current []*trakt.Shows
 
@@ -1116,9 +1160,10 @@ func SyncShowsList(listID string, updating bool, isUpdateNeeded bool) (err error
 
 	// For first run we will try to write all shows, not only the delta
 	if !IsTraktInitialized {
-		shows = current
+		addedShows = current
 	} else {
-		shows = DiffTraktShows(previous, current, IsTraktInitialized)
+		addedShows = DiffTraktShows(previous, current, IsTraktInitialized)
+		removedShows = DiffTraktShows(current, previous, IsTraktInitialized)
 	}
 
 	if err != nil {
@@ -1136,7 +1181,7 @@ func SyncShowsList(listID string, updating bool, isUpdateNeeded bool) (err error
 	}()
 
 	var showIDs []int
-	for _, show := range shows {
+	for _, show := range addedShows {
 		title := show.Show.Title
 		// Try to resolve TMDB id through IMDB id, if provided
 		if show.Show.IDs.TMDB == 0 {
@@ -1160,7 +1205,7 @@ func SyncShowsList(listID string, updating bool, isUpdateNeeded bool) (err error
 		}
 
 		tmdbID := strconv.Itoa(show.Show.IDs.TMDB)
-		if t, ok := showsLastUpdates[show.Show.IDs.Trakt]; ok && uid.IsDuplicateShow(tmdbID) && !t.Before(show.Show.UpdatedAt) {
+		if t, ok := showsLastUpdates[show.Show.IDs.Trakt]; ok && uid.IsDuplicateShow(tmdbID) && t.After(show.Show.UpdatedAt) {
 			continue
 		}
 		showsLastUpdates[show.Show.IDs.Trakt] = show.Show.UpdatedAt
@@ -1180,7 +1225,7 @@ func SyncShowsList(listID string, updating bool, isUpdateNeeded bool) (err error
 	found := false
 	for k := range showsLastUpdates {
 		found = false
-		for _, s := range shows {
+		for _, s := range addedShows {
 			if s.Show.IDs.Trakt == k {
 				found = true
 				break
@@ -1196,8 +1241,16 @@ func SyncShowsList(listID string, updating bool, isUpdateNeeded bool) (err error
 		return err
 	}
 
+	// Sync back removed Shows, meaning removing them from Kodi library.
+	if config.Get().TraktSyncRemovedShowsBack && len(removedShows) != 0 {
+		if err := syncShowsRemovedBack(removedShows); err != nil {
+			log.Warningf("Could not sync back removed shows: %s", err)
+		}
+		log.Infof("Shows list (%s) removed %d items", listID, len(removedShows))
+	}
+
 	if !updating && len(showIDs) > 0 {
-		log.Noticef("Shows list (%s) added", listID)
+		log.Infof("Shows list (%s) added %d items", listID, len(showIDs))
 		xbmcHost, _ := xbmc.GetLocalXBMCHost()
 		if xbmcHost != nil {
 			if config.Get().LibraryUpdate == 0 || (config.Get().LibraryUpdate == 1 && xbmcHost.DialogConfirmFocused("Elementum", fmt.Sprintf("LOCALIZE[30277];;%s", label))) {
@@ -1206,6 +1259,28 @@ func SyncShowsList(listID string, updating bool, isUpdateNeeded bool) (err error
 		}
 	}
 	return nil
+}
+
+// DiffTraktMovies ...
+func DiffTraktMovies(previous, current []*trakt.Movies, isInitialized bool) []*trakt.Movies {
+	ret := make([]*trakt.Movies, 0, len(current))
+	found := false
+	for _, ce := range current {
+		found = false
+		for _, pr := range previous {
+			if pr.Movie.IDs.Trakt == ce.Movie.IDs.Trakt {
+				found = true
+				break
+			}
+		}
+
+		// If Trakt is not yet initialized - we can leave shows that are not yet in the library
+		if !found || (!isInitialized && !uid.IsDuplicateMovieByInt(ce.Movie.IDs.TMDB)) {
+			ret = append(ret, ce)
+		}
+	}
+
+	return ret
 }
 
 // DiffTraktShows ...

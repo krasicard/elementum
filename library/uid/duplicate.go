@@ -26,6 +26,21 @@ func IsDuplicateMovie(tmdbID string) bool {
 	return false
 }
 
+// IsDuplicateMovieByInt checks if movie exists in the library
+func IsDuplicateMovieByInt(tmdbID int) bool {
+	l.Mu.UIDs.Lock()
+	defer l.Mu.UIDs.Unlock()
+	defer perf.ScopeTimer()()
+
+	for _, u := range l.UIDs {
+		if u.TMDB != 0 && u.MediaType == MovieType && u.TMDB == tmdbID {
+			return true
+		}
+	}
+
+	return false
+}
+
 // IsDuplicateShow checks if show exists in the library
 func IsDuplicateShow(tmdbID string) bool {
 	defer perf.ScopeTimer()()
