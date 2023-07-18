@@ -55,13 +55,18 @@ func GetHTTPHost() string {
 	// We should always use local IP, instead of external one, if possible
 	// to avoid situations when ip has changed and Kodi expects it anyway.
 	host := "127.0.0.1"
-	if config.Args.RemoteHost != "" && config.Args.RemoteHost != "127.0.0.1" {
+	if config.Args.RemoteHost == "" || config.Args.RemoteHost == "127.0.0.1" {
 		if localIP, err := LocalIP(); err == nil {
 			host = localIP.String()
 		}
 	}
 
 	return fmt.Sprintf("http://%s:%d", host, config.Args.LocalPort)
+}
+
+// GetLocalHTTPHost ...
+func GetLocalHTTPHost() string {
+	return fmt.Sprintf("http://%s:%d", "127.0.0.1", config.Args.LocalPort)
 }
 
 // GetContextHTTPHost ...

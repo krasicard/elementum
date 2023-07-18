@@ -382,6 +382,9 @@ func (as *AddonSearcher) call(method string, searchObject interface{}) []*bittor
 	torrents := make([]*bittorrent.TorrentFile, 0)
 	cid, c := GetCallback()
 	cbURL := fmt.Sprintf("%s/callbacks/%s", util.GetHTTPHost(), cid)
+	if as.xbmcHost.IsLocal() {
+		cbURL = fmt.Sprintf("%s/callbacks/%s", util.GetLocalHTTPHost(), cid)
+	}
 
 	payload := &SearchPayload{
 		Method:       method,

@@ -7,6 +7,10 @@ import (
 	"github.com/anacrolix/missinggo/perf"
 )
 
+func (h *XBMCHost) IsLocal() bool {
+	return h.Host == "127.0.0.1" || strings.Contains(h.Host, "::1")
+}
+
 // UpdateAddonRepos ...
 func (h *XBMCHost) UpdateAddonRepos() (retVal string) {
 	h.executeJSONRPCEx("UpdateAddonRepos", &retVal, nil)
