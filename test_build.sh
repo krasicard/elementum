@@ -20,10 +20,10 @@ function manage {
 
   if [[ "${DEST_MANAGE}" == *"restart"* ]]; then
     echo "Restarting Elementum at $DEST_HOST"
-    curl -m 10 -s $DEST_HOST:65220/restart || echo \"Elementum is not running\"
+    curl --connect-timeout 2 -s $DEST_HOST:65220/restart || echo \"Elementum is not running\"
   elif [[ "${DEST_MANAGE}" == *"shutdown"* ]]; then
     echo "Shutting down Elementum at $DEST_HOST"
-    curl -m 10 -s $DEST_HOST:65220/shutdown || echo \"Elementum is not running\"
+    curl --connect-timeout 2 -s $DEST_HOST:65220/shutdown || echo \"Elementum is not running\"
   elif [[ "${DEST_MANAGE}" == *"kill"* ]]; then
     echo "Killing Elementum at $DEST_HOST"
     killall -q elementum || echo \"Elementum is not running\"
