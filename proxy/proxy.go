@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/elgatito/elementum/config"
 
@@ -24,8 +24,6 @@ var (
 
 	// ProxyPort ...
 	ProxyPort = 65222
-
-	hostMatch = "^.*$"
 )
 
 // CustomProxy stores http.Server with field showing there was an error while listening.
@@ -120,14 +118,18 @@ func dumpResponse(resp *http.Response, ctx *goproxy.ProxyCtx, details bool, body
 		return
 	}
 
+	// Skip response dump for binary data
+	if body && strings.Contains(resp.Header.Get("Content-Type"), "application/x-bittorrent") {
+		body = false
+	}
+
 	dump, _ := httputil.DumpResponse(resp, body)
 	log.Debugf("RESPONSE:\n%s", dump)
 }
 
 // StartProxy starts HTTP/HTTPS proxy for debugging
 func StartProxy() *CustomProxy {
-	Proxy.OnRequest(goproxy.ReqHostMatches(regexp.MustCompile(hostMatch))).
-		HandleConnect(AlwaysHTTPMitm)
+	Proxy.OnRequest().HandleConnect(AlwaysHTTPMitm)
 
 	Proxy.OnRequest().DoFunc(handleRequest)
 	Proxy.OnResponse().DoFunc(handleResponse)
@@ -156,6 +158,7 @@ func StartProxy() *CustomProxy {
 	}
 
 	go func() {
+		log.Infof("Starting internal proxy at :%d", ProxyPort)
 		if err := srv.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Warningf("Could not start internal proxy: %s", err)
 			srv.IsErrored = true

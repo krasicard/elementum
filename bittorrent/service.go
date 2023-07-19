@@ -192,7 +192,6 @@ func (s *Service) configure() {
 
 	proxy.Reload()
 	if s.config.InternalProxyEnabled {
-		log.Infof("Starting internal proxy")
 		s.InternalProxy = proxy.StartProxy()
 	}
 
