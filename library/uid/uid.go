@@ -21,12 +21,14 @@ const (
 
 // Status represents library bool statuses
 type Status struct {
-	IsOverall  bool
-	IsMovies   bool
-	IsShows    bool
-	IsEpisodes bool
-	IsTrakt    bool
-	IsKodi     bool
+	IsOverall    bool
+	IsMovies     bool
+	IsShows      bool
+	IsEpisodes   bool
+	IsTrakt      bool
+	IsKodi       bool
+	IsKodiMovies bool
+	IsKodiShows  bool
 }
 
 // UniqueIDs represents all IDs for a library item

@@ -250,9 +250,9 @@ func Init() {
 
 	updateDelay := config.Get().UpdateDelay
 	if updateDelay > 0 {
-		if updateDelay < 10 {
+		if updateDelay < 5 {
 			// Give time to Elementum to update its cache of libraryMovies, libraryShows and libraryEpisodes
-			updateDelay = 10
+			updateDelay = 5
 		}
 		go func() {
 			time.Sleep(time.Duration(updateDelay) * time.Second)
@@ -263,7 +263,7 @@ func Init() {
 				return
 			default:
 				PlanTraktUpdate()
-				updateLibraryShows(xbmcHost)
+				PlanKodiShowsUpdate()
 			}
 		}()
 	}
@@ -313,7 +313,7 @@ func Init() {
 	for {
 		select {
 		case <-watcherTicker.C:
-			if !initialized || l.Running.IsOverall || l.Running.IsMovies || l.Running.IsShows || l.Running.IsEpisodes || l.Running.IsKodi || l.Running.IsTrakt {
+			if !initialized || l.Running.IsOverall || l.Running.IsMovies || l.Running.IsShows || l.Running.IsEpisodes || l.Running.IsKodi || l.Running.IsTrakt || l.Running.IsKodiMovies || l.Running.IsKodiShows {
 				continue
 			} else if l.Pending.IsKodi {
 				go RefreshKodi()
@@ -325,18 +325,14 @@ func Init() {
 				go RefreshShows()
 			} else if l.Pending.IsEpisodes {
 				go RefreshEpisodes()
+			} else if l.Pending.IsKodiShows {
+				go updateLibraryShows(xbmcHost)
 			} else if l.Pending.IsOverall {
 				go Refresh()
 			}
 		case <-updateTicker.C:
-			if config.Get().UpdateFrequency > 0 && config.Get().LibraryEnabled && config.Get().LibrarySyncEnabled && (config.Get().LibrarySyncPlaybackEnabled || xbmcHost == nil || !xbmcHost.PlayerIsPlaying()) {
-				go func() {
-					if err := updateLibraryShows(xbmcHost); err != nil {
-						log.Warning(err)
-						return
-					}
-					PlanKodiUpdate()
-				}()
+			if config.Get().UpdateFrequency > 0 && config.Get().LibraryEnabled && config.Get().LibrarySyncEnabled && (config.Get().LibrarySyncPlaybackEnabled) {
+				PlanKodiShowsUpdate()
 			}
 		case <-traktSyncTicker.C:
 			PlanTraktUpdate()
@@ -385,6 +381,18 @@ func updateLibraryShows(xbmcHost *xbmc.XBMCHost) error {
 	if !config.Get().LibraryEnabled || !config.Get().LibrarySyncEnabled || (!config.Get().LibrarySyncPlaybackEnabled && xbmcHost != nil && xbmcHost.PlayerIsPlaying()) {
 		return nil
 	}
+
+	l := uid.Get()
+	if l.Running.IsKodiShows || l.Running.IsKodi {
+		return nil
+	}
+
+	l.Pending.IsKodiShows = false
+	l.Running.IsKodiShows = true
+
+	defer func() {
+		l.Running.IsKodiShows = false
+	}()
 
 	if err := checkShowsPath(); err != nil {
 		return err
@@ -1453,4 +1461,237 @@ func getShowPaths(show *tmdb.Show) map[string]bool {
 	}
 
 	return paths
+}
+
+func GetDuplicateStats() (movies, shows, episodes int, err error) {
+	// Fetch Movie duplicates
+	if moviesDuplicates, err := findMovieDuplicates(); err != nil {
+		return movies, shows, episodes, err
+	} else {
+		movies = len(moviesDuplicates)
+	}
+
+	// Fetch Season duplicates
+	if showsDuplicates, err := findShowDuplicates(); err != nil {
+		return movies, shows, episodes, err
+	} else {
+		shows = len(showsDuplicates)
+	}
+
+	// Fetch Episode duplicates
+	if episodeDuplicates, err := findEpisodeDuplicates(); err != nil {
+		return movies, shows, episodes, err
+	} else {
+		episodes = len(episodeDuplicates)
+	}
+
+	return
+}
+
+func findMovieDuplicates() ([]*uid.Movie, error) {
+	l := uid.Get()
+
+	l.Mu.Movies.RLock()
+	defer l.Mu.Movies.RUnlock()
+
+	seen := map[int]struct{}{}
+	duplicates := []*uid.Movie{}
+
+	for _, m := range l.Movies {
+		if m == nil || m.UIDs == nil || m.XbmcUIDs == nil || m.XbmcUIDs.Elementum == "" || !strings.HasSuffix(m.File, ".strm") {
+			continue
+		}
+
+		if _, ok := seen[m.UIDs.TMDB]; ok {
+			duplicates = append(duplicates, m)
+		} else {
+			seen[m.UIDs.TMDB] = struct{}{}
+		}
+	}
+
+	return duplicates, nil
+}
+
+func findShowDuplicates() ([]*uid.Show, error) {
+	l := uid.Get()
+
+	l.Mu.Shows.RLock()
+	defer l.Mu.Shows.RUnlock()
+
+	seen := map[int]struct{}{}
+	duplicates := []*uid.Show{}
+
+	for _, s := range l.Shows {
+		if s == nil || s.UIDs == nil || s.XbmcUIDs == nil || s.XbmcUIDs.Elementum == "" {
+			continue
+		}
+
+		if _, ok := seen[s.UIDs.TMDB]; ok {
+			duplicates = append(duplicates, s)
+		} else {
+			seen[s.UIDs.TMDB] = struct{}{}
+		}
+	}
+
+	return duplicates, nil
+}
+
+func findEpisodeDuplicates() ([]*uid.Episode, error) {
+	l := uid.Get()
+
+	l.Mu.Shows.RLock()
+	defer l.Mu.Shows.RUnlock()
+
+	seen := map[string]struct{}{}
+	duplicates := []*uid.Episode{}
+	id := ""
+
+	for _, s := range l.Shows {
+		if s == nil || s.UIDs == nil || s.Episodes == nil || s.XbmcUIDs == nil || s.XbmcUIDs.Elementum == "" {
+			continue
+		}
+
+		for _, e := range s.Episodes {
+			if e == nil || e.UIDs == nil || !strings.HasSuffix(e.File, ".strm") {
+				continue
+			}
+
+			id = fmt.Sprintf("%d.%d.%d", s.UIDs.TMDB, e.Season, e.Episode)
+			if _, ok := seen[id]; ok {
+				duplicates = append(duplicates, e)
+			} else {
+				seen[id] = struct{}{}
+			}
+		}
+	}
+
+	return duplicates, nil
+}
+
+func RemoveDuplicates() error {
+	xbmcHost, err := xbmc.GetLocalXBMCHost()
+	if xbmcHost == nil || err != nil {
+		return err
+	}
+
+	xbmcHost.Notify("Elementum", "LOCALIZE[30683]", config.AddonIcon())
+
+	var movies, shows, episodes int
+
+	if movies, err = removeMovieDuplicates(xbmcHost); err != nil {
+		log.Warningf("Could not remove movie duplicates: %s", err)
+		return err
+	}
+
+	if shows, err = removeShowDuplicates(xbmcHost); err != nil {
+		log.Warningf("Could not remove show duplicates: %s", err)
+		return err
+	}
+
+	if episodes, err = removeEpisodeDuplicates(xbmcHost); err != nil {
+		log.Warningf("Could not remove episode duplicates: %s", err)
+		return err
+	}
+
+	log.Warningf("Removed duplicate stats. Movies: %d, Shows: %d, Episodes: %d", movies, shows, episodes)
+
+	if movies > 0 || shows > 0 || episodes > 0 {
+		PlanOverallUpdate()
+	}
+
+	xbmcHost.Notify("Elementum", fmt.Sprintf("LOCALIZE[30684];;%d;;%d;;%d", movies, shows, episodes), config.AddonIcon())
+
+	return nil
+}
+
+func removeMovieDuplicates(xbmcHost *xbmc.XBMCHost) (int, error) {
+	count := 0
+	movies, err := findMovieDuplicates()
+	if err != nil {
+		return count, err
+	}
+
+	for _, m := range movies {
+		if m.XbmcUIDs == nil || !strings.HasSuffix(m.File, ".strm") {
+			continue
+		}
+
+		dir := filepath.Dir(m.File)
+		log.Debugf("Removing duplicate movie '%s' from '%s'", m.Title, dir)
+
+		// Remove strm file with parent folder from disk
+		if err := os.RemoveAll(dir); err != nil {
+			log.Error(err)
+			continue
+		}
+
+		xbmcHost.VideoLibraryCleanDirectory(m.File, "movies", false)
+		xbmcHost.VideoLibraryRemoveMovie(m.XbmcUIDs.Kodi)
+
+		count++
+	}
+
+	return count, nil
+}
+
+func removeShowDuplicates(xbmcHost *xbmc.XBMCHost) (int, error) {
+	count := 0
+	shows, err := findShowDuplicates()
+	if err != nil {
+		return count, err
+	}
+
+	for _, s := range shows {
+		if s.XbmcUIDs == nil || len(s.Episodes) == 0 || !strings.HasSuffix(s.Episodes[0].File, ".strm") {
+			continue
+		}
+
+		dir := filepath.Dir(s.Episodes[0].File)
+		log.Debugf("Removing duplicate show '%s' from '%s'", s.Title, dir)
+
+		// Remove strm file with parent folder from disk
+		if err := os.RemoveAll(dir); err != nil {
+			log.Error(err)
+			continue
+		}
+
+		for _, e := range s.Episodes {
+			xbmcHost.VideoLibraryCleanDirectory(e.File, "tvshows", false)
+		}
+
+		xbmcHost.VideoLibraryRemoveTVShow(s.XbmcUIDs.Kodi)
+
+		count++
+	}
+
+	return count, nil
+}
+
+func removeEpisodeDuplicates(xbmcHost *xbmc.XBMCHost) (int, error) {
+	count := 0
+	episodes, err := findEpisodeDuplicates()
+	if err != nil {
+		return count, err
+	}
+
+	for _, e := range episodes {
+		if e.XbmcUIDs == nil || !strings.HasSuffix(e.File, ".strm") {
+			continue
+		}
+
+		log.Debugf("Removing duplicate episode '%s' from '%s'", e.Title, e.File)
+
+		// Remove strm file with parent folder from disk
+		if err := os.RemoveAll(e.File); err != nil {
+			log.Error(err)
+			continue
+		}
+
+		xbmcHost.VideoLibraryCleanDirectory(e.File, "tvshows", false)
+		xbmcHost.VideoLibraryRemoveEpisode(e.XbmcUIDs.Kodi)
+
+		count++
+	}
+
+	return count, nil
 }

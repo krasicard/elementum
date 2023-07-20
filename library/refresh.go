@@ -1007,3 +1007,8 @@ func PlanShowUpdate(showID int) {
 	lock.Unlock()
 	uid.Get().Pending.IsEpisodes = true
 }
+
+// PlanKodiShowsUpdate ...
+func PlanKodiShowsUpdate() {
+	uid.Get().Pending.IsKodiShows = true
+}

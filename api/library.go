@@ -261,3 +261,21 @@ func PlayShow(s *bittorrent.Service) gin.HandlerFunc {
 	}
 	return ShowEpisodeRun("links", s)
 }
+
+// UnduplicateLibrary ...
+func UnduplicateLibrary(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
+
+	movies, shows, episodes, err := library.GetDuplicateStats()
+	if err != nil {
+		ctx.String(200, err.Error())
+		return
+	}
+
+	answer := xbmcHost.DialogConfirmNonTimed("Elementum", fmt.Sprintf("LOCALIZE[30681];;%d;;%d;;%d", movies, shows, episodes))
+	if answer {
+		if err = library.RemoveDuplicates(); err != nil {
+			ctx.String(200, err.Error())
+		}
+	}
+}

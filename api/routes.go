@@ -312,6 +312,7 @@ func Routes(s *bittorrent.Service, shutdown func(code int)) *gin.Engine {
 		library.GET("/show/play/:showId/:season/:episode", PlayShow(s))
 
 		library.GET("/update", UpdateLibrary)
+		library.GET("/unduplicate", UnduplicateLibrary)
 
 		// DEPRECATED
 		library.GET("/play/movie/:tmdbId", PlayMovie(s))

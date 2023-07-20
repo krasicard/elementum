@@ -147,6 +147,12 @@ func (h *XBMCHost) VideoLibraryRemoveTVShow(id int) (retVal string) {
 	return
 }
 
+// VideoLibraryRemoveEpisode ...
+func (h *XBMCHost) VideoLibraryRemoveEpisode(id int) (retVal string) {
+	h.executeJSONRPC("VideoLibrary.RemoveEpisode", &retVal, Args{id})
+	return
+}
+
 // PlayerGetActive ...
 func (h *XBMCHost) PlayerGetActive() int {
 	params := map[string]interface{}{}

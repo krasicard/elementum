@@ -205,6 +205,13 @@ func (h *XBMCHost) DialogBrowseSingle(browseType int, title string, shares strin
 	return retVal
 }
 
+// DialogConfirmNonTimed is a regular Yes/No dialog, without time limitation applied.
+func (h *XBMCHost) DialogConfirmNonTimed(title string, message string) bool {
+	retVal := 0
+	h.executeJSONRPCEx("Dialog_Confirm", &retVal, Args{title, message})
+	return retVal != 0
+}
+
 // DialogConfirm ...
 func (h *XBMCHost) DialogConfirm(title string, message string) bool {
 	return h.dialogConfirmRunner(title, message, false)
