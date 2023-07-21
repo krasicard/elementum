@@ -27,7 +27,7 @@ func ProviderGetMovie(ctx *gin.Context) {
 	movie := tmdb.GetMovieByID(tmdbID, config.Get().Language)
 	log.Infof("Resolved %s to %s", tmdbID, movie.Title)
 
-	searcher := providers.NewAddonSearcher(xbmcHost, provider)
+	searcher := providers.NewAddonSearcher(xbmcHost, ctx.Request.Host, provider)
 	torrents := searcher.SearchMovieLinks(movie)
 	if ctx.Query("resolve") == "true" {
 		for _, torrent := range torrents {
@@ -70,7 +70,7 @@ func ProviderGetEpisode(ctx *gin.Context) {
 
 	log.Infof("Resolved %d to %s", showID, show.Name)
 
-	searcher := providers.NewAddonSearcher(xbmcHost, provider)
+	searcher := providers.NewAddonSearcher(xbmcHost, ctx.Request.Host, provider)
 	torrents := searcher.SearchEpisodeLinks(show, episode)
 	if ctx.Query("resolve") == "true" {
 		for _, torrent := range torrents {

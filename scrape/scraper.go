@@ -256,7 +256,7 @@ func getTorrents(m *trakt.Movie, withAuth bool) []*bittorrent.TorrentFile {
 		return nil
 	}
 
-	searchers := providers.GetMovieSearchers(xbmcHost)
+	searchers := providers.GetMovieSearchers(xbmcHost, "")
 	if len(searchers) == 0 {
 		return nil
 	}

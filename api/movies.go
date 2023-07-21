@@ -481,14 +481,14 @@ func SearchMovies(ctx *gin.Context) {
 	renderMovies(ctx, movies, page, total, query)
 }
 
-func movieLinks(xbmcHost *xbmc.XBMCHost, tmdbID string) []*bittorrent.TorrentFile {
+func movieLinks(xbmcHost *xbmc.XBMCHost, callbackHost string, tmdbID string) []*bittorrent.TorrentFile {
 	log.Info("Searching links for:", tmdbID)
 
 	movie := tmdb.GetMovieByID(tmdbID, config.Get().Language)
 
 	log.Infof("Resolved %s to %s", tmdbID, movie.Title)
 
-	searchers := providers.GetMovieSearchers(xbmcHost)
+	searchers := providers.GetMovieSearchers(xbmcHost, callbackHost)
 	if len(searchers) == 0 {
 		xbmcHost.Notify("Elementum", "LOCALIZE[30204]", config.AddonIcon())
 	}
@@ -557,10 +557,10 @@ func MovieLinks(action string, s *bittorrent.Service) gin.HandlerFunc {
 
 		if torrents, err = GetCachedTorrents(tmdbID); err != nil || len(torrents) == 0 {
 			if !isCustom {
-				torrents = movieLinks(xbmcHost, tmdbID)
+				torrents = movieLinks(xbmcHost, ctx.Request.Host, tmdbID)
 			} else {
 				if query := xbmcHost.Keyboard(movie.Title, "LOCALIZE[30209]"); len(query) != 0 {
-					torrents = searchLinks(xbmcHost, query)
+					torrents = searchLinks(xbmcHost, ctx.Request.Host, query)
 				}
 			}
 

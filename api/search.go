@@ -74,7 +74,7 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 		var err error
 
 		if torrents, err = GetCachedTorrents(fakeTmdbID); err != nil || len(torrents) == 0 {
-			torrents = searchLinks(xbmcHost, query)
+			torrents = searchLinks(xbmcHost, ctx.Request.Host, query)
 
 			SetCachedTorrents(fakeTmdbID, torrents)
 		}
@@ -147,10 +147,10 @@ func Search(s *bittorrent.Service) gin.HandlerFunc {
 	}
 }
 
-func searchLinks(xbmcHost *xbmc.XBMCHost, query string) []*bittorrent.TorrentFile {
+func searchLinks(xbmcHost *xbmc.XBMCHost, callbackHost string, query string) []*bittorrent.TorrentFile {
 	searchLog.Infof("Searching providers for query: %s", query)
 
-	searchers := providers.GetSearchers(xbmcHost)
+	searchers := providers.GetSearchers(xbmcHost, callbackHost)
 	if len(searchers) == 0 {
 		xbmcHost.Notify("Elementum", "LOCALIZE[30204]", config.AddonIcon())
 	}

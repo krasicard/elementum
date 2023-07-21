@@ -31,9 +31,10 @@ type AddonSearcher struct {
 	SeasonSearcher
 	EpisodeSearcher
 
-	addonID  string
-	xbmcHost *xbmc.XBMCHost
-	log      *logging.Logger
+	addonID      string
+	callbackHost string
+	xbmcHost     *xbmc.XBMCHost
+	log          *logging.Logger
 }
 
 var cbLock = sync.RWMutex{}
@@ -74,58 +75,67 @@ func CallbackHandler(ctx *gin.Context) {
 	close(c)
 }
 
-func getSearchers(xbmcHost *xbmc.XBMCHost) []interface{} {
+func getSearchers(xbmcHost *xbmc.XBMCHost, callbackHost string) []interface{} {
 	list := make([]interface{}, 0)
 	for _, addon := range xbmcHost.GetAddons("xbmc.python.script", "executable", true).Addons {
 		if strings.HasPrefix(addon.ID, "script.elementum.") {
-			list = append(list, NewAddonSearcher(xbmcHost, addon.ID))
+			list = append(list, NewAddonSearcher(xbmcHost, callbackHost, addon.ID))
 		}
 	}
 	return list
 }
 
 // GetMovieSearchers ...
-func GetMovieSearchers(xbmcHost *xbmc.XBMCHost) []MovieSearcher {
+func GetMovieSearchers(xbmcHost *xbmc.XBMCHost, callbackHost string) []MovieSearcher {
 	searchers := make([]MovieSearcher, 0)
-	for _, searcher := range getSearchers(xbmcHost) {
+	for _, searcher := range getSearchers(xbmcHost, callbackHost) {
 		searchers = append(searchers, searcher.(MovieSearcher))
 	}
 	return searchers
 }
 
 // GetSeasonSearchers ...
-func GetSeasonSearchers(xbmcHost *xbmc.XBMCHost) []SeasonSearcher {
+func GetSeasonSearchers(xbmcHost *xbmc.XBMCHost, callbackHost string) []SeasonSearcher {
 	searchers := make([]SeasonSearcher, 0)
-	for _, searcher := range getSearchers(xbmcHost) {
+	for _, searcher := range getSearchers(xbmcHost, callbackHost) {
 		searchers = append(searchers, searcher.(SeasonSearcher))
 	}
 	return searchers
 }
 
 // GetEpisodeSearchers ...
-func GetEpisodeSearchers(xbmcHost *xbmc.XBMCHost) []EpisodeSearcher {
+func GetEpisodeSearchers(xbmcHost *xbmc.XBMCHost, callbackHost string) []EpisodeSearcher {
 	searchers := make([]EpisodeSearcher, 0)
-	for _, searcher := range getSearchers(xbmcHost) {
+	for _, searcher := range getSearchers(xbmcHost, callbackHost) {
 		searchers = append(searchers, searcher.(EpisodeSearcher))
 	}
 	return searchers
 }
 
 // GetSearchers ...
-func GetSearchers(xbmcHost *xbmc.XBMCHost) []Searcher {
+func GetSearchers(xbmcHost *xbmc.XBMCHost, callbackHost string) []Searcher {
 	searchers := make([]Searcher, 0)
-	for _, searcher := range getSearchers(xbmcHost) {
+	for _, searcher := range getSearchers(xbmcHost, callbackHost) {
 		searchers = append(searchers, searcher.(Searcher))
 	}
 	return searchers
 }
 
 // NewAddonSearcher ...
-func NewAddonSearcher(xbmcHost *xbmc.XBMCHost, addonID string) *AddonSearcher {
+func NewAddonSearcher(xbmcHost *xbmc.XBMCHost, callbackHost string, addonID string) *AddonSearcher {
+	if callbackHost == "" {
+		if config.Args.LocalHost != "" {
+			callbackHost = fmt.Sprintf("%s:%d", config.Args.LocalHost, config.Args.LocalPort)
+		} else {
+			callbackHost = fmt.Sprintf("%s:%d", "127.0.0.1", config.Args.LocalPort)
+		}
+	}
+
 	return &AddonSearcher{
-		xbmcHost: xbmcHost,
-		addonID:  addonID,
-		log:      logging.MustGetLogger(fmt.Sprintf("AddonSearcher %s", addonID)),
+		xbmcHost:     xbmcHost,
+		addonID:      addonID,
+		callbackHost: callbackHost,
+		log:          logging.MustGetLogger(fmt.Sprintf("AddonSearcher %s", addonID)),
 	}
 }
 
@@ -381,10 +391,7 @@ func (as *AddonSearcher) GetEpisodeSearchObject(show *tmdb.Show, episode *tmdb.E
 func (as *AddonSearcher) call(method string, searchObject interface{}) []*bittorrent.TorrentFile {
 	torrents := make([]*bittorrent.TorrentFile, 0)
 	cid, c := GetCallback()
-	cbURL := fmt.Sprintf("%s/callbacks/%s", util.GetHTTPHost(), cid)
-	if as.xbmcHost.IsLocal() {
-		cbURL = fmt.Sprintf("%s/callbacks/%s", util.GetLocalHTTPHost(), cid)
-	}
+	cbURL := fmt.Sprintf("http://%s/callbacks/%s", as.callbackHost, cid)
 
 	payload := &SearchPayload{
 		Method:       method,
