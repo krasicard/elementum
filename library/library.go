@@ -268,32 +268,6 @@ func Init() {
 		}()
 	}
 
-	log.Notice("Warming up caches...")
-	go func() {
-		time.Sleep(30 * time.Second)
-		if !tmdb.WarmingUp.IsSet() && xbmcHost != nil {
-			xbmcHost.Notify("Elementum", "LOCALIZE[30147]", config.AddonIcon())
-		}
-	}()
-
-	started := time.Now()
-	language := config.Get().Language
-	tmdb.PopularMovies(tmdb.DiscoverFilters{}, language, 1)
-	tmdb.PopularShows(tmdb.DiscoverFilters{}, language, 1)
-	if _, _, err := trakt.TopMovies("trending", "1"); err != nil {
-		log.Warning(err)
-	}
-	if _, _, err := trakt.TopShows("trending", "1"); err != nil {
-		log.Warning(err)
-	}
-
-	tmdb.WarmingUp.Set()
-	took := time.Since(started)
-	if took.Seconds() > 30 && xbmcHost != nil {
-		xbmcHost.Notify("Elementum", "LOCALIZE[30148]", config.AddonIcon())
-	}
-	log.Noticef("Caches warmed up in %s", took)
-
 	updateFrequency := util.Max(1, config.Get().UpdateFrequency)
 	traktFrequency := util.Max(1, config.Get().TraktSyncFrequencyMin)
 
