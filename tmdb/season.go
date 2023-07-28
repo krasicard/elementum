@@ -44,6 +44,7 @@ func GetSeason(showID int, seasonNumber int, language string, seasonsCount int) 
 				"api_key":                apiKey,
 				"append_to_response":     "credits,images,videos,external_ids,alternative_titles,translations,trailers",
 				"include_image_language": fmt.Sprintf("%s,en,null", config.Get().Language),
+				"include_video_language": fmt.Sprintf("%s,en,null", config.Get().Language),
 				"language":               language,
 			}.AsUrlValues(),
 			Result:      &season,

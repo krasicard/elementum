@@ -44,6 +44,7 @@ func GetShowImages(showID int) *Images {
 			Params: napping.Params{
 				"api_key":                apiKey,
 				"include_image_language": fmt.Sprintf("%s,en,null", config.Get().Language),
+				"include_video_language": fmt.Sprintf("%s,en,null", config.Get().Language),
 			}.AsUrlValues(),
 			Result:      &images,
 			Description: "show images",
@@ -69,6 +70,7 @@ func GetSeasonImages(showID int, season int) *Images {
 			Params: napping.Params{
 				"api_key":                apiKey,
 				"include_image_language": fmt.Sprintf("%s,en,null", config.Get().Language),
+				"include_video_language": fmt.Sprintf("%s,en,null", config.Get().Language),
 			}.AsUrlValues(),
 			Result:      &images,
 			Description: "season images",
@@ -94,6 +96,7 @@ func GetEpisodeImages(showID, season, episode int) *Images {
 			Params: napping.Params{
 				"api_key":                apiKey,
 				"include_image_language": fmt.Sprintf("%s,en,null", config.Get().Language),
+				"include_video_language": fmt.Sprintf("%s,en,null", config.Get().Language),
 			}.AsUrlValues(),
 			Result:      &images,
 			Description: "season images",
@@ -129,6 +132,7 @@ func GetShow(showID int, language string) (show *Show) {
 				"api_key":                apiKey,
 				"append_to_response":     "credits,images,alternative_titles,translations,external_ids,content_ratings",
 				"include_image_language": fmt.Sprintf("%s,en,null", config.Get().Language),
+				"include_video_language": fmt.Sprintf("%s,en,null", config.Get().Language),
 				"language":               language,
 			}.AsUrlValues(),
 			Result:      &show,

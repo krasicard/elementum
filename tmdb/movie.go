@@ -41,6 +41,7 @@ func GetImages(movieID int) *Images {
 			Params: napping.Params{
 				"api_key":                apiKey,
 				"include_image_language": fmt.Sprintf("%s,en,null", config.Get().Language),
+				"include_video_language": fmt.Sprintf("%s,en,null", config.Get().Language),
 			}.AsUrlValues(),
 			Result:      &images,
 			Description: "movie images",
@@ -72,6 +73,7 @@ func GetMovieByID(movieID string, language string) *Movie {
 				"api_key":                apiKey,
 				"append_to_response":     "credits,images,alternative_titles,translations,external_ids,trailers,release_dates",
 				"include_image_language": fmt.Sprintf("%s,en,null", config.Get().Language),
+				"include_video_language": fmt.Sprintf("%s,en,null", config.Get().Language),
 				"language":               language,
 			}.AsUrlValues(),
 			Result:      &movie,
@@ -519,16 +521,6 @@ func (movie *Movie) ToListItem() *xbmc.ListItem {
 		for _, trailer := range movie.Trailers.Youtube {
 			item.Info.Trailer = util.TrailerURL(trailer.Source)
 			break
-		}
-	}
-
-	if item.Info.Trailer == "" && config.Get().Language != "en" {
-		enMovie := GetMovie(movie.ID, "en")
-		if enMovie != nil && enMovie.Trailers != nil {
-			for _, trailer := range enMovie.Trailers.Youtube {
-				item.Info.Trailer = util.TrailerURL(trailer.Source)
-				break
-			}
 		}
 	}
 

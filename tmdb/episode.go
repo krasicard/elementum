@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anacrolix/missinggo/perf"
+
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/library/playcount"
@@ -17,6 +19,8 @@ import (
 
 // GetEpisode ...
 func GetEpisode(showID int, seasonNumber int, episodeNumber int, language string) *Episode {
+	defer perf.ScopeTimer()()
+
 	var episode *Episode
 	cacheStore := cache.NewDBStore()
 	key := fmt.Sprintf(cache.TMDBEpisodeKey, showID, seasonNumber, episodeNumber, language)
@@ -27,6 +31,7 @@ func GetEpisode(showID int, seasonNumber int, episodeNumber int, language string
 				"api_key":                apiKey,
 				"append_to_response":     "credits,images,videos,alternative_titles,translations,external_ids,trailers",
 				"include_image_language": fmt.Sprintf("%s,en,null", config.Get().Language),
+				"include_video_language": fmt.Sprintf("%s,en,null", config.Get().Language),
 				"language":               language,
 			}.AsUrlValues(),
 			Result:      &episode,
@@ -42,6 +47,8 @@ func GetEpisode(showID int, seasonNumber int, episodeNumber int, language string
 
 // ToListItems ...
 func (episodes EpisodeList) ToListItems(show *Show, season *Season) []*xbmc.ListItem {
+	defer perf.ScopeTimer()()
+
 	items := make([]*xbmc.ListItem, 0, len(episodes))
 	if len(episodes) == 0 {
 		return items
@@ -83,6 +90,8 @@ func (episodes EpisodeList) ToListItems(show *Show, season *Season) []*xbmc.List
 
 // ToListItem ...
 func (episode *Episode) ToListItem(show *Show, season *Season) *xbmc.ListItem {
+	defer perf.ScopeTimer()()
+
 	year, _ := strconv.Atoi(strings.Split(episode.AirDate, "-")[0])
 
 	episodeLabel := episode.name(show)
