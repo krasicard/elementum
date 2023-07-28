@@ -40,6 +40,11 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 			mediaAction = action
 		}
 
+		urlAdd := ""
+		if isCustom {
+			urlAdd = "?custom=1"
+		}
+
 		if kodiID == 0 {
 			if mediaAction != "watched" && mediaAction != "unwatched" {
 				if query == "" {
@@ -58,24 +63,24 @@ func ContextPlaySelector(s *bittorrent.Service) gin.HandlerFunc {
 		} else if media == "movie" {
 			if m := uid.GetLibraryMovie(kodiID); m != nil && m.UIDs.TMDB != 0 {
 				title := fmt.Sprintf("%s (%d)", m.Title, m.Year)
-				ctx.Redirect(302, URLQuery(URLForXBMC("/movie/%d/%s/%s", m.UIDs.TMDB, mediaAction, url.PathEscape(title))))
+				ctx.Redirect(302, URLQuery(URLForXBMC("/movie/%d/%s/%s%s", m.UIDs.TMDB, mediaAction, url.PathEscape(title), urlAdd)))
 				return
 			}
 		} else if media == "episode" {
 			if s, e := uid.GetLibraryEpisode(kodiID); s != nil && e != nil && s.UIDs.TMDB != 0 {
 				title := fmt.Sprintf("%s S%02dE%02d", s.Title, e.Season, e.Episode)
-				ctx.Redirect(302, URLQuery(URLForXBMC("/show/%d/season/%d/episode/%d/%s/%s", s.UIDs.TMDB, e.Season, e.Episode, mediaAction, url.PathEscape(title))))
+				ctx.Redirect(302, URLQuery(URLForXBMC("/show/%d/season/%d/episode/%d/%s/%s%s", s.UIDs.TMDB, e.Season, e.Episode, mediaAction, url.PathEscape(title), urlAdd)))
 				return
 			}
 		} else if media == "season" {
 			if s, se := uid.GetLibrarySeason(kodiID); s != nil && se != nil && s.UIDs.TMDB != 0 {
 				title := fmt.Sprintf("%s S%02d", s.Title, se.Season)
-				ctx.Redirect(302, URLQuery(URLForXBMC("/show/%d/season/%d/%s/%s", s.UIDs.TMDB, se.Season, mediaAction, url.PathEscape(title))))
+				ctx.Redirect(302, URLQuery(URLForXBMC("/show/%d/season/%d/%s/%s%s", s.UIDs.TMDB, se.Season, mediaAction, url.PathEscape(title), urlAdd)))
 				return
 			}
 		} else if media == "tvshow" {
 			if s := uid.GetLibraryShow(kodiID); s != nil && s.UIDs.TMDB != 0 {
-				ctx.Redirect(302, URLQuery(URLForXBMC("/show/%d/%s/%s", s.UIDs.TMDB, mediaAction, url.PathEscape(s.Title))))
+				ctx.Redirect(302, URLQuery(URLForXBMC("/show/%d/%s/%s%s", s.UIDs.TMDB, mediaAction, url.PathEscape(s.Title), urlAdd)))
 				return
 			}
 		}
