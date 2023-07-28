@@ -14,6 +14,8 @@ import (
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/util/event"
 	"github.com/elgatito/elementum/xbmc"
+
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/jmcvetta/napping"
 	"github.com/op/go-logging"
 )
@@ -392,7 +394,7 @@ const (
 	// Currently TMDB is disabled rates limiting
 	// burstRate               = 40
 	// burstTime               = 10 * time.Second
-	simultaneousConnections = 20
+	simultaneousConnections = 30
 )
 
 var (
@@ -612,6 +614,8 @@ func GetLanguages(language string) []*Language {
 
 // MakeRequest used to proxy requests with proper RateLimiter usage and HTTP error processing
 func MakeRequest(r APIRequest) (ret error) {
+	defer perf.ScopeTimer()()
+
 	rl.Call(func() error {
 		httpTransport := &http.Transport{}
 		if config.Get().ProxyURL != "" {

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
 	"github.com/klauspost/compress/gzip"
 	"github.com/vmihailenco/msgpack"
@@ -57,6 +58,8 @@ func NewDBStore() *DBStore {
 
 // Set ...
 func (c *DBStore) Set(key string, value interface{}, expires time.Duration) (err error) {
+	defer perf.ScopeTimer()()
+
 	item := DBStoreItem{
 		Key:   key,
 		Value: value,
@@ -97,6 +100,8 @@ func (c *DBStore) Get(key string, value interface{}) (err error) {
 		return errors.New("database is closed")
 	}
 
+	defer perf.ScopeTimer()()
+
 	data, errGet := c.db.GetBytes(database.CommonBucket, key)
 	if errGet != nil {
 		return errGet
@@ -136,6 +141,8 @@ func (c *DBStore) Get(key string, value interface{}) (err error) {
 
 // Delete ...
 func (c *DBStore) Delete(key string) error {
+	defer perf.ScopeTimer()()
+
 	return c.db.Delete(database.CommonBucket, key)
 }
 

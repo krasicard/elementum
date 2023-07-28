@@ -16,6 +16,7 @@ import (
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
 	"github.com/jmcvetta/napping"
 )
@@ -103,6 +104,8 @@ func setCalendarFanarts(movies []*CalendarMovie) []*CalendarMovie {
 
 // GetMovie ...
 func GetMovie(ID string) (movie *Movie) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("movies/%s", ID)
 
 	params := napping.Params{
@@ -133,6 +136,8 @@ func GetMovie(ID string) (movie *Movie) {
 
 // GetMovieByTMDB ...
 func GetMovieByTMDB(tmdbID string) (movie *Movie) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("search/tmdb/%s?type=movie", tmdbID)
 
 	params := napping.Params{}.AsUrlValues()
@@ -163,6 +168,8 @@ func GetMovieByTMDB(tmdbID string) (movie *Movie) {
 
 // SearchMovies ...
 func SearchMovies(query string, page string) (movies []*Movies, err error) {
+	defer perf.ScopeTimer()()
+
 	endPoint := "search"
 
 	params := napping.Params{
@@ -193,6 +200,8 @@ func SearchMovies(query string, page string) (movies []*Movies, err error) {
 
 // TopMovies ...
 func TopMovies(topCategory string, page string) (movies []*Movies, total int, err error) {
+	defer perf.ScopeTimer()()
+
 	endPoint := "movies/" + topCategory
 	if topCategory == "recommendations" {
 		endPoint = topCategory + "/movies"
@@ -283,6 +292,8 @@ func WatchlistMovies(isUpdateNeeded bool) (movies []*Movies, err error) {
 		return movies, err
 	}
 
+	defer perf.ScopeTimer()()
+
 	endPoint := "sync/watchlist/movies"
 
 	params := napping.Params{
@@ -338,6 +349,8 @@ func CollectionMovies(isUpdateNeeded bool) (movies []*Movies, err error) {
 		return movies, errAuth
 	}
 
+	defer perf.ScopeTimer()()
+
 	endPoint := "sync/collection/movies"
 
 	params := napping.Params{
@@ -378,6 +391,8 @@ func CollectionMovies(isUpdateNeeded bool) (movies []*Movies, err error) {
 
 // Userlists ...
 func Userlists() (lists []*List) {
+	defer perf.ScopeTimer()()
+
 	traktUsername := config.Get().TraktUsername
 	if traktUsername == "" || config.Get().TraktToken == "" || !config.Get().TraktAuthorized {
 		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
@@ -427,6 +442,8 @@ func Userlists() (lists []*List) {
 
 // Likedlists ...
 func Likedlists() (lists []*List) {
+	defer perf.ScopeTimer()()
+
 	traktUsername := config.Get().TraktUsername
 	if traktUsername == "" || config.Get().TraktToken == "" {
 		if xbmcHost, err := xbmc.GetLocalXBMCHost(); err == nil && xbmcHost != nil {
@@ -480,6 +497,8 @@ func Likedlists() (lists []*List) {
 
 // TopLists ...
 func TopLists(page string) (lists []*ListContainer, hasNext bool) {
+	defer perf.ScopeTimer()()
+
 	pageInt, _ := strconv.Atoi(page)
 
 	endPoint := "lists/popular"
@@ -538,6 +557,8 @@ func PreviousListItemsMovies(listID string) (movies []*Movies, err error) {
 
 // ListItemsMovies ...
 func ListItemsMovies(user string, listID string, isUpdateNeeded bool) (movies []*Movies, err error) {
+	defer perf.ScopeTimer()()
+
 	if user == "" || user == "id" {
 		user = config.Get().TraktUsername
 	}
@@ -591,6 +612,8 @@ func ListItemsMovies(user string, listID string, isUpdateNeeded bool) (movies []
 
 // CalendarMovies ...
 func CalendarMovies(endPoint string, page string) (movies []*CalendarMovie, total int, err error) {
+	defer perf.ScopeTimer()()
+
 	resultsPerPage := config.Get().ResultsPerPage
 	limit := resultsPerPage * PagesAtOnce
 	pageInt, err := strconv.Atoi(page)
@@ -643,6 +666,8 @@ func CalendarMovies(endPoint string, page string) (movies []*CalendarMovie, tota
 
 // WatchedMovies ...
 func WatchedMovies(isUpdateNeeded bool) ([]*WatchedMovie, error) {
+	defer perf.ScopeTimer()()
+
 	var movies []*WatchedMovie
 	err := Request(
 		"sync/watched/movies",
@@ -678,6 +703,8 @@ func PreviousWatchedMovies() (movies []*WatchedMovie, err error) {
 
 // PausedMovies ...
 func PausedMovies(isUpdateNeeded bool) ([]*PausedMovie, error) {
+	defer perf.ScopeTimer()()
+
 	var movies []*PausedMovie
 	err := Request(
 		"sync/playback/movies",
@@ -696,6 +723,8 @@ func PausedMovies(isUpdateNeeded bool) ([]*PausedMovie, error) {
 
 // ToListItem ...
 func (movie *Movie) ToListItem() (item *xbmc.ListItem) {
+	defer perf.ScopeTimer()()
+
 	if !config.Get().ForceUseTrakt && movie.IDs.TMDB != 0 {
 		tmdbID := strconv.Itoa(movie.IDs.TMDB)
 		if tmdbMovie := tmdb.GetMovieByID(tmdbID, config.Get().Language); tmdbMovie != nil {

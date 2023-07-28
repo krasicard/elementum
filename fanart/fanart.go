@@ -11,6 +11,8 @@ import (
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
+
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/jmcvetta/napping"
 	logging "github.com/op/go-logging"
 )
@@ -131,6 +133,8 @@ func GetMovie(tmdbID int) (movie *Movie) {
 		return nil
 	}
 
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("movies/%d", tmdbID)
 	params := napping.Params{}.AsUrlValues()
 
@@ -159,6 +163,8 @@ func GetShow(tvdbID int) (show *Show) {
 	if tvdbID == 0 {
 		return nil
 	}
+
+	defer perf.ScopeTimer()()
 
 	endPoint := fmt.Sprintf("tv/%d", tvdbID)
 	params := napping.Params{}.AsUrlValues()

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/anacrolix/sync"
 	"github.com/gin-gonic/gin"
 
 	"github.com/elgatito/elementum/bittorrent"
@@ -291,71 +292,90 @@ func renderMovies(ctx *gin.Context, movies tmdb.Movies, page int, total int, que
 		}
 	}
 
-	items := make(xbmc.ListItems, 0, len(movies)+hasNextPage)
+	itemsCount := 0
+	for _, movie := range movies {
+		if movie != nil {
+			itemsCount++
+		}
+	}
 
+	items := make(xbmc.ListItems, itemsCount+hasNextPage)
+	wg := sync.WaitGroup{}
+	wg.Add(itemsCount)
+
+	index := -1
 	for _, movie := range movies {
 		if movie == nil {
 			continue
 		}
-		item := movie.ToListItem()
 
-		thisURL := URLForXBMC("/movie/%d/", movie.ID) + "%s/%s"
-		contextLabel := playLabel
-		contextTitle := fmt.Sprintf("%s (%d)", item.Info.OriginalTitle, item.Info.Year)
-		contextURL := contextPlayOppositeURL(thisURL, contextTitle, false)
-		if config.Get().ChooseStreamAutoMovie {
-			contextLabel = linksLabel
-		}
+		index++
 
-		item.Path = contextPlayURL(thisURL, contextTitle, false)
+		go func(idx int, movie *tmdb.Movie) {
+			defer wg.Done()
 
-		tmdbID := strconv.Itoa(movie.ID)
+			item := movie.ToListItem()
 
-		libraryActions := [][]string{
-			{contextLabel, fmt.Sprintf("PlayMedia(%s)", contextURL)},
-		}
-		if uid.IsDuplicateMovie(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.MovieType) {
-			libraryActions = append(libraryActions, []string{"LOCALIZE[30283]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/add/%d?force=true", movie.ID))})
-			libraryActions = append(libraryActions, []string{"LOCALIZE[30253]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/remove/%d", movie.ID))})
-		} else {
-			libraryActions = append(libraryActions, []string{"LOCALIZE[30252]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/add/%d", movie.ID))})
-		}
+			thisURL := URLForXBMC("/movie/%d/", movie.ID) + "%s/%s"
+			contextLabel := playLabel
+			contextTitle := fmt.Sprintf("%s (%d)", item.Info.OriginalTitle, item.Info.Year)
+			contextURL := contextPlayOppositeURL(thisURL, contextTitle, false)
+			if config.Get().ChooseStreamAutoMovie {
+				contextLabel = linksLabel
+			}
 
-		toggleWatchedAction := []string{"LOCALIZE[30667]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/watched", movie.ID))}
-		// TODO: maybe there is a better way to determine if item was watched.
-		if item.Info.PlayCount > 0 {
-			toggleWatchedAction = []string{"LOCALIZE[30668]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/unwatched", movie.ID))}
-		}
+			item.Path = contextPlayURL(thisURL, contextTitle, false)
 
-		watchlistAction := []string{"LOCALIZE[30255]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/watchlist/add", movie.ID))}
-		if inMoviesWatchlist(movie.ID) {
-			watchlistAction = []string{"LOCALIZE[30256]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/watchlist/remove", movie.ID))}
-		}
+			tmdbID := strconv.Itoa(movie.ID)
 
-		collectionAction := []string{"LOCALIZE[30258]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/collection/add", movie.ID))}
-		if inMoviesCollection(movie.ID) {
-			collectionAction = []string{"LOCALIZE[30259]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/collection/remove", movie.ID))}
-		}
+			libraryActions := [][]string{
+				{contextLabel, fmt.Sprintf("PlayMedia(%s)", contextURL)},
+			}
+			if uid.IsDuplicateMovie(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.MovieType) {
+				libraryActions = append(libraryActions, []string{"LOCALIZE[30283]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/add/%d?force=true", movie.ID))})
+				libraryActions = append(libraryActions, []string{"LOCALIZE[30253]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/remove/%d", movie.ID))})
+			} else {
+				libraryActions = append(libraryActions, []string{"LOCALIZE[30252]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/add/%d", movie.ID))})
+			}
 
-		item.ContextMenu = [][]string{
-			{"LOCALIZE[30619];;LOCALIZE[30214]", fmt.Sprintf("Container.Update(%s)", URLForXBMC("/movies/"))},
-			toggleWatchedAction,
-			watchlistAction,
-			collectionAction,
-			{"LOCALIZE[30034]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/setviewmode/movies"))},
-		}
-		item.ContextMenu = append(libraryActions, item.ContextMenu...)
+			toggleWatchedAction := []string{"LOCALIZE[30667]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/watched", movie.ID))}
+			// TODO: maybe there is a better way to determine if item was watched.
+			if item.Info.PlayCount > 0 {
+				toggleWatchedAction = []string{"LOCALIZE[30668]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/unwatched", movie.ID))}
+			}
 
-		if config.Get().Platform.Kodi < 17 {
-			item.ContextMenu = append(item.ContextMenu,
-				[]string{"LOCALIZE[30203]", "Action(Info)"},
-				[]string{"LOCALIZE[30268]", "Action(ToggleWatched)"},
-			)
-		}
+			watchlistAction := []string{"LOCALIZE[30255]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/watchlist/add", movie.ID))}
+			if inMoviesWatchlist(movie.ID) {
+				watchlistAction = []string{"LOCALIZE[30256]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/watchlist/remove", movie.ID))}
+			}
 
-		item.IsPlayable = true
-		items = append(items, item)
+			collectionAction := []string{"LOCALIZE[30258]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/collection/add", movie.ID))}
+			if inMoviesCollection(movie.ID) {
+				collectionAction = []string{"LOCALIZE[30259]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/movie/%d/collection/remove", movie.ID))}
+			}
+
+			item.ContextMenu = [][]string{
+				{"LOCALIZE[30619];;LOCALIZE[30214]", fmt.Sprintf("Container.Update(%s)", URLForXBMC("/movies/"))},
+				toggleWatchedAction,
+				watchlistAction,
+				collectionAction,
+				{"LOCALIZE[30034]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/setviewmode/movies"))},
+			}
+			item.ContextMenu = append(libraryActions, item.ContextMenu...)
+
+			if config.Get().Platform.Kodi < 17 {
+				item.ContextMenu = append(item.ContextMenu,
+					[]string{"LOCALIZE[30203]", "Action(Info)"},
+					[]string{"LOCALIZE[30268]", "Action(ToggleWatched)"},
+				)
+			}
+
+			item.IsPlayable = true
+			items[idx] = item
+		}(index, movie)
 	}
+	wg.Wait()
+
 	if page >= 0 && hasNextPage > 0 {
 		path := ctx.Request.URL.Path
 		nextPath := URLForXBMC(fmt.Sprintf("%s?page=%d", path, page+1))
@@ -367,7 +387,7 @@ func renderMovies(ctx *gin.Context, movies tmdb.Movies, page int, total int, que
 			Path:      nextPath,
 			Thumbnail: config.AddonResource("img", "nextpage.png"),
 		}
-		items = append(items, next)
+		items[index+1] = next
 	}
 	ctx.JSON(200, xbmc.NewView("movies", filterListItems(items)))
 }
@@ -409,6 +429,9 @@ func PopularMovies(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	movies, total := tmdb.PopularMovies(p, config.Get().Language, page)
+	defer func() {
+		go tmdb.PopularMovies(p, config.Get().Language, page+1)
+	}()
 	renderMovies(ctx, movies, page, total, "")
 }
 
@@ -426,6 +449,9 @@ func RecentMovies(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	movies, total := tmdb.RecentMovies(p, config.Get().Language, page)
+	defer func() {
+		go tmdb.RecentMovies(p, config.Get().Language, page+1)
+	}()
 	renderMovies(ctx, movies, page, total, "")
 }
 
@@ -439,6 +465,9 @@ func TopRatedMovies(ctx *gin.Context) {
 	}
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	movies, total := tmdb.TopRatedMovies(genre, config.Get().Language, page)
+	defer func() {
+		go tmdb.TopRatedMovies(genre, config.Get().Language, page+1)
+	}()
 	renderMovies(ctx, movies, page, total, "")
 }
 
@@ -457,6 +486,9 @@ func MoviesMostVoted(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	movies, total := tmdb.MostVotedMovies("", config.Get().Language, page)
+	defer func() {
+		go tmdb.MostVotedMovies("", config.Get().Language, page+1)
+	}()
 	renderMovies(ctx, movies, page, total, "")
 }
 
@@ -478,6 +510,9 @@ func SearchMovies(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	movies, total := tmdb.SearchMovies(query, config.Get().Language, page)
+	defer func() {
+		go tmdb.SearchMovies(query, config.Get().Language, page+1)
+	}()
 	renderMovies(ctx, movies, page, total, query)
 }
 

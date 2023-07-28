@@ -14,12 +14,15 @@ import (
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
 	"github.com/jmcvetta/napping"
 )
 
 // GetSeason ...
 func GetSeason(showID int, seasonNumber int, language string, seasonsCount int) *Season {
+	defer perf.ScopeTimer()()
+
 	var season *Season
 	cacheStore := cache.NewDBStore()
 	updateFrequency := config.Get().UpdateFrequency * 60
@@ -83,6 +86,8 @@ func GetSeason(showID int, seasonNumber int, language string, seasonsCount int) 
 
 // ToListItems ...
 func (seasons SeasonList) ToListItems(show *Show) []*xbmc.ListItem {
+	defer perf.ScopeTimer()()
+
 	items := make([]*xbmc.ListItem, 0, len(seasons))
 	specials := make(xbmc.ListItems, 0)
 

@@ -16,6 +16,7 @@ import (
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
 	"github.com/jmcvetta/napping"
 )
@@ -118,6 +119,8 @@ func setCalendarShowsFanart(shows []*CalendarShow) []*CalendarShow {
 
 // GetShow ...
 func GetShow(ID string) (show *Show) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("shows/%s", ID)
 
 	params := napping.Params{
@@ -147,6 +150,8 @@ func GetShow(ID string) (show *Show) {
 
 // GetShowByTMDB ...
 func GetShowByTMDB(tmdbID string) (show *Show) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("search/tmdb/%s?type=show", tmdbID)
 
 	params := napping.Params{}.AsUrlValues()
@@ -177,6 +182,8 @@ func GetShowByTMDB(tmdbID string) (show *Show) {
 
 // GetShowByTVDB ...
 func GetShowByTVDB(tvdbID string) (show *Show) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("search/tvdb/%s?type=show", tvdbID)
 
 	params := napping.Params{}.AsUrlValues()
@@ -202,6 +209,8 @@ func GetShowByTVDB(tvdbID string) (show *Show) {
 
 // GetSeasons returns list of seasons for show
 func GetSeasons(showID int, withEpisodes bool) (seasons []*Season) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("shows/%d/seasons", showID)
 
 	params := napping.Params{"extended": "full"}.AsUrlValues()
@@ -230,6 +239,8 @@ func GetSeasons(showID int, withEpisodes bool) (seasons []*Season) {
 
 // GetSeasonEpisodes ...
 func GetSeasonEpisodes(showID, seasonNumber int) (episodes []*Episode) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("shows/%d/seasons/%d", showID, seasonNumber)
 	params := napping.Params{"extended": "episodes,full"}.AsUrlValues()
 
@@ -251,6 +262,8 @@ func GetSeasonEpisodes(showID, seasonNumber int) (episodes []*Episode) {
 
 // GetEpisode ...
 func GetEpisode(showID, seasonNumber, episodeNumber int) (episode *Episode) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("shows/%d/seasons/%d/episodes/%d", showID, seasonNumber, episodeNumber)
 	params := napping.Params{"extended": "full,images"}.AsUrlValues()
 
@@ -272,6 +285,8 @@ func GetEpisode(showID, seasonNumber, episodeNumber int) (episode *Episode) {
 
 // GetEpisodeByID ...
 func GetEpisodeByID(id string) (episode *Episode) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("search/trakt/%s?type=episode", id)
 
 	params := napping.Params{}.AsUrlValues()
@@ -297,6 +312,8 @@ func GetEpisodeByID(id string) (episode *Episode) {
 
 // GetEpisodeByTMDB ...
 func GetEpisodeByTMDB(tmdbID string) (episode *Episode) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("search/tmdb/%s?type=episode", tmdbID)
 
 	params := napping.Params{}.AsUrlValues()
@@ -327,6 +344,8 @@ func GetEpisodeByTMDB(tmdbID string) (episode *Episode) {
 
 // GetEpisodeByTVDB ...
 func GetEpisodeByTVDB(tvdbID string) (episode *Episode) {
+	defer perf.ScopeTimer()()
+
 	endPoint := fmt.Sprintf("search/tvdb/%s?type=episode", tvdbID)
 
 	params := napping.Params{}.AsUrlValues()
@@ -353,6 +372,8 @@ func GetEpisodeByTVDB(tvdbID string) (episode *Episode) {
 // SearchShows ...
 // TODO: Actually use this somewhere
 func SearchShows(query string, page string) (shows []*Shows, err error) {
+	defer perf.ScopeTimer()()
+
 	endPoint := "search"
 
 	params := napping.Params{
@@ -380,6 +401,8 @@ func SearchShows(query string, page string) (shows []*Shows, err error) {
 
 // TopShows ...
 func TopShows(topCategory string, page string) (shows []*Shows, total int, err error) {
+	defer perf.ScopeTimer()()
+
 	endPoint := "shows/" + topCategory
 	if topCategory == "recommendations" {
 		endPoint = topCategory + "/shows"
@@ -461,6 +484,8 @@ func WatchlistShows(isUpdateNeeded bool) (shows []*Shows, err error) {
 		return shows, err
 	}
 
+	defer perf.ScopeTimer()()
+
 	endPoint := "sync/watchlist/shows"
 
 	params := napping.Params{
@@ -517,6 +542,8 @@ func CollectionShows(isUpdateNeeded bool) (shows []*Shows, err error) {
 		return shows, err
 	}
 
+	defer perf.ScopeTimer()()
+
 	endPoint := "sync/collection/shows"
 
 	params := napping.Params{
@@ -567,6 +594,8 @@ func PreviousCollectionShows() (shows []*Shows, err error) {
 
 // ListItemsShows ...
 func ListItemsShows(user string, listID string, isUpdateNeeded bool) (shows []*Shows, err error) {
+	defer perf.ScopeTimer()()
+
 	if user == "" || user == "id" {
 		user = config.Get().TraktUsername
 	}
@@ -629,6 +658,8 @@ func PreviousListItemsShows(listID string) (shows []*Shows, err error) {
 
 // CalendarShows ...
 func CalendarShows(endPoint string, page string) (shows []*CalendarShow, total int, err error) {
+	defer perf.ScopeTimer()()
+
 	resultsPerPage := config.Get().ResultsPerPage
 	limit := resultsPerPage * PagesAtOnce
 	pageInt, err := strconv.Atoi(page)
@@ -679,6 +710,8 @@ func CalendarShows(endPoint string, page string) (shows []*CalendarShow, total i
 
 // WatchedShows ...
 func WatchedShows(isUpdateNeeded bool) ([]*WatchedShow, error) {
+	defer perf.ScopeTimer()()
+
 	var shows []*WatchedShow
 	err := Request(
 		"sync/watched/shows",
@@ -710,6 +743,8 @@ func PreviousWatchedShows() (shows []*WatchedShow, err error) {
 
 // PausedShows ...
 func PausedShows(isUpdateNeeded bool) ([]*PausedEpisode, error) {
+	defer perf.ScopeTimer()()
+
 	var shows []*PausedEpisode
 	err := Request(
 		"sync/playback/episodes",
@@ -731,6 +766,8 @@ func WatchedShowsProgress() (shows []*ProgressShow, err error) {
 	if errAuth := Authorized(); errAuth != nil {
 		return nil, errAuth
 	}
+
+	defer perf.ScopeTimer()()
 
 	cacheStore := cache.NewDBStore()
 
@@ -861,6 +898,8 @@ func ListHiddenShows(section string, isUpdateNeeded bool) (shows []*Shows, err e
 		return shows, err
 	}
 
+	defer perf.ScopeTimer()()
+
 	endPoint := "users/hidden/" + section
 
 	params := napping.Params{
@@ -920,6 +959,8 @@ func ListHiddenShows(section string, isUpdateNeeded bool) (shows []*Shows, err e
 
 // ToListItem ...
 func (show *Show) ToListItem() (item *xbmc.ListItem) {
+	defer perf.ScopeTimer()()
+
 	if !config.Get().ForceUseTrakt && show.IDs.TMDB != 0 {
 		tmdbID := strconv.Itoa(show.IDs.TMDB)
 		if tmdbShow := tmdb.GetShowByID(tmdbID, config.Get().Language); tmdbShow != nil {
@@ -998,6 +1039,8 @@ func (show *Show) ToListItem() (item *xbmc.ListItem) {
 
 // ToListItem ...
 func (episode *Episode) ToListItem(show *Show) *xbmc.ListItem {
+	defer perf.ScopeTimer()()
+
 	episodeLabel := episode.Title
 	if config.Get().AddEpisodeNumbers {
 		episodeLabel = fmt.Sprintf("%dx%02d %s", episode.Season, episode.Number, episode.Title)

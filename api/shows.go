@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/anacrolix/missinggo/perf"
+	"github.com/anacrolix/sync"
 	"github.com/gin-gonic/gin"
 
 	"github.com/elgatito/elementum/bittorrent"
@@ -227,56 +228,75 @@ func renderShows(ctx *gin.Context, shows tmdb.Shows, page int, total int, query 
 		}
 	}
 
-	items := make(xbmc.ListItems, 0, len(shows)+hasNextPage)
+	itemsCount := 0
+	for _, show := range shows {
+		if show != nil {
+			itemsCount++
+		}
+	}
 
+	items := make(xbmc.ListItems, itemsCount+hasNextPage)
+	wg := sync.WaitGroup{}
+	wg.Add(itemsCount)
+
+	index := -1
 	for _, show := range shows {
 		if show == nil {
 			continue
 		}
-		item := show.ToListItem()
-		item.Path = URLForXBMC("/show/%d/seasons", show.ID)
 
-		tmdbID := strconv.Itoa(show.ID)
-		libraryActions := [][]string{}
-		if uid.IsDuplicateShow(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.ShowType) {
-			libraryActions = append(libraryActions, []string{"LOCALIZE[30283]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/add/%d?force=true", show.ID))})
-			libraryActions = append(libraryActions, []string{"LOCALIZE[30253]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/remove/%d", show.ID))})
-		} else {
-			libraryActions = append(libraryActions, []string{"LOCALIZE[30252]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/add/%d", show.ID))})
-		}
+		index++
 
-		toggleWatchedAction := []string{"LOCALIZE[30667]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/watched", show.ID))}
-		if item.Info.PlayCount > 0 {
-			toggleWatchedAction = []string{"LOCALIZE[30668]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/unwatched", show.ID))}
-		}
+		go func(idx int, show *tmdb.Show) {
+			defer wg.Done()
 
-		watchlistAction := []string{"LOCALIZE[30255]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/watchlist/add", show.ID))}
-		if inShowsWatchlist(show.ID) {
-			watchlistAction = []string{"LOCALIZE[30256]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/watchlist/remove", show.ID))}
-		}
+			item := show.ToListItem()
+			item.Path = URLForXBMC("/show/%d/seasons", show.ID)
 
-		collectionAction := []string{"LOCALIZE[30258]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/collection/add", show.ID))}
-		if inShowsCollection(show.ID) {
-			collectionAction = []string{"LOCALIZE[30259]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/collection/remove", show.ID))}
-		}
+			tmdbID := strconv.Itoa(show.ID)
+			libraryActions := [][]string{}
+			if uid.IsDuplicateShow(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.ShowType) {
+				libraryActions = append(libraryActions, []string{"LOCALIZE[30283]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/add/%d?force=true", show.ID))})
+				libraryActions = append(libraryActions, []string{"LOCALIZE[30253]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/remove/%d", show.ID))})
+			} else {
+				libraryActions = append(libraryActions, []string{"LOCALIZE[30252]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/add/%d", show.ID))})
+			}
 
-		item.ContextMenu = [][]string{
-			{"LOCALIZE[30619];;LOCALIZE[30215]", fmt.Sprintf("Container.Update(%s)", URLForXBMC("/shows/"))},
-			toggleWatchedAction,
-			watchlistAction,
-			collectionAction,
-			{"LOCALIZE[30035]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/setviewmode/tvshows"))},
-		}
-		item.ContextMenu = append(libraryActions, item.ContextMenu...)
+			toggleWatchedAction := []string{"LOCALIZE[30667]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/watched", show.ID))}
+			if item.Info.PlayCount > 0 {
+				toggleWatchedAction = []string{"LOCALIZE[30668]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/unwatched", show.ID))}
+			}
 
-		if config.Get().Platform.Kodi < 17 {
-			item.ContextMenu = append(item.ContextMenu,
-				[]string{"LOCALIZE[30203]", "Action(Info)"},
-				[]string{"LOCALIZE[30268]", "Action(ToggleWatched)"},
-			)
-		}
-		items = append(items, item)
+			watchlistAction := []string{"LOCALIZE[30255]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/watchlist/add", show.ID))}
+			if inShowsWatchlist(show.ID) {
+				watchlistAction = []string{"LOCALIZE[30256]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/watchlist/remove", show.ID))}
+			}
+
+			collectionAction := []string{"LOCALIZE[30258]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/collection/add", show.ID))}
+			if inShowsCollection(show.ID) {
+				collectionAction = []string{"LOCALIZE[30259]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/show/%d/collection/remove", show.ID))}
+			}
+
+			item.ContextMenu = [][]string{
+				{"LOCALIZE[30619];;LOCALIZE[30215]", fmt.Sprintf("Container.Update(%s)", URLForXBMC("/shows/"))},
+				toggleWatchedAction,
+				watchlistAction,
+				collectionAction,
+				{"LOCALIZE[30035]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/setviewmode/tvshows"))},
+			}
+			item.ContextMenu = append(libraryActions, item.ContextMenu...)
+
+			if config.Get().Platform.Kodi < 17 {
+				item.ContextMenu = append(item.ContextMenu,
+					[]string{"LOCALIZE[30203]", "Action(Info)"},
+					[]string{"LOCALIZE[30268]", "Action(ToggleWatched)"},
+				)
+			}
+			items[idx] = item
+		}(index, show)
 	}
+	wg.Wait()
+
 	if page >= 0 && hasNextPage > 0 {
 		path := ctx.Request.URL.Path
 		nextPath := URLForXBMC(fmt.Sprintf("%s?page=%d", path, page+1))
@@ -288,7 +308,7 @@ func renderShows(ctx *gin.Context, shows tmdb.Shows, page int, total int, query 
 			Path:      nextPath,
 			Thumbnail: config.AddonResource("img", "nextpage.png"),
 		}
-		items = append(items, next)
+		items[index+1] = next
 	}
 	ctx.JSON(200, xbmc.NewView("tvshows", filterListItems(items)))
 }
@@ -307,6 +327,9 @@ func PopularShows(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	shows, total := tmdb.PopularShows(p, config.Get().Language, page)
+	defer func() {
+		go tmdb.PopularShows(p, config.Get().Language, page+1)
+	}()
 	renderShows(ctx, shows, page, total, "")
 }
 
@@ -324,6 +347,9 @@ func RecentShows(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	shows, total := tmdb.RecentShows(p, config.Get().Language, page)
+	defer func() {
+		go tmdb.RecentShows(p, config.Get().Language, page+1)
+	}()
 	renderShows(ctx, shows, page, total, "")
 }
 
@@ -341,6 +367,9 @@ func RecentEpisodes(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	shows, total := tmdb.RecentEpisodes(p, config.Get().Language, page)
+	defer func() {
+		go tmdb.RecentEpisodes(p, config.Get().Language, page+1)
+	}()
 	renderShows(ctx, shows, page, total, "")
 }
 
@@ -350,6 +379,9 @@ func TopRatedShows(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	shows, total := tmdb.TopRatedShows("", config.Get().Language, page)
+	defer func() {
+		go tmdb.TopRatedShows("", config.Get().Language, page+1)
+	}()
 	renderShows(ctx, shows, page, total, "")
 }
 
@@ -359,6 +391,9 @@ func TVMostVoted(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	shows, total := tmdb.MostVotedShows("", config.Get().Language, page)
+	defer func() {
+		go tmdb.MostVotedShows("", config.Get().Language, page+1)
+	}()
 	renderShows(ctx, shows, page, total, "")
 }
 
@@ -380,6 +415,9 @@ func SearchShows(ctx *gin.Context) {
 
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 	shows, total := tmdb.SearchShows(query, config.Get().Language, page)
+	defer func() {
+		go tmdb.SearchShows(query, config.Get().Language, page+1)
+	}()
 	renderShows(ctx, shows, page, total, query)
 }
 

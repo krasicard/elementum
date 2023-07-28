@@ -18,6 +18,7 @@ import (
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
 	"github.com/jmcvetta/napping"
 )
@@ -32,6 +33,8 @@ func LogError(err error) {
 
 // GetShowImages ...
 func GetShowImages(showID int) *Images {
+	defer perf.ScopeTimer()()
+
 	var images *Images
 	cacheStore := cache.NewDBStore()
 	key := fmt.Sprintf(cache.TMDBShowImagesKey, showID)
@@ -55,6 +58,8 @@ func GetShowImages(showID int) *Images {
 
 // GetSeasonImages ...
 func GetSeasonImages(showID int, season int) *Images {
+	defer perf.ScopeTimer()()
+
 	var images *Images
 	cacheStore := cache.NewDBStore()
 	key := fmt.Sprintf(cache.TMDBSeasonImagesKey, showID, season)
@@ -78,6 +83,8 @@ func GetSeasonImages(showID int, season int) *Images {
 
 // GetEpisodeImages ...
 func GetEpisodeImages(showID, season, episode int) *Images {
+	defer perf.ScopeTimer()()
+
 	var images *Images
 	cacheStore := cache.NewDBStore()
 	key := fmt.Sprintf(cache.TMDBEpisodeImagesKey, showID, season, episode)
@@ -110,6 +117,9 @@ func GetShow(showID int, language string) (show *Show) {
 	if showID == 0 {
 		return
 	}
+
+	defer perf.ScopeTimer()()
+
 	cacheStore := cache.NewDBStore()
 	key := fmt.Sprintf(cache.TMDBShowByIDKey, showID, language)
 	if err := cacheStore.Get(key, &show); err != nil {
@@ -156,6 +166,8 @@ func GetShow(showID int, language string) (show *Show) {
 
 // GetShows ...
 func GetShows(showIds []int, language string) Shows {
+	defer perf.ScopeTimer()()
+
 	var wg sync.WaitGroup
 	shows := make(Shows, len(showIds))
 	wg.Add(len(showIds))
@@ -195,6 +207,8 @@ func SearchShows(query string, language string, page int) (Shows, int) {
 }
 
 func listShows(endpoint string, cacheKey string, params napping.Params, page int) (Shows, int) {
+	defer perf.ScopeTimer()()
+
 	params["api_key"] = apiKey
 	totalResults := -1
 
@@ -515,6 +529,8 @@ func (show *Show) AnimeInfoWithShow(episode *Episode, tvdbShow *tvdb.Show) (an i
 
 // ToListItem ...
 func (show *Show) ToListItem() *xbmc.ListItem {
+	defer perf.ScopeTimer()()
+
 	year, _ := strconv.Atoi(strings.Split(show.FirstAirDate, "-")[0])
 
 	name := show.name()

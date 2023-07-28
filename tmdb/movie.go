@@ -16,6 +16,7 @@ import (
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 
+	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
 	"github.com/jmcvetta/napping"
 )
@@ -29,6 +30,8 @@ func (a ByPopularity) Less(i, j int) bool { return a[i].Popularity < a[j].Popula
 
 // GetImages ...
 func GetImages(movieID int) *Images {
+	defer perf.ScopeTimer()()
+
 	var images *Images
 	cacheStore := cache.NewDBStore()
 	key := fmt.Sprintf(cache.TMDBMovieImagesKey, movieID)
@@ -57,6 +60,8 @@ func GetMovie(tmdbID int, language string) *Movie {
 
 // GetMovieByID ...
 func GetMovieByID(movieID string, language string) *Movie {
+	defer perf.ScopeTimer()()
+
 	var movie *Movie
 	cacheStore := cache.NewDBStore()
 	key := fmt.Sprintf(cache.TMDBMovieByIDKey, movieID, language)
@@ -96,6 +101,8 @@ func GetMovieByID(movieID string, language string) *Movie {
 
 // GetMovies ...
 func GetMovies(tmdbIds []int, language string) Movies {
+	defer perf.ScopeTimer()()
+
 	var wg sync.WaitGroup
 	movies := make(Movies, len(tmdbIds))
 	wg.Add(len(tmdbIds))
@@ -111,6 +118,8 @@ func GetMovies(tmdbIds []int, language string) Movies {
 
 // GetMovieGenres ...
 func GetMovieGenres(language string) []*Genre {
+	defer perf.ScopeTimer()()
+
 	genres := GenreList{}
 
 	cacheStore := cache.NewDBStore()
@@ -157,6 +166,8 @@ func GetMovieGenres(language string) []*Genre {
 
 // SearchMovies ...
 func SearchMovies(query string, language string, page int) (Movies, int) {
+	defer perf.ScopeTimer()()
+
 	var results EntityList
 
 	MakeRequest(APIRequest{
@@ -183,6 +194,8 @@ func SearchMovies(query string, language string, page int) (Movies, int) {
 
 // GetIMDBList ...
 func GetIMDBList(listID string, language string, page int) (movies Movies, totalResults int) {
+	defer perf.ScopeTimer()()
+
 	var results *List
 	totalResults = -1
 
@@ -230,6 +243,8 @@ func GetIMDBList(listID string, language string, page int) (movies Movies, total
 }
 
 func listMovies(endpoint string, cacheKey string, params napping.Params, page int) (Movies, int) {
+	defer perf.ScopeTimer()()
+
 	params["api_key"] = apiKey
 	totalResults := -1
 
@@ -423,6 +438,8 @@ func (movie *Movie) Year() int {
 
 // ToListItem ...
 func (movie *Movie) ToListItem() *xbmc.ListItem {
+	defer perf.ScopeTimer()()
+
 	title := movie.title()
 	if config.Get().UseOriginalTitle && movie.OriginalTitle != "" {
 		title = movie.OriginalTitle
