@@ -208,10 +208,16 @@ func TopMovies(topCategory string, page string) (movies []*Movies, total int, er
 	}
 
 	resultsPerPage := config.Get().ResultsPerPage
-	limit := resultsPerPage * PagesAtOnce
+	limit := resultsPerPage
 	pageInt, err := strconv.Atoi(page)
 	if err != nil {
 		return
+	}
+	if pageInt < -1 {
+		resultsPerPage = pageInt * -1
+		limit = pageInt * -1
+		page = "1"
+		pageInt = 1
 	}
 	page = strconv.Itoa((pageInt-1)*resultsPerPage/limit + 1)
 	params := napping.Params{
@@ -221,7 +227,7 @@ func TopMovies(topCategory string, page string) (movies []*Movies, total int, er
 	}.AsUrlValues()
 
 	cacheStore := cache.NewDBStore()
-	key := fmt.Sprintf(cache.TraktMoviesByCategoryKey, topCategory, page)
+	key := fmt.Sprintf(cache.TraktMoviesByCategoryKey, topCategory, page, limit)
 	totalKey := fmt.Sprintf(cache.TraktMoviesByCategoryTotalKey, topCategory)
 	if err := cacheStore.Get(key, &movies); err != nil || len(movies) == 0 {
 		var resp *napping.Response
@@ -611,7 +617,7 @@ func CalendarMovies(endPoint string, page string) (movies []*CalendarMovie, tota
 	defer perf.ScopeTimer()()
 
 	resultsPerPage := config.Get().ResultsPerPage
-	limit := resultsPerPage * PagesAtOnce
+	limit := resultsPerPage
 	pageInt, err := strconv.Atoi(page)
 	if err != nil {
 		return
@@ -625,7 +631,7 @@ func CalendarMovies(endPoint string, page string) (movies []*CalendarMovie, tota
 
 	cacheStore := cache.NewDBStore()
 	endPointKey := strings.Replace(endPoint, "/", ".", -1)
-	key := fmt.Sprintf(cache.TraktMoviesCalendarKey, endPointKey, page)
+	key := fmt.Sprintf(cache.TraktMoviesCalendarKey, endPointKey, page, limit)
 	totalKey := fmt.Sprintf(cache.TraktMoviesCalendarTotalKey, endPointKey)
 	if err := cacheStore.Get(key, &movies); err != nil {
 		resp, err := GetWithAuth("calendars/"+endPoint, params)

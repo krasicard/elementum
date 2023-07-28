@@ -457,7 +457,7 @@ func renderTraktMovies(ctx *gin.Context, movies []*trakt.Movies, total int, page
 		}
 
 		if len(movies) > resultsPerPage {
-			start := (page - 1) % trakt.PagesAtOnce * resultsPerPage
+			start := (page - 1) * resultsPerPage
 			end := start + resultsPerPage
 			if len(movies) <= end {
 				movies = movies[start:]
@@ -583,13 +583,9 @@ func TraktRecommendationsMovies(ctx *gin.Context) {
 
 	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
-	pageParam := ctx.DefaultQuery("page", "1")
-	page, _ := strconv.Atoi(pageParam)
+	page := config.Get().ResultsPerPage * -5
+	pageParam := strconv.Itoa(page)
 	movies, total, err := trakt.TopMovies("recommendations", pageParam)
-
-	defer func() {
-		go trakt.TopMovies("recommendations", nextPage(pageParam))
-	}()
 
 	if err != nil {
 		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
@@ -774,6 +770,7 @@ func TraktProgressShows(ctx *gin.Context) {
 
 func renderTraktShows(ctx *gin.Context, shows []*trakt.Shows, total int, page int) {
 	hasNextPage := 0
+	log.Debugf("Render start %d --- %d --- %d", len(shows), total, page)
 	if page > 0 {
 		resultsPerPage := config.Get().ResultsPerPage
 
@@ -786,9 +783,10 @@ func renderTraktShows(ctx *gin.Context, shows []*trakt.Shows, total int, page in
 			}
 		}
 
-		if len(shows) >= resultsPerPage {
-			start := (page - 1) % trakt.PagesAtOnce * resultsPerPage
+		if len(shows) > resultsPerPage {
+			start := (page - 1) * resultsPerPage
 			end := start + resultsPerPage
+			log.Debugf("Render mid %d --- %d --- %d -- %d -- %d", len(shows), total, page, start, end)
 			if len(shows) <= end {
 				shows = shows[start:]
 			} else {
@@ -888,13 +886,9 @@ func TraktRecommendationsShows(ctx *gin.Context) {
 
 	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
-	pageParam := ctx.DefaultQuery("page", "1")
-	page, _ := strconv.Atoi(pageParam)
+	page := config.Get().ResultsPerPage * -5
+	pageParam := strconv.Itoa(page)
 	shows, total, err := trakt.TopShows("recommendations", pageParam)
-
-	defer func() {
-		go trakt.TopShows("recommendations", nextPage(pageParam))
-	}()
 
 	if err != nil {
 		xbmcHost.Notify("Elementum", err.Error(), config.AddonIcon())
@@ -1221,7 +1215,7 @@ func renderCalendarMovies(ctx *gin.Context, movies []*trakt.CalendarMovie, total
 		}
 
 		if len(movies) > resultsPerPage {
-			start := (page - 1) % trakt.PagesAtOnce * resultsPerPage
+			start := (page - 1) * resultsPerPage
 			end := start + resultsPerPage
 			if len(movies) <= end {
 				movies = movies[start:]
@@ -1368,8 +1362,8 @@ func renderCalendarShows(ctx *gin.Context, shows []*trakt.CalendarShow, total in
 			}
 		}
 
-		if len(shows) >= resultsPerPage {
-			start := (page - 1) % trakt.PagesAtOnce * resultsPerPage
+		if len(shows) > resultsPerPage {
+			start := (page - 1) * resultsPerPage
 			end := start + resultsPerPage
 			if len(shows) <= end {
 				shows = shows[start:]

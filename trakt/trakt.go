@@ -41,8 +41,6 @@ var (
 )
 
 var (
-	// PagesAtOnce ...
-	PagesAtOnce             = 5
 	retriesLeft             = 3
 	burstRate               = 50
 	burstTime               = 10 * time.Second

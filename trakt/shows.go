@@ -409,10 +409,16 @@ func TopShows(topCategory string, page string) (shows []*Shows, total int, err e
 	}
 
 	resultsPerPage := config.Get().ResultsPerPage
-	limit := resultsPerPage * PagesAtOnce
+	limit := resultsPerPage
 	pageInt, err := strconv.Atoi(page)
 	if err != nil {
 		return shows, 0, err
+	}
+	if pageInt < -1 {
+		resultsPerPage = pageInt * -1
+		limit = pageInt * -1
+		page = "1"
+		pageInt = 1
 	}
 	page = strconv.Itoa((pageInt-1)*resultsPerPage/limit + 1)
 	params := napping.Params{
@@ -422,7 +428,7 @@ func TopShows(topCategory string, page string) (shows []*Shows, total int, err e
 	}.AsUrlValues()
 
 	cacheStore := cache.NewDBStore()
-	key := fmt.Sprintf(cache.TraktShowsByCategoryKey, topCategory, page)
+	key := fmt.Sprintf(cache.TraktShowsByCategoryKey, topCategory, page, limit)
 	totalKey := fmt.Sprintf(cache.TraktShowsByCategoryTotalKey, topCategory)
 	if err := cacheStore.Get(key, &shows); err != nil || len(shows) == 0 {
 		var resp *napping.Response
@@ -661,7 +667,7 @@ func CalendarShows(endPoint string, page string) (shows []*CalendarShow, total i
 	defer perf.ScopeTimer()()
 
 	resultsPerPage := config.Get().ResultsPerPage
-	limit := resultsPerPage * PagesAtOnce
+	limit := resultsPerPage
 	pageInt, err := strconv.Atoi(page)
 	if err != nil {
 		return shows, 0, err
@@ -675,7 +681,7 @@ func CalendarShows(endPoint string, page string) (shows []*CalendarShow, total i
 
 	cacheStore := cache.NewDBStore()
 	endPointKey := strings.Replace(endPoint, "/", ".", -1)
-	key := fmt.Sprintf(cache.TraktShowsCalendarKey, endPointKey, page)
+	key := fmt.Sprintf(cache.TraktShowsCalendarKey, endPointKey, page, limit)
 	totalKey := fmt.Sprintf(cache.TraktShowsCalendarTotalKey, endPointKey)
 	if err := cacheStore.Get(key, &shows); err != nil {
 		resp, err := GetWithAuth("calendars/"+endPoint, params)

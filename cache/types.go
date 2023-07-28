@@ -61,7 +61,7 @@ const (
 	TraktMovieExpire                       = GeneralExpire
 	TraktMovieByTMDBKey                    = TraktKey + "movie.tmdb.%s"
 	TraktMovieByTMDBExpire                 = GeneralExpire
-	TraktMoviesByCategoryKey               = TraktKey + "movies.%s.%s"
+	TraktMoviesByCategoryKey               = TraktKey + "movies.%s.%s.%d"
 	TraktMoviesByCategoryExpire            = 24 * time.Hour
 	TraktMoviesByCategoryTotalKey          = TraktKey + "movies.%s.total"
 	TraktMoviesByCategoryTotalExpire       = 24 * time.Hour
@@ -71,7 +71,7 @@ const (
 	TraktMoviesCollectionExpire            = GeneralExpire
 	TraktMoviesListKey                     = TraktKey + "movies.list.%s"
 	TraktMoviesListExpire                  = 1 * time.Minute
-	TraktMoviesCalendarKey                 = TraktKey + "movies.calendar.%s.%s"
+	TraktMoviesCalendarKey                 = TraktKey + "movies.calendar.%s.%s.%d"
 	TraktMoviesCalendarExpire              = GeneralExpire
 	TraktMoviesCalendarTotalKey            = TraktKey + "movies.calendar.%s.total"
 	TraktMoviesCalendarTotalExpire         = GeneralExpire
@@ -81,7 +81,7 @@ const (
 	TraktMoviesPausedExpire                = GeneralExpire
 	TraktShowKey                           = TraktKey + "show.%s"
 	TraktShowExpire                        = GeneralExpire
-	TraktShowsByCategoryKey                = TraktKey + "shows.%s.%s"
+	TraktShowsByCategoryKey                = TraktKey + "shows.%s.%s.%d"
 	TraktShowsByCategoryExpire             = 24 * time.Hour
 	TraktShowsByCategoryTotalKey           = TraktKey + "shows.%s.total"
 	TraktShowsByCategoryTotalExpire        = 24 * time.Hour
@@ -95,7 +95,7 @@ const (
 	TraktShowsCollectionExpire             = GeneralExpire
 	TraktShowsListKey                      = TraktKey + "shows.list.%s"
 	TraktShowsListExpire                   = 1 * time.Minute
-	TraktShowsCalendarKey                  = TraktKey + "shows.calendar.%s.%s"
+	TraktShowsCalendarKey                  = TraktKey + "shows.calendar.%s.%s.%d"
 	TraktShowsCalendarExpire               = GeneralExpire
 	TraktShowsCalendarTotalKey             = TraktKey + "shows.calendar.%s.total"
 	TraktShowsCalendarTotalExpire          = GeneralExpire
