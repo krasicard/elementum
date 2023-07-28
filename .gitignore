@@ -34,5 +34,6 @@ elementum
 # Custom shell scripts
 
 # Local library paths
+special*
 elementum_library/
 C:\\Users\\*
