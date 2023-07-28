@@ -504,7 +504,7 @@ func TopLists(page string) (lists []*ListContainer, hasNext bool) {
 	endPoint := "lists/popular"
 	params := napping.Params{
 		"page":  page,
-		"limit": strconv.Itoa(config.Get().ResultsPerPage),
+		"limit": strconv.Itoa(ListsPerPage),
 	}.AsUrlValues()
 
 	var resp *napping.Response
@@ -535,10 +535,6 @@ func TopLists(page string) (lists []*ListContainer, hasNext bool) {
 	if err := resp.Unmarshal(&lists); err != nil {
 		log.Warning(err)
 	}
-
-	sort.Slice(lists, func(i int, j int) bool {
-		return lists[i].List.Name < lists[j].List.Name
-	})
 
 	p := getPagination(resp.HttpResponse().Header)
 	hasNext = p.PageCount > pageInt

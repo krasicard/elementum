@@ -27,6 +27,8 @@ const (
 	APIURL = "https://api.trakt.tv"
 	// APIVersion ...
 	APIVersion = "2"
+
+	ListsPerPage = 150
 )
 
 var log = logging.MustGetLogger("trakt")
