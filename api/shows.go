@@ -152,21 +152,31 @@ func TVLibrary(ctx *gin.Context) {
 		return
 	}
 
-	tmdbShows := tmdb.Shows{}
+	tmdbShows := make(tmdb.Shows, config.Get().ResultsPerPage)
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 
+	wg := sync.WaitGroup{}
+	index := -1
 	for i := (page - 1) * config.Get().ResultsPerPage; i < shows.Limits.Total && i < page*config.Get().ResultsPerPage; i++ {
 		if shows == nil || shows.Shows == nil || len(shows.Shows) < i {
 			continue
 		}
 
-		if id, err := strconv.Atoi(shows.Shows[i].UniqueIDs.Elementum); err == nil {
-			s := tmdb.GetShow(id, config.Get().Language)
-			if s != nil {
-				tmdbShows = append(tmdbShows, s)
+		wg.Add(1)
+		index++
+
+		go func(show *xbmc.VideoLibraryShowItem, idx int) {
+			defer wg.Done()
+
+			if id, err := strconv.Atoi(show.UniqueIDs.Elementum); err == nil {
+				s := tmdb.GetShow(id, config.Get().Language)
+				if s != nil {
+					tmdbShows[idx] = s
+				}
 			}
-		}
+		}(shows.Shows[i], index)
 	}
+	wg.Wait()
 
 	renderShows(ctx, tmdbShows, page, shows.Limits.Total, "")
 }

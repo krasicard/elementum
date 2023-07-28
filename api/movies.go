@@ -179,21 +179,30 @@ func MovieLibrary(ctx *gin.Context) {
 		return
 	}
 
-	tmdbMovies := tmdb.Movies{}
+	tmdbMovies := make(tmdb.Movies, config.Get().ResultsPerPage)
 	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
 
+	wg := sync.WaitGroup{}
+	index := -1
 	for i := (page - 1) * config.Get().ResultsPerPage; i < movies.Limits.Total && i < page*config.Get().ResultsPerPage; i++ {
 		if movies == nil || movies.Movies == nil || len(movies.Movies) < i {
 			continue
 		}
 
-		if id, err := strconv.Atoi(movies.Movies[i].UniqueIDs.Elementum); err == nil {
-			m := tmdb.GetMovie(id, config.Get().Language)
-			if m != nil {
-				tmdbMovies = append(tmdbMovies, m)
+		wg.Add(1)
+		index++
+
+		go func(movie *xbmc.VideoLibraryMovieItem, idx int) {
+			defer wg.Done()
+			if id, err := strconv.Atoi(movie.UniqueIDs.Elementum); err == nil {
+				m := tmdb.GetMovie(id, config.Get().Language)
+				if m != nil {
+					tmdbMovies[idx] = m
+				}
 			}
-		}
+		}(movies.Movies[i], index)
 	}
+	wg.Wait()
 
 	renderMovies(ctx, tmdbMovies, page, movies.Limits.Total, "")
 }
