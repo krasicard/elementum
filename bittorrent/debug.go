@@ -1,6 +1,7 @@
 package bittorrent
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -50,13 +51,16 @@ func DebugBundle(s *Service) gin.HandlerFunc {
 			return
 		}
 
+		var logFile io.Reader
+
 		logPath := xbmcHost.TranslatePath("special://logpath/kodi.log")
-		logFile, err := os.Open(logPath)
+		logFile, err = os.Open(logPath)
 		if err != nil {
-			log.Debugf("Could not open kodi.log: %#v", err)
-			return
+			log.Debug("Could not open kodi.log locally, trying to get it from Kodi")
+			logFile = bytes.NewReader(xbmcHost.GetKodiLog())
+		} else {
+			defer logFile.(*os.File).Close()
 		}
-		defer logFile.Close()
 
 		now := time.Now()
 		fileName := fmt.Sprintf("bundle_%d_%d_%d_%d_%d.log", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute())

@@ -40,6 +40,13 @@ func (h *XBMCHost) NewLogBackend() *LogBackend {
 	return &LogBackend{h}
 }
 
+// GetKodiLog is returning kodi.log, read by python part
+func (h *XBMCHost) GetKodiLog() []byte {
+	retVal := []byte{}
+	h.executeJSONRPCEx("GetKodiLog", &retVal, nil)
+	return retVal
+}
+
 // Log ...
 func (b *LogBackend) Log(level logging.Level, calldepth int, rec *logging.Record) error {
 	line := rec.Formatted(calldepth + 1)
