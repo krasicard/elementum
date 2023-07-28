@@ -214,7 +214,7 @@ func ContextActionFromKodiLibrarySelector(s *bittorrent.Service) gin.HandlerFunc
 				if m := uid.GetLibraryMovie(kodiID); m != nil && m.UIDs.TMDB != 0 {
 					tmdbID = m.UIDs.TMDB
 				}
-			} else if media == "tvshow" {
+			} else if media == "tvshow" || media == "show" {
 				if s := uid.GetLibraryShow(kodiID); s != nil && s.UIDs.TMDB != 0 {
 					tmdbID = s.UIDs.TMDB
 				}

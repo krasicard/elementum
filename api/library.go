@@ -216,7 +216,6 @@ func RemoveShow(ctx *gin.Context) {
 			library.ClearPageCache(xbmcHost)
 		}
 	}
-
 }
 
 // UpdateLibrary ...
