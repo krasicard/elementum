@@ -908,6 +908,18 @@ func wasRemoved(id int, mediaType int) (wasRemoved bool) {
 	return false
 }
 
+// IsInLibrary checks for LibraryItem in Emenentum database
+func IsInLibrary(id int, mediaType int) (res bool) {
+	defer perf.ScopeTimer()()
+
+	var li database.LibraryItem
+	if err := database.GetStormDB().Select(q.Eq("ID", id), q.Eq("MediaType", mediaType), q.Eq("State", StateActive)).First(&li); err == nil && li.ID != 0 {
+		return true
+	}
+
+	return false
+}
+
 //
 // Maintenance
 //

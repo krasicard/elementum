@@ -8,6 +8,8 @@ import (
 
 	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
+	"github.com/asdine/storm"
+	"github.com/asdine/storm/q"
 	"github.com/gin-gonic/gin"
 
 	"github.com/elgatito/elementum/bittorrent"
@@ -88,6 +90,7 @@ func MoviesIndex(ctx *gin.Context) {
 		{Label: "Trakt > LOCALIZE[30361]", Path: URLForXBMC("/movies/trakt/history"), Thumbnail: config.AddonResource("img", "trakt.png"), TraktAuth: true},
 
 		{Label: "LOCALIZE[30517]", Path: URLForXBMC("/movies/library"), Thumbnail: config.AddonResource("img", "movies.png")},
+		{Label: "LOCALIZE[30687]", Path: URLForXBMC("/movies/elementum_library"), Thumbnail: config.AddonResource("img", "movies.png")},
 	}
 	for _, item := range items {
 		item.ContextMenu = append([][]string{
@@ -205,6 +208,46 @@ func MovieLibrary(ctx *gin.Context) {
 	wg.Wait()
 
 	renderMovies(ctx, tmdbMovies, page, movies.Limits.Total, "")
+}
+
+// MovieElementumLibrary ...
+func MovieElementumLibrary(ctx *gin.Context) {
+	defer perf.ScopeTimer()()
+
+	var lis []database.LibraryItem
+	if err := database.GetStormDB().Select(q.Eq("MediaType", library.MovieType), q.Eq("State", library.StateActive), q.Not(q.Eq("ID", "0"))).Find(&lis); err != nil && err != storm.ErrNotFound {
+		log.Infof("Could not get list of library items: %s", err)
+	}
+
+	tmdbMovies := make(tmdb.Movies, len(lis))
+
+	wg := sync.WaitGroup{}
+	index := -1
+	for _, i := range lis {
+		if i.ID == 0 {
+			continue
+		}
+
+		wg.Add(1)
+		index++
+
+		go func(id, idx int) {
+			defer wg.Done()
+			m := tmdb.GetMovie(id, config.Get().Language)
+			if m != nil {
+				tmdbMovies[idx] = m
+			}
+		}(i.ID, index)
+	}
+	wg.Wait()
+
+	for i := len(tmdbMovies) - 1; i >= 0; i-- {
+		if tmdbMovies[i] == nil {
+			tmdbMovies = append(tmdbMovies[:i], tmdbMovies[i+1:]...)
+		}
+	}
+
+	renderMovies(ctx, tmdbMovies, -1, len(tmdbMovies), "")
 }
 
 // TopTraktLists ...
@@ -340,7 +383,7 @@ func renderMovies(ctx *gin.Context, movies tmdb.Movies, page int, total int, que
 			libraryActions := [][]string{
 				{contextLabel, fmt.Sprintf("PlayMedia(%s)", contextURL)},
 			}
-			if uid.IsDuplicateMovie(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.MovieType) {
+			if uid.IsDuplicateMovie(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.MovieType) || library.IsInLibrary(movie.ID, library.MovieType) {
 				libraryActions = append(libraryActions, []string{"LOCALIZE[30283]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/add/%d?force=true", movie.ID))})
 				libraryActions = append(libraryActions, []string{"LOCALIZE[30253]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/remove/%d", movie.ID))})
 			} else {

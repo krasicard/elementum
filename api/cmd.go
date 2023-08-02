@@ -146,8 +146,8 @@ func SetViewMode(ctx *gin.Context) {
 	ctx.String(200, "")
 }
 
-// ClearDatabaseMovies ...
-func ClearDatabaseMovies(ctx *gin.Context) {
+// ClearDatabaseDeletedMovies ...
+func ClearDatabaseDeletedMovies(ctx *gin.Context) {
 	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	log.Debug("Removing deleted movies from database")
@@ -160,13 +160,41 @@ func ClearDatabaseMovies(ctx *gin.Context) {
 	ctx.String(200, "")
 }
 
-// ClearDatabaseShows ...
-func ClearDatabaseShows(ctx *gin.Context) {
+// ClearDatabaseMovies ...
+func ClearDatabaseMovies(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
+
+	log.Debug("Removing movies from database")
+
+	query := database.GetStormDB().Select(q.Eq("MediaType", library.MovieType))
+	_ = query.Delete(&database.LibraryItem{})
+
+	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
+
+	ctx.String(200, "")
+}
+
+// ClearDatabaseDeletedShows ...
+func ClearDatabaseDeletedShows(ctx *gin.Context) {
 	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
 
 	log.Debug("Removing deleted shows from database")
 
 	query := database.GetStormDB().Select(q.Eq("MediaType", library.ShowType), q.Eq("State", library.StateDeleted))
+	_ = query.Delete(&database.LibraryItem{})
+
+	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())
+
+	ctx.String(200, "")
+}
+
+// ClearDatabaseShows ...
+func ClearDatabaseShows(ctx *gin.Context) {
+	xbmcHost, _ := xbmc.GetXBMCHostWithContext(ctx)
+
+	log.Debug("Removing shows from database")
+
+	query := database.GetStormDB().Select(q.Eq("MediaType", library.ShowType))
 	_ = query.Delete(&database.LibraryItem{})
 
 	xbmcHost.Notify("Elementum", "LOCALIZE[30472]", config.AddonIcon())

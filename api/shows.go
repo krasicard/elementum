@@ -9,6 +9,8 @@ import (
 
 	"github.com/anacrolix/missinggo/perf"
 	"github.com/anacrolix/sync"
+	"github.com/asdine/storm"
+	"github.com/asdine/storm/q"
 	"github.com/gin-gonic/gin"
 
 	"github.com/elgatito/elementum/bittorrent"
@@ -58,6 +60,7 @@ func TVIndex(ctx *gin.Context) {
 		{Label: "Trakt > LOCALIZE[30361]", Path: URLForXBMC("/shows/trakt/history"), Thumbnail: config.AddonResource("img", "trakt.png"), TraktAuth: true},
 
 		{Label: "LOCALIZE[30517]", Path: URLForXBMC("/shows/library"), Thumbnail: config.AddonResource("img", "genre_tv.png")},
+		{Label: "LOCALIZE[30687]", Path: URLForXBMC("/shows/elementum_library"), Thumbnail: config.AddonResource("img", "genre_tv.png")},
 	}
 	for _, item := range items {
 		item.ContextMenu = append([][]string{
@@ -181,6 +184,46 @@ func TVLibrary(ctx *gin.Context) {
 	renderShows(ctx, tmdbShows, page, shows.Limits.Total, "")
 }
 
+// TVElementumLibrary ...
+func TVElementumLibrary(ctx *gin.Context) {
+	defer perf.ScopeTimer()()
+
+	var lis []database.LibraryItem
+	if err := database.GetStormDB().Select(q.Eq("MediaType", library.ShowType), q.Eq("State", library.StateActive), q.Not(q.Eq("ShowID", "0"))).Find(&lis); err != nil && err != storm.ErrNotFound {
+		log.Infof("Could not get list of library items: %s", err)
+	}
+
+	tmdbShows := make(tmdb.Shows, len(lis))
+
+	wg := sync.WaitGroup{}
+	index := -1
+	for _, i := range lis {
+		if i.ShowID == 0 {
+			continue
+		}
+
+		wg.Add(1)
+		index++
+
+		go func(id, idx int) {
+			defer wg.Done()
+			s := tmdb.GetShow(id, config.Get().Language)
+			if s != nil {
+				tmdbShows[idx] = s
+			}
+		}(i.ID, index)
+	}
+	wg.Wait()
+
+	for i := len(tmdbShows) - 1; i >= 0; i-- {
+		if tmdbShows[i] == nil {
+			tmdbShows = append(tmdbShows[:i], tmdbShows[i+1:]...)
+		}
+	}
+
+	renderShows(ctx, tmdbShows, -1, len(tmdbShows), "")
+}
+
 // TVTraktLists ...
 func TVTraktLists(ctx *gin.Context) {
 	defer perf.ScopeTimer()()
@@ -265,7 +308,7 @@ func renderShows(ctx *gin.Context, shows tmdb.Shows, page int, total int, query 
 
 			tmdbID := strconv.Itoa(show.ID)
 			libraryActions := [][]string{}
-			if uid.IsDuplicateShow(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.ShowType) {
+			if uid.IsDuplicateShow(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.ShowType) || library.IsInLibrary(show.ID, library.ShowType) {
 				libraryActions = append(libraryActions, []string{"LOCALIZE[30283]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/add/%d?force=true", show.ID))})
 				libraryActions = append(libraryActions, []string{"LOCALIZE[30253]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/remove/%d", show.ID))})
 			} else {

@@ -142,6 +142,7 @@ func Routes(s *bittorrent.Service, shutdown func(code int)) *gin.Engine {
 		movies.GET("/languages", MovieLanguages)
 		movies.GET("/countries", MovieCountries)
 		movies.GET("/library", MovieLibrary)
+		movies.GET("/elementum_library", MovieElementumLibrary)
 
 		trakt := movies.Group("/trakt")
 		{
@@ -219,6 +220,7 @@ func Routes(s *bittorrent.Service, shutdown func(code int)) *gin.Engine {
 		shows.GET("/languages", TVLanguages)
 		shows.GET("/countries", TVCountries)
 		shows.GET("/library", TVLibrary)
+		shows.GET("/elementum_library", TVElementumLibrary)
 
 		trakt := shows.Group("/trakt")
 		{
@@ -404,6 +406,8 @@ func Routes(s *bittorrent.Service, shutdown func(code int)) *gin.Engine {
 		{
 			database.GET("/clear_movies", ClearDatabaseMovies)
 			database.GET("/clear_shows", ClearDatabaseShows)
+			database.GET("/clear_deleted_movies", ClearDatabaseDeletedMovies)
+			database.GET("/clear_deleted_shows", ClearDatabaseDeletedShows)
 			database.GET("/clear_torrent_history", ClearDatabaseTorrentHistory)
 			database.GET("/clear_search_history", ClearDatabaseSearchHistory)
 			database.GET("/clear_database", ClearDatabase)

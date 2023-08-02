@@ -500,7 +500,7 @@ func renderTraktMovies(ctx *gin.Context, movies []*trakt.Movies, total int, page
 			libraryActions := [][]string{
 				{contextLabel, fmt.Sprintf("PlayMedia(%s)", contextURL)},
 			}
-			if uid.IsDuplicateMovie(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.MovieType) {
+			if uid.IsDuplicateMovie(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.MovieType) || library.IsInLibrary(movieListing.Movie.IDs.TMDB, library.MovieType) {
 				libraryActions = append(libraryActions, []string{"LOCALIZE[30283]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/add/%d?force=true", movieListing.Movie.IDs.TMDB))})
 				libraryActions = append(libraryActions, []string{"LOCALIZE[30253]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/movie/remove/%d", movieListing.Movie.IDs.TMDB))})
 			} else {
@@ -808,7 +808,7 @@ func renderTraktShows(ctx *gin.Context, shows []*trakt.Shows, total int, page in
 		item.Path = URLForXBMC("/show/%d/seasons", showListing.Show.IDs.TMDB)
 
 		libraryActions := [][]string{}
-		if uid.IsDuplicateShow(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.ShowType) {
+		if uid.IsDuplicateShow(tmdbID) || uid.IsAddedToLibrary(tmdbID, library.ShowType) || library.IsInLibrary(showListing.Show.IDs.TMDB, library.ShowType) {
 			libraryActions = append(libraryActions, []string{"LOCALIZE[30283]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/add/%d?force=true", showListing.Show.IDs.TMDB))})
 			libraryActions = append(libraryActions, []string{"LOCALIZE[30253]", fmt.Sprintf("RunPlugin(%s)", URLForXBMC("/library/show/remove/%d", showListing.Show.IDs.TMDB))})
 		} else {
