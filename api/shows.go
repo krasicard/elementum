@@ -357,9 +357,10 @@ func renderShows(ctx *gin.Context, shows tmdb.Shows, page int, total int, query 
 			nextPath = URLForXBMC(fmt.Sprintf("%s?q=%s&page=%d", path, query, page+1))
 		}
 		next := &xbmc.ListItem{
-			Label:     "LOCALIZE[30415];;" + strconv.Itoa(page+1),
-			Path:      nextPath,
-			Thumbnail: config.AddonResource("img", "nextpage.png"),
+			Label:      "LOCALIZE[30415];;" + strconv.Itoa(page+1),
+			Path:       nextPath,
+			Thumbnail:  config.AddonResource("img", "nextpage.png"),
+			Properties: &xbmc.ListItemProperties{SpecialSort: "bottom"},
 		}
 		items[index+1] = next
 	}

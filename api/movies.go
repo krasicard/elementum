@@ -279,9 +279,10 @@ func TopTraktLists(ctx *gin.Context) {
 	if hasNextPage {
 		path := ctx.Request.URL.Path
 		nextpage := &xbmc.ListItem{
-			Label:     "LOCALIZE[30415];;" + strconv.Itoa(page+1),
-			Path:      URLForXBMC(fmt.Sprintf("%s?page=%d", path, page+1)),
-			Thumbnail: config.AddonResource("img", "nextpage.png"),
+			Label:      "LOCALIZE[30415];;" + strconv.Itoa(page+1),
+			Path:       URLForXBMC(fmt.Sprintf("%s?page=%d", path, page+1)),
+			Thumbnail:  config.AddonResource("img", "nextpage.png"),
+			Properties: &xbmc.ListItemProperties{SpecialSort: "bottom"},
 		}
 		items = append(items, nextpage)
 	}
@@ -435,9 +436,10 @@ func renderMovies(ctx *gin.Context, movies tmdb.Movies, page int, total int, que
 			nextPath = URLForXBMC(fmt.Sprintf("%s?q=%s&page=%d", path, query, page+1))
 		}
 		next := &xbmc.ListItem{
-			Label:     "LOCALIZE[30415];;" + strconv.Itoa(page+1),
-			Path:      nextPath,
-			Thumbnail: config.AddonResource("img", "nextpage.png"),
+			Label:      "LOCALIZE[30415];;" + strconv.Itoa(page+1),
+			Path:       nextPath,
+			Thumbnail:  config.AddonResource("img", "nextpage.png"),
+			Properties: &xbmc.ListItemProperties{SpecialSort: "bottom"},
 		}
 		items[index+1] = next
 	}

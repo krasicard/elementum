@@ -90,6 +90,7 @@ type ListItemProperties struct {
 	SubtitlesSync            string `json:"sync,omitempty"`
 	SubtitlesHearingImpaired string `json:"hearing_imp,omitempty"`
 	ShowTMDBId               string `json:"showtmdbid,omitempty"`
+	SpecialSort              string `json:"specialsort,omitempty"`
 }
 
 // ListItemInfo ...
