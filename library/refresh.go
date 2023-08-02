@@ -875,7 +875,7 @@ func refreshLocalMovies() {
 	begin := time.Now()
 	addon := []byte(config.Get().Info.ID)
 	files := searchStrm(moviesLibraryPath)
-	IDs := []int{}
+	IDs := map[int]bool{}
 	for _, f := range files {
 		fileContent, err := os.ReadFile(f)
 		if err != nil || len(fileContent) == 0 || !bytes.Contains(fileContent, addon) {
@@ -884,7 +884,7 @@ func refreshLocalMovies() {
 
 		if matches := movieRegexp.FindSubmatch(fileContent); len(matches) > 1 {
 			id, _ := strconv.Atoi(string(matches[1]))
-			IDs = append(IDs, id)
+			IDs[id] = true
 		}
 	}
 
@@ -892,6 +892,9 @@ func refreshLocalMovies() {
 		return
 	}
 
+	for id := range IDs {
+		updateDBItem(id, StateActive, MovieType, 0)
+	}
 	log.Debugf("Finished updating %d local movies in %s", len(IDs), time.Since(begin))
 }
 
