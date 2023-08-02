@@ -181,7 +181,7 @@ func TVLibrary(ctx *gin.Context) {
 	}
 	wg.Wait()
 
-	renderShows(ctx, tmdbShows, page, shows.Limits.Total, "")
+	renderShows(ctx, tmdbShows, page, shows.Limits.Total, "", false)
 }
 
 // TVElementumLibrary ...
@@ -221,7 +221,7 @@ func TVElementumLibrary(ctx *gin.Context) {
 		}
 	}
 
-	renderShows(ctx, tmdbShows, -1, len(tmdbShows), "")
+	renderShows(ctx, tmdbShows, -1, len(tmdbShows), "", true)
 }
 
 // TVTraktLists ...
@@ -273,7 +273,7 @@ func CalendarShows(ctx *gin.Context) {
 	ctx.JSON(200, xbmc.NewView("menus_tvshows", filterListItems(items)))
 }
 
-func renderShows(ctx *gin.Context, shows tmdb.Shows, page int, total int, query string) {
+func renderShows(ctx *gin.Context, shows tmdb.Shows, page int, total int, query string, nameSort bool) {
 	hasNextPage := 0
 	if page > 0 {
 		if page*config.Get().ResultsPerPage < total {
@@ -363,6 +363,13 @@ func renderShows(ctx *gin.Context, shows tmdb.Shows, page int, total int, query 
 		}
 		items[index+1] = next
 	}
+
+	if nameSort {
+		sort.Slice(items, func(i int, j int) bool {
+			return items[i].Label < items[j].Label
+		})
+	}
+
 	ctx.JSON(200, xbmc.NewView("tvshows", filterListItems(items)))
 }
 
@@ -383,7 +390,7 @@ func PopularShows(ctx *gin.Context) {
 	defer func() {
 		go tmdb.PopularShows(p, config.Get().Language, page+1)
 	}()
-	renderShows(ctx, shows, page, total, "")
+	renderShows(ctx, shows, page, total, "", false)
 }
 
 // RecentShows ...
@@ -403,7 +410,7 @@ func RecentShows(ctx *gin.Context) {
 	defer func() {
 		go tmdb.RecentShows(p, config.Get().Language, page+1)
 	}()
-	renderShows(ctx, shows, page, total, "")
+	renderShows(ctx, shows, page, total, "", false)
 }
 
 // RecentEpisodes ...
@@ -423,7 +430,7 @@ func RecentEpisodes(ctx *gin.Context) {
 	defer func() {
 		go tmdb.RecentEpisodes(p, config.Get().Language, page+1)
 	}()
-	renderShows(ctx, shows, page, total, "")
+	renderShows(ctx, shows, page, total, "", false)
 }
 
 // TopRatedShows ...
@@ -435,7 +442,7 @@ func TopRatedShows(ctx *gin.Context) {
 	defer func() {
 		go tmdb.TopRatedShows("", config.Get().Language, page+1)
 	}()
-	renderShows(ctx, shows, page, total, "")
+	renderShows(ctx, shows, page, total, "", false)
 }
 
 // TVMostVoted ...
@@ -447,7 +454,7 @@ func TVMostVoted(ctx *gin.Context) {
 	defer func() {
 		go tmdb.MostVotedShows("", config.Get().Language, page+1)
 	}()
-	renderShows(ctx, shows, page, total, "")
+	renderShows(ctx, shows, page, total, "", false)
 }
 
 // SearchShows ...
@@ -471,7 +478,7 @@ func SearchShows(ctx *gin.Context) {
 	defer func() {
 		go tmdb.SearchShows(query, config.Get().Language, page+1)
 	}()
-	renderShows(ctx, shows, page, total, query)
+	renderShows(ctx, shows, page, total, query, false)
 }
 
 // ShowSeasons ...
