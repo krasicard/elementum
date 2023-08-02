@@ -12,9 +12,6 @@ echo "Building with tag=$TAG"
 
 sudo -S true
 
-# Special dependency for Windows platform
-GOOS=windows go get -u github.com/yusufpapurcu/wmi
-
 # Compile all platforms
 make all
 

@@ -17,8 +17,8 @@ import (
 
 	"github.com/anacrolix/sync"
 	"github.com/dustin/go-humanize"
+	"github.com/jaypipes/ghw"
 	"github.com/op/go-logging"
-	"github.com/pbnjay/memory"
 	"github.com/sanity-io/litter"
 	"github.com/spf13/cast"
 	"gopkg.in/yaml.v3"
@@ -754,20 +754,27 @@ func Reload() (ret *Configuration, err error) {
 			if newConfig.AutoMemorySizeStrategy == 0 {
 				newConfig.MemorySize = defaultAutoMemorySize
 			} else {
-				pct := uint64(8)
-				if newConfig.AutoMemorySizeStrategy == 2 {
-					pct = 15
-				}
+				if memoryInfo, err := ghw.Memory(); err == nil && memoryInfo != nil {
+					totalMemory := uint64(memoryInfo.TotalPhysicalBytes)
 
-				mem := memory.TotalMemory() / 100 * pct
-				if mem > 0 {
-					newConfig.MemorySize = int(mem)
-				}
-				log.Debugf("Total system memory: %s\n", humanize.Bytes(memory.TotalMemory()))
-				log.Debugf("Automatically selected memory size: %s\n", humanize.Bytes(uint64(newConfig.MemorySize)))
-				if newConfig.MemorySize > maxMemorySize {
-					log.Debugf("Selected memory size (%s) is bigger than maximum for auto-select (%s), so we decrease memory size to maximum allowed: %s", humanize.Bytes(uint64(mem)), humanize.Bytes(uint64(maxMemorySize)), humanize.Bytes(uint64(maxMemorySize)))
-					newConfig.MemorySize = maxMemorySize
+					pct := uint64(8)
+					if newConfig.AutoMemorySizeStrategy == 2 {
+						pct = 15
+					}
+
+					mem := totalMemory / 100 * pct
+					if mem > 0 {
+						newConfig.MemorySize = int(mem)
+					}
+					log.Debugf("Total system memory: %s\n", humanize.Bytes(totalMemory))
+					log.Debugf("Automatically selected memory size: %s\n", humanize.Bytes(uint64(newConfig.MemorySize)))
+					if newConfig.MemorySize > maxMemorySize {
+						log.Debugf("Selected memory size (%s) is bigger than maximum for auto-select (%s), so we decrease memory size to maximum allowed: %s", humanize.Bytes(uint64(mem)), humanize.Bytes(uint64(maxMemorySize)), humanize.Bytes(uint64(maxMemorySize)))
+						newConfig.MemorySize = maxMemorySize
+					}
+				} else {
+					log.Warningf("Could not get system memory information: %s", err)
+					newConfig.MemorySize = defaultAutoMemorySize
 				}
 			}
 		}
