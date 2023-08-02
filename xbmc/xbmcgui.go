@@ -7,19 +7,19 @@ import (
 // DialogProgress ...
 type DialogProgress struct {
 	Host *XBMCHost
-	hWnd int64
+	hWnd string
 }
 
 // DialogProgressBG ...
 type DialogProgressBG struct {
 	Host *XBMCHost
-	hWnd int64
+	hWnd string
 }
 
 // OverlayStatus ...
 type OverlayStatus struct {
 	Host *XBMCHost
-	hWnd int64
+	hWnd string
 }
 
 // DialogInsert ...
@@ -31,9 +31,9 @@ func (h *XBMCHost) DialogInsert() map[string]string {
 
 // NewDialogProgress ...
 func (h *XBMCHost) NewDialogProgress(title, line1, line2, line3 string) *DialogProgress {
-	retVal := int64(-1)
+	retVal := ""
 	h.executeJSONRPCEx("DialogProgress_Create", &retVal, Args{title, line1, line2, line3})
-	if retVal < 0 {
+	if len(retVal) <= 0 {
 		return nil
 	}
 	return &DialogProgress{
@@ -69,9 +69,9 @@ func (h *XBMCHost) DialogProgressBGCleanup() {
 
 // NewDialogProgressBG ...
 func (h *XBMCHost) NewDialogProgressBG(title, message string, translations ...string) *DialogProgressBG {
-	retVal := int64(-1)
+	retVal := ""
 	h.executeJSONRPCEx("DialogProgressBG_Create", &retVal, Args{title, message, translations})
-	if retVal < 0 {
+	if len(retVal) <= 0 {
 		return nil
 	}
 	return &DialogProgressBG{
@@ -101,9 +101,9 @@ func (dp *DialogProgressBG) Close() {
 
 // NewOverlayStatus ...
 func (h *XBMCHost) NewOverlayStatus() *OverlayStatus {
-	retVal := int64(-1)
+	retVal := ""
 	h.executeJSONRPCEx("OverlayStatus_Create", &retVal, Args{})
-	if retVal < 0 {
+	if len(retVal) <= 0 {
 		return nil
 	}
 	return &OverlayStatus{

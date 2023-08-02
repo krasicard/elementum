@@ -265,7 +265,9 @@ func (btp *Player) Buffer() error {
 
 	if !btp.t.IsBufferingFinished && btp.xbmcHost != nil {
 		btp.dialogProgress = btp.xbmcHost.NewDialogProgress("Elementum", "", "", "")
-		defer btp.dialogProgress.Close()
+		if btp.dialogProgress != nil {
+			defer btp.dialogProgress.Close()
+		}
 	}
 
 	if btp.xbmcHost != nil {

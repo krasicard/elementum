@@ -316,7 +316,7 @@ func processLinks(xbmcHost *xbmc.XBMCHost, torrentsChan chan *bittorrent.Torrent
 		return torrents
 	}
 
-	if !isSilent {
+	if !isSilent && dialogProgressBG != nil {
 		dialogProgressBG.Close()
 		dialogProgressBG = nil
 	}
