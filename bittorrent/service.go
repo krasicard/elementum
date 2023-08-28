@@ -37,6 +37,7 @@ import (
 	"github.com/elgatito/elementum/trakt"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/util/event"
+	"github.com/elgatito/elementum/util/ident"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -205,7 +206,7 @@ func (s *Service) configure() {
 
 	log.Info("Applying session settings...")
 
-	s.PeerID, s.UserAgent = util.GetUserAndPeer()
+	s.PeerID, s.UserAgent = ident.GetUserAndPeer()
 	log.Infof("UserAgent: %s, PeerID: %s", s.UserAgent, s.PeerID)
 	settings.SetStr("user_agent", s.UserAgent)
 
@@ -1432,7 +1433,7 @@ func (s *Service) onDownloadProgress() {
 					// Check paths are valid and writable, and only once
 					if _, exists := pathChecked[item.Type]; !exists {
 						if item.Type == "movie" {
-							if err := config.IsWritablePath(s.config.CompletedMoviesPath); err != nil {
+							if err := util.IsWritablePath(s.config.CompletedMoviesPath); err != nil {
 								warnedMissing[infoHash] = true
 								pathChecked[item.Type] = true
 								log.Error(err)
@@ -1440,7 +1441,7 @@ func (s *Service) onDownloadProgress() {
 							}
 							pathChecked[item.Type] = true
 						} else {
-							if err := config.IsWritablePath(s.config.CompletedShowsPath); err != nil {
+							if err := util.IsWritablePath(s.config.CompletedShowsPath); err != nil {
 								warnedMissing[infoHash] = true
 								pathChecked[item.Type] = true
 								log.Error(err)

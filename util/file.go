@@ -1,7 +1,10 @@
 package util
 
 import (
+	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -163,4 +166,42 @@ func FileWithoutExtension(name string) string {
 		return name[:pos]
 	}
 	return name
+}
+
+// PathExists returns whether path exists in OS
+func PathExists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
+}
+
+// IsWritablePath ...
+func IsWritablePath(path string) error {
+	if path == "." {
+		return errors.New("Path not set")
+	}
+	// TODO: Review this after test evidences come
+	if IsNetworkPath(path) {
+		return fmt.Errorf("Network paths are not supported, change %s to a locally mounted path by the OS", path)
+	}
+	if p, err := os.Stat(path); err != nil || !p.IsDir() {
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("%s is not a valid directory", path)
+	}
+	writableFile := filepath.Join(path, ".writable")
+	writable, err := os.Create(writableFile)
+	if err != nil {
+		return err
+	}
+	writable.Close()
+	os.Remove(writableFile)
+	return nil
+}
+
+func IsNetworkPath(path string) bool {
+	return strings.HasPrefix(path, "nfs") || strings.HasPrefix(path, "smb")
 }

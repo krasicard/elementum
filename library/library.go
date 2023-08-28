@@ -25,6 +25,7 @@ import (
 	"github.com/elgatito/elementum/trakt"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/util/event"
+	"github.com/elgatito/elementum/util/ip"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -983,7 +984,7 @@ func ClearTmdbCache(xbmcHost *xbmc.XBMCHost) {
 // URLForHTTP ...
 func URLForHTTP(pattern string, args ...interface{}) string {
 	u, _ := url.Parse(fmt.Sprintf(pattern, args...))
-	return util.GetHTTPHost() + u.String()
+	return ip.GetHTTPHost() + u.String()
 }
 
 // URLForXBMC ...
@@ -1389,7 +1390,7 @@ func getMoviePathsByTMDB(id int) (ret map[string]bool) {
 	ret = map[string]bool{}
 
 	if m, err := uid.GetMovieByTMDB(id); err == nil {
-		if m != nil && m.File != "" && strings.HasSuffix(m.File, ".strm") {
+		if m != nil && m.File != "" && !util.IsNetworkPath(m.File) && strings.HasSuffix(m.File, ".strm") {
 			ret[filepath.Dir(m.File)] = true
 		}
 	}
@@ -1402,7 +1403,7 @@ func getShowPathsByTMDB(id int) (ret map[string]bool) {
 
 	if s, err := uid.FindShowByTMDB(id); err == nil {
 		for _, e := range s.Episodes {
-			if e != nil && e.File != "" && strings.HasSuffix(e.File, ".strm") {
+			if e != nil && e.File != "" && !util.IsNetworkPath(e.File) && strings.HasSuffix(e.File, ".strm") {
 				ret[filepath.Dir(e.File)] = true
 			}
 		}

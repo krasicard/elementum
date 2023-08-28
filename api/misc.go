@@ -18,7 +18,8 @@ import (
 	"github.com/elgatito/elementum/library"
 	"github.com/elgatito/elementum/proxy"
 	"github.com/elgatito/elementum/tmdb"
-	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ident"
+	iputil "github.com/elgatito/elementum/util/ip"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -98,7 +99,7 @@ func Status(ctx *gin.Context) {
 `
 
 	ip := "127.0.0.1"
-	if localIP, err := util.LocalIP(); err == nil {
+	if localIP, err := iputil.LocalIP(); err == nil {
 		ip = localIP.String()
 	}
 
@@ -117,7 +118,7 @@ func Status(ctx *gin.Context) {
 	deletedShowsCount, _ := database.GetStormDB().Select(q.Eq("MediaType", library.ShowType), q.Eq("State", library.StateDeleted)).Count(&database.LibraryItem{})
 
 	text = fmt.Sprintf(text,
-		util.GetVersion(),
+		ident.GetVersion(),
 		ip,
 		port,
 		proxy.ProxyPort,

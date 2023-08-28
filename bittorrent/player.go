@@ -32,6 +32,7 @@ import (
 	"github.com/elgatito/elementum/upnext"
 	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/util/event"
+	"github.com/elgatito/elementum/util/ip"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -1139,7 +1140,7 @@ func (btp *Player) InitAudio() {
 
 		for _, f := range btp.t.files {
 			if strings.Contains(f.Path, currentPath) && util.HasAudioExt(f.Path) {
-				collected = append(collected, util.GetHTTPHost()+"/files/"+f.Path)
+				collected = append(collected, ip.GetHTTPHost()+"/files/"+f.Path)
 			}
 		}
 
@@ -1216,7 +1217,7 @@ func (btp *Player) SetSubtitles() {
 
 		for _, f := range btp.t.files {
 			if strings.Contains(f.Path, currentPath) && util.HasSubtitlesExt(f.Path) {
-				collected = append(collected, util.GetHTTPHost()+"/files/"+util.EncodeFileURL(f.Path))
+				collected = append(collected, ip.GetHTTPHost()+"/files/"+util.EncodeFileURL(f.Path))
 			}
 		}
 

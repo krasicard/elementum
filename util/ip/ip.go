@@ -1,4 +1,4 @@
-package util
+package ip
 
 import (
 	"errors"
@@ -12,7 +12,10 @@ import (
 	"github.com/elgatito/elementum/config"
 
 	"github.com/gin-gonic/gin"
+	"github.com/op/go-logging"
 )
+
+var log = logging.MustGetLogger("ip")
 
 // LocalIP ...
 func LocalIP() (net.IP, error) {

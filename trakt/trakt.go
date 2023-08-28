@@ -15,6 +15,7 @@ import (
 	"github.com/elgatito/elementum/cache"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ident"
 	"github.com/elgatito/elementum/xbmc"
 	"github.com/jmcvetta/napping"
 	"github.com/op/go-logging"
@@ -1341,7 +1342,7 @@ func Scrobble(action string, contentType string, tmdbID int, watched float64, ru
 
 	endPoint := fmt.Sprintf("scrobble/%s", action)
 	payload := fmt.Sprintf(`{"%s": {"ids": {"tmdb": %d}}, "progress": %f, "app_version": "%s"}`,
-		contentType, tmdbID, progress, util.GetVersion())
+		contentType, tmdbID, progress, ident.GetVersion())
 	resp, err := Post(endPoint, bytes.NewBufferString(payload))
 	if err != nil {
 		log.Error(err.Error())

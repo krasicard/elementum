@@ -9,8 +9,9 @@ import (
 
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/osdb"
-	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ip"
 	"github.com/elgatito/elementum/xbmc"
+
 	"github.com/gin-gonic/gin"
 	"github.com/op/go-logging"
 )
@@ -27,8 +28,8 @@ func SubtitlesIndex(s *bittorrent.Service) gin.HandlerFunc {
 		playingFile := xbmcHost.PlayerGetPlayingFile()
 
 		// Check if we are reading a file from Elementum
-		if strings.HasPrefix(playingFile, util.GetContextHTTPHost(ctx)) {
-			playingFile = strings.Replace(playingFile, util.GetContextHTTPHost(ctx)+"/files", config.Get().DownloadPath, 1)
+		if strings.HasPrefix(playingFile, ip.GetContextHTTPHost(ctx)) {
+			playingFile = strings.Replace(playingFile, ip.GetContextHTTPHost(ctx)+"/files", config.Get().DownloadPath, 1)
 			// not QueryUnescape in order to treat "+" as "+" in file name on FS
 			playingFile, _ = url.PathUnescape(playingFile)
 		}

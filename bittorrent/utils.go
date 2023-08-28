@@ -5,13 +5,13 @@ import (
 	"net/url"
 
 	"github.com/elgatito/elementum/config"
-	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ip"
 )
 
 // URLForHTTP ...
 func URLForHTTP(pattern string, args ...interface{}) string {
 	u, _ := url.Parse(fmt.Sprintf(pattern, args...))
-	return util.GetHTTPHost() + u.String()
+	return ip.GetHTTPHost() + u.String()
 }
 
 // URLForXBMC ...

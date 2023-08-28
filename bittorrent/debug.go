@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/elgatito/elementum/config"
-	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ip"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -96,7 +96,7 @@ func writeHeader(w http.ResponseWriter, title string) {
 func writeResponse(w http.ResponseWriter, url string) {
 	w.Write([]byte("Response for url: " + url + "\n\n"))
 
-	resp, err := http.Get(fmt.Sprintf("http://%s:%d%s", util.GetLocalHost(), config.Args.LocalPort, url))
+	resp, err := http.Get(fmt.Sprintf("http://%s:%d%s", ip.GetLocalHost(), config.Args.LocalPort, url))
 	if err != nil {
 		return
 	}

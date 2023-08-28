@@ -15,6 +15,7 @@ import (
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/tmdb"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ip"
 	"github.com/elgatito/elementum/xbmc"
 	"github.com/gin-gonic/gin"
 	"github.com/op/go-logging"
@@ -146,8 +147,8 @@ func (as *AddonSearcher) GetQuerySearchObject(query string) *QuerySearchObject {
 	}
 
 	sObject.ProxyURL = config.Get().ProxyURL
-	sObject.ElementumURL = util.ElementumURL()
-	sObject.InternalProxyURL = util.InternalProxyURL()
+	sObject.ElementumURL = ip.ElementumURL()
+	sObject.InternalProxyURL = ip.InternalProxyURL()
 
 	return sObject
 }
@@ -247,8 +248,8 @@ func (as *AddonSearcher) GetMovieSearchObject(movie *tmdb.Movie) *MovieSearchObj
 	}
 
 	sObject.ProxyURL = config.Get().ProxyURL
-	sObject.ElementumURL = util.ElementumURL()
-	sObject.InternalProxyURL = util.InternalProxyURL()
+	sObject.ElementumURL = ip.ElementumURL()
+	sObject.InternalProxyURL = ip.InternalProxyURL()
 
 	return sObject
 }
@@ -299,8 +300,8 @@ func (as *AddonSearcher) GetSeasonSearchObject(show *tmdb.Show, season *tmdb.Sea
 	}
 
 	sObject.ProxyURL = config.Get().ProxyURL
-	sObject.ElementumURL = util.ElementumURL()
-	sObject.InternalProxyURL = util.InternalProxyURL()
+	sObject.ElementumURL = ip.ElementumURL()
+	sObject.InternalProxyURL = ip.InternalProxyURL()
 
 	return sObject
 }
@@ -382,8 +383,8 @@ func (as *AddonSearcher) GetEpisodeSearchObject(show *tmdb.Show, episode *tmdb.E
 	}
 
 	sObject.ProxyURL = config.Get().ProxyURL
-	sObject.ElementumURL = util.ElementumURL()
-	sObject.InternalProxyURL = util.InternalProxyURL()
+	sObject.ElementumURL = ip.ElementumURL()
+	sObject.InternalProxyURL = ip.InternalProxyURL()
 
 	return sObject
 }

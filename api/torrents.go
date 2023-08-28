@@ -19,7 +19,7 @@ import (
 	"github.com/elgatito/elementum/bittorrent"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/database"
-	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ident"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -669,7 +669,7 @@ func Versions(s *bittorrent.Service) gin.HandlerFunc {
 			UserAgent string `json:"user-agent"`
 		}
 		versions := Versions{
-			Version:   util.GetVersion(),
+			Version:   ident.GetVersion(),
 			UserAgent: s.UserAgent,
 		}
 		ctx.JSON(200, versions)

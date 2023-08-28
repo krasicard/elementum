@@ -8,6 +8,7 @@ import (
 	"github.com/elgatito/elementum/bittorrent"
 	"github.com/elgatito/elementum/config"
 	"github.com/elgatito/elementum/providers"
+	"github.com/elgatito/elementum/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/op/go-logging"
@@ -90,7 +91,7 @@ func Routes(s *bittorrent.Service, shutdown func(code int)) *gin.Engine {
 	}
 
 	// Make sure to load static files if they exist locally
-	if config.PathExists(filepath.Join(config.Get().Info.Path, "resources", "web")) {
+	if util.PathExists(filepath.Join(config.Get().Info.Path, "resources", "web")) {
 		r.LoadHTMLGlob(filepath.Join(config.Get().Info.Path, "resources", "web", "*.html"))
 		web := r.Group("/web")
 		{

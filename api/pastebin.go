@@ -11,7 +11,7 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	"github.com/elgatito/elementum/config"
-	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ip"
 	"github.com/elgatito/elementum/xbmc"
 	"github.com/gin-gonic/gin"
 )
@@ -93,7 +93,7 @@ func Pastebin(ctx *gin.Context) {
 		}
 	}()
 
-	rurl := fmt.Sprintf("http://%s:%d%s%s", util.GetLocalHost(), config.Args.LocalPort, "/debug/", ctx.Params.ByName("type"))
+	rurl := fmt.Sprintf("http://%s:%d%s%s", ip.GetLocalHost(), config.Args.LocalPort, "/debug/", ctx.Params.ByName("type"))
 
 	log.Infof("Requesting %s before uploading to pastebin", rurl)
 	resp, err := http.Get(rurl)

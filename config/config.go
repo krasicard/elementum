@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/elgatito/elementum/exit"
+	"github.com/elgatito/elementum/util"
 	"github.com/elgatito/elementum/xbmc"
 
 	"github.com/anacrolix/sync"
@@ -430,13 +430,13 @@ func Reload() (ret *Configuration, err error) {
 		}
 	}
 
-	if !PathExists(info.Profile) {
+	if !util.PathExists(info.Profile) {
 		log.Infof("Profile path does not exist, creating it at: %s", info.Profile)
 		if err := os.MkdirAll(info.Profile, 0777); err != nil {
 			log.Errorf("Could not create profile directory: %#v", err)
 		}
 	}
-	if !PathExists(filepath.Join(info.Profile, "libtorrent.config")) {
+	if !util.PathExists(filepath.Join(info.Profile, "libtorrent.config")) {
 		filePath := filepath.Join(info.Profile, "libtorrent.config")
 		log.Infof("Creating libtorrent.config to further usage at: %s", filePath)
 		if _, err := os.Create(filePath); err == nil {
@@ -468,7 +468,7 @@ func Reload() (ret *Configuration, err error) {
 			settingsWarning = "LOCALIZE[30113]"
 			exit.Panic(err)
 			return nil, err
-		} else if err := IsWritablePath(downloadPath); err != nil {
+		} else if err := util.IsWritablePath(downloadPath); err != nil {
 			err = fmt.Errorf("Cannot write to download location '%s': %#v", downloadPath, err)
 			settingsWarning = err.Error()
 			exit.Panic(err)
@@ -490,7 +490,7 @@ func Reload() (ret *Configuration, err error) {
 			return nil, err
 		}
 	}
-	if err := IsWritablePath(libraryPath); err != nil {
+	if err := util.IsWritablePath(libraryPath); err != nil {
 		err = fmt.Errorf("Cannot write to library location '%s': %#v", libraryPath, err)
 		settingsWarning = err.Error()
 		exit.Panic(err)
@@ -508,7 +508,7 @@ func Reload() (ret *Configuration, err error) {
 			return nil, err
 		}
 	}
-	if err := IsWritablePath(torrentsPath); err != nil {
+	if err := util.IsWritablePath(torrentsPath); err != nil {
 		err = fmt.Errorf("Cannot write to location '%s': %#v", torrentsPath, err)
 		settingsWarning = err.Error()
 		exit.Panic(err)
@@ -867,7 +867,7 @@ func TranslatePath(xbmcHost *xbmc.XBMCHost, path string) string {
 		kodiDir := xbmcHost.TranslatePath("special://temp")
 		pathDir := filepath.Join(kodiDir, dir)
 
-		if PathExists(pathDir) {
+		if util.PathExists(pathDir) {
 			return pathDir
 		}
 		if err := os.MkdirAll(pathDir, 0777); err != nil {
@@ -886,40 +886,6 @@ func TranslatePath(xbmcHost *xbmc.XBMCHost, path string) string {
 	// 	return path
 	// }
 	return filepath.Dir(xbmcHost.TranslatePath(path))
-}
-
-// PathExists returns whether path exists in OS
-func PathExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
-	}
-
-	return true
-}
-
-// IsWritablePath ...
-func IsWritablePath(path string) error {
-	if path == "." {
-		return errors.New("Path not set")
-	}
-	// TODO: Review this after test evidences come
-	if strings.HasPrefix(path, "nfs") || strings.HasPrefix(path, "smb") {
-		return fmt.Errorf("Network paths are not supported, change %s to a locally mounted path by the OS", path)
-	}
-	if p, err := os.Stat(path); err != nil || !p.IsDir() {
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("%s is not a valid directory", path)
-	}
-	writableFile := filepath.Join(path, ".writable")
-	writable, err := os.Create(writableFile)
-	if err != nil {
-		return err
-	}
-	writable.Close()
-	os.Remove(writableFile)
-	return nil
 }
 
 func findExistingPath(paths []string, addon string) string {

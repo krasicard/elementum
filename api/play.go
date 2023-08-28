@@ -12,14 +12,14 @@ import (
 
 	"github.com/elgatito/elementum/bittorrent"
 	"github.com/elgatito/elementum/database"
-	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ip"
 	"github.com/elgatito/elementum/xbmc"
 )
 
 // Download ...
 func Download(s *bittorrent.Service) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		rURL, _ := url.Parse(fmt.Sprintf("%s%s", util.GetContextHTTPHost(ctx), strings.Replace(ctx.Request.RequestURI, "/download", "/play", 1)+"&background=true"))
+		rURL, _ := url.Parse(fmt.Sprintf("%s%s", ip.GetContextHTTPHost(ctx), strings.Replace(ctx.Request.RequestURI, "/download", "/play", 1)+"&background=true"))
 		ctx.Redirect(302, rURL.String())
 	}
 }
@@ -121,7 +121,7 @@ func Play(s *bittorrent.Service) gin.HandlerFunc {
 			return
 		}
 
-		rURL, _ := url.Parse(fmt.Sprintf("%s/files/%s", util.GetContextHTTPHost(ctx), player.PlayURL()))
+		rURL, _ := url.Parse(fmt.Sprintf("%s/files/%s", ip.GetContextHTTPHost(ctx), player.PlayURL()))
 		ctx.Redirect(302, rURL.String())
 	}
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/elgatito/elementum/scrape"
 	"github.com/elgatito/elementum/trakt"
 	"github.com/elgatito/elementum/util"
+	"github.com/elgatito/elementum/util/ident"
 	"github.com/elgatito/elementum/xbmc"
 )
 
@@ -92,7 +93,7 @@ func setupLogging() {
 	if config.Args.LogPath != "" {
 		logPath = config.Args.LogPath
 	}
-	if logPath != "" && config.IsWritablePath(filepath.Base(logPath)) == nil {
+	if logPath != "" && util.IsWritablePath(filepath.Base(logPath)) == nil {
 		backend = logging.NewLogBackend(&lumberjack.Logger{
 			Filename:   logPath,
 			MaxSize:    10, // Size in Megabytes
@@ -140,7 +141,7 @@ func main() {
 	} else {
 		log.Infof("Starting Elementum daemon")
 	}
-	log.Infof("Version: %s LibTorrent: %s Go: %s, Threads: %d", util.GetVersion(), util.GetTorrentVersion(), runtime.Version(), runtime.GOMAXPROCS(0))
+	log.Infof("Version: %s LibTorrent: %s Go: %s, Threads: %d", ident.GetVersion(), ident.GetTorrentVersion(), runtime.Version(), runtime.GOMAXPROCS(0))
 
 	// Init default XBMC connections
 	xbmc.Init()
