@@ -36,6 +36,12 @@ else ifeq ($(TARGET_ARCH), armv7)
 	GOARCH = arm
 	GOARM = 7
 	PKGDIR = -pkgdir /go/pkg/linux_armv7
+else ifeq ($(TARGET_ARCH), armv7_softfp)
+	CUSTOM_CFLAGS += -march=armv7-a -mfloat-abi=softfp -ffast-math
+	CUSTOM_LDFLAGS += -march=armv7-a -mfloat-abi=softfp -ffast-math
+	GOARCH = arm
+	GOARM = 7
+	PKGDIR = -pkgdir /go/pkg/linux_armv7
 else ifeq ($(TARGET_ARCH), arm64)
 	GOARCH = arm64
 	GOARM =
@@ -64,9 +70,10 @@ else ifeq ($(TARGET_OS), darwin)
 else ifeq ($(TARGET_OS), linux)
 	ifeq ($(IS_SHARED), no)
 		EXT = 
-		GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-L $(CROSS_ROOT)/lib/ -lm -lstdc++"
+		GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "-L $(CROSS_ROOT)/lib/ -lm -lstdc++ $(CUSTOM_LDFLAGS)"
 	else
 		EXT = .so
+		GO_LDFLAGS += -linkmode=external -extld=$(CC) -extldflags "$(CUSTOM_LDFLAGS)"
 	endif
 
 	GOOS = linux
@@ -128,6 +135,8 @@ LINUX_PLATFORMS = \
 	linux-armv6-shared \
 	linux-armv7 \
 	linux-armv7-shared \
+	linux-armv7_softfp \
+	linux-armv7_softfp-shared \
 	linux-arm64 \
 	linux-arm64-shared \
 	linux-x64 \
