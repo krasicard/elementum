@@ -1962,7 +1962,13 @@ func (t *Torrent) ChooseFile(btp *Player) (*File, int, error) {
 			items = append(items, choice.DisplayName)
 		}
 
-		choice := btp.xbmcHost.ListDialog("LOCALIZE[30560];;"+searchTitle, items...)
+		var xbmcHost *xbmc.XBMCHost
+		if btp != nil && btp.xbmcHost != nil {
+			xbmcHost = btp.xbmcHost
+		} else {
+			xbmcHost, _ = xbmc.GetLocalXBMCHost()
+		}
+		choice := xbmcHost.ListDialog("LOCALIZE[30560];;"+searchTitle, items...)
 		log.Debugf("Choice selected: %d", choice)
 		if choice >= 0 {
 			if btp == nil {
