@@ -852,6 +852,8 @@ func (s *Service) AddTorrent(xbmcHost *xbmc.XBMCHost, uri string, paused bool, d
 
 	if !t.HasMetadata() {
 		if err := t.WaitForMetadata(xbmcHost, infoHash); err != nil {
+			log.Infof("Auto removing torrent %s after not getting metadata", infoHash)
+			s.RemoveTorrent(xbmcHost, t, false, false, false)
 			return nil, err
 		}
 	}
