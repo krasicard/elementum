@@ -97,7 +97,7 @@ endif
 
 PROJECT = elementumorg
 NAME = elementum
-GO_PKG = github.com/elgatito/elementum
+GO_PKG = github.com/krasicard/elementum
 GO = go
 GIT = git
 DOCKER = docker
