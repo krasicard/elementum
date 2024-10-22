@@ -14,9 +14,9 @@ unset GOROOT
 
 git checkout master
 
-rm -rf ~/go/src/github.com/elgatito/elementum
-ln -s ~/workspace/elementum ~/go/src/github.com/elgatito/elementum
-cd ~/go/src/github.com/elgatito/elementum
+rm -rf ~/go/src/github.com/krasicard/elementum
+ln -s ~/workspace/elementum ~/go/src/github.com/krasicard/elementum
+cd ~/go/src/github.com/krasicard/elementum
 
 sudo -S true
 
