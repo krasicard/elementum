@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/elgatito/elementum/exit"
+	"github.com/krasicard/elementum/exit"
 )
 
 func initShared() {
