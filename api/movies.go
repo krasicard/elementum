@@ -12,16 +12,16 @@ import (
 	"github.com/asdine/storm/q"
 	"github.com/gin-gonic/gin"
 
-	"github.com/elgatito/elementum/bittorrent"
-	"github.com/elgatito/elementum/config"
-	"github.com/elgatito/elementum/database"
-	"github.com/elgatito/elementum/library"
-	"github.com/elgatito/elementum/library/uid"
-	"github.com/elgatito/elementum/providers"
-	"github.com/elgatito/elementum/scrape"
-	"github.com/elgatito/elementum/tmdb"
-	"github.com/elgatito/elementum/trakt"
-	"github.com/elgatito/elementum/xbmc"
+	"github.com/krasicard/elementum/bittorrent"
+	"github.com/krasicard/elementum/config"
+	"github.com/krasicard/elementum/database"
+	"github.com/krasicard/elementum/library"
+	"github.com/krasicard/elementum/library/uid"
+	"github.com/krasicard/elementum/providers"
+	"github.com/krasicard/elementum/scrape"
+	"github.com/krasicard/elementum/tmdb"
+	"github.com/krasicard/elementum/trakt"
+	"github.com/krasicard/elementum/xbmc"
 )
 
 // Maps TMDB movie genre ids to slugs for images
